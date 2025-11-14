@@ -3,7 +3,7 @@ import React from 'react'
 const StudentHome = () => {
   return (
     <>
-      StudentHome
+    Student Home
     </>
   )
 }

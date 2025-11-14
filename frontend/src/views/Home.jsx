@@ -1,11 +1,9 @@
 import React from 'react'
-import Sidebar from '../components/navigators/Sidebar'
 
 const Home = () => {
   return (
-    <Sidebar>
-
-    </Sidebar>
+    <section className='flex column full-view'>
+    </section>
   )
 }
 

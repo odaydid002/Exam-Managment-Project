@@ -1,0 +1,24 @@
+.search{
+    height: 2em;
+    margin-left: 1em;
+    flex-grow: 1;
+    max-width: 80%;
+}
+
+.container{
+    border-radius: 5px;
+    width: calc(100% - 1.3em);
+    margin-left: 0.65em;
+    padding: 0.10em 0;
+    padding-left: 0.85em;
+}
+
+.borderless{
+    border: none;
+    background-color: transparent;
+}
+
+.borderless:focus{
+    outline: none;
+    border: none;
+}

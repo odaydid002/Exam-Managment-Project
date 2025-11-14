@@ -1,0 +1,36 @@
+:root{
+    --logo-color: var(--color-second2)
+}
+
+.st0 {
+    stroke: #000;
+}
+
+.st0, .st1 {
+    fill: none;
+    stroke-miterlimit: 10;
+}
+
+.st1 {
+    stroke: var(--logo-color);
+    stroke-width: 13px;
+}
+
+.st2 {
+    fill: var(--color-main);
+}
+
+.st3 {
+    fill: var(--logo-color);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root{
+        --logo-color: var(--color-second)
+    }
+}
+@media (prefers-color-scheme: light) {
+    :root{
+        --logo-color: var(--color-second2)
+    }
+}

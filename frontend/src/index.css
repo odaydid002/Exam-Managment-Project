@@ -11,6 +11,10 @@
     color: var(--text);
 }
 
-body{
+#root{
     background-color: var(--bg);
+}
+
+.page{
+  
 }

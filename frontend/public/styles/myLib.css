@@ -30,6 +30,12 @@
 
 /* Variables */
 :root{
+
+    --page-pd: 2em;
+    --ease-duration: 0.6s;
+    --sidebar-width: 4em;
+    --sidebar-expand: 12em;
+
     /*  Colors  */
     --color-main: #F1504A;
     --color-second: #FDF4E7;
@@ -72,7 +78,7 @@
 .c-text{
     color: var(--text);
 }
-.c-text-l{
+.text-low{
     color: var(--text-low);
 }
 .text-a-l{
@@ -98,6 +104,28 @@
 }
 .text-white{
     color: white;
+}
+/*---------------*/
+
+/* Border Radius */
+.rounded-s{
+    border-radius: 0.3125em;
+}
+
+.rounded-m{
+    border-radius: 0.625em;
+}
+
+.rounded-l{
+    border-radius: 1em;
+}
+
+.rounded-xl{
+    border-radius: 1.25em;
+}
+
+.rounded-full{
+    border-radius: 50%;
 }
 /*---------------*/
 
@@ -150,6 +178,10 @@
 /*--------*/
 
 /* Margin */
+.mrg{
+    margin: 1em;
+}
+
 .mrh{
     margin: 0 1em;
 }
@@ -161,6 +193,9 @@
 }
 .mrr{
     margin-right: 1em;
+}
+.mrr-2{
+    margin-right: 2em;
 }
 .mrt{
     margin-top: 1em;
@@ -179,6 +214,14 @@
 /* Padding */
 .pd{
     padding: 1em;
+}
+
+.pd-s{
+    padding: 0.5em;
+}
+
+.pd-l{
+    padding: 2em;
 }
 
 .pdh{
@@ -208,11 +251,17 @@
 .cSecond{
     color: var(--color-second);
 }
-.bgMain{
+.bg-main{
     background-color: var(--color-main);
 }
-.bgSecond{
+.bg-second{
     background-color: var(--color-second);
+}
+.bgc{
+    background-color: var(--bgc);
+}
+.bg{
+    background-color: var(--bg);
 }
 .cText{
     color: var(--text);
@@ -269,7 +318,7 @@
 }
 .top-left{
     top: 0;
-    right: 0;
+    right: -10px;
 }
 .pos-left{
     left: 0;
@@ -354,12 +403,12 @@
     background-color: #1C1C1D;
 }
 .cbg-trans-grey{
-    background-color: #7a7a7a2d;
+    background-color: #7a7a7a17;
 }
 /*--------*/
 
 /* Animation */
 .ease-in-out{
-    transition: ease-in-out 0.6s;
+    transition: ease-in-out var(--ease-duration);
 }
 /*-----------*/

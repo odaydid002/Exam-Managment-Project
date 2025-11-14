@@ -1,15 +1,17 @@
 import React from 'react'
-import { Link, Outlet } from 'react-router-dom'
-import Sidebar from '../../components/navigators/sidebar'
+import { Outlet } from 'react-router-dom'
+
+import StudentSidebar from './StudentSidebar';
 
 const StudentLayout = () => {
+
+  document.title = "Unitime - Home";
+  
   return (
-    <>
-        <Sidebar>
-          
-        </Sidebar>
+    <section className={`full overview-h flex`}>
+        <StudentSidebar />
         <Outlet />
-    </>
+    </section>
   )
 }
 
