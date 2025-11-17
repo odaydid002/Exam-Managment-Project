@@ -30,20 +30,16 @@
 
 /* Variables */
 :root{
-
-    --page-pd: 2em;
-    --ease-duration: 0.6s;
-    --sidebar-width: 4em;
-    --sidebar-expand: 12em;
-
     /*  Colors  */
     --color-main: #F1504A;
+    --color-main-low: color-mix(in srgb, var(--color-main) 15%, transparent);
     --color-second: #FDF4E7;
     --color-second2: #092846;
     --text-white: white;
     --text-black: black;
     --border: #7575757c;
     --border-low: #75757534;
+    --trans-grey: rgba(128, 128, 128, 0.09);
     /*----------*/
     /*    Font   */
     --icon-size: 1.5rem;
@@ -144,6 +140,12 @@
 }
 .j-center{
     justify-content: center;
+}
+.j-spacebet{
+    justify-content: space-between;
+}
+.j-around{
+    justify-content: space-around;
 }
 .a-center{
     align-items: center;
@@ -412,3 +414,9 @@
     transition: ease-in-out var(--ease-duration);
 }
 /*-----------*/
+
+/* List */
+.no-style-list{
+    list-style: none;
+}
+/*------*/

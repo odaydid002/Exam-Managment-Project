@@ -39,7 +39,6 @@
     left: 50%;
     transform: translate(-50%, -50%);
     background-color: rgba(128, 128, 128, 0.06);
-    border-left: 3px solid var(--color-main);
     z-index: 1;
     border-radius: 5px;
 }

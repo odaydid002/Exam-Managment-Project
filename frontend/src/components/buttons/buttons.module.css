@@ -1,0 +1,60 @@
+.primary{
+    background-color: var(--color-main);
+    border: none;
+}
+
+.second{
+    background-color: var(--trans-grey);
+    border: none;
+}
+
+.bgless{
+    background-color: var(--color-main-low);
+    border: none;
+}
+
+.bt{
+    border-radius: var(--bt-radius);
+    padding: 0.4rem 1em;
+    cursor: pointer;
+}
+
+.icon{
+    margin-right: 1em;
+}
+
+.icon, .text{
+    font-size: 0.75rem;
+}
+
+.primary .text, .primary .icon{
+    color: white;
+}
+
+.second .text, .second .icon{
+    color: grey;
+}
+
+.bgless .text, .bgless .icon{
+    color: var(--color-main);
+}
+
+.bt:hover{
+    opacity: 0.9;
+    transform: scale(1.01);
+}
+
+.bt:active{
+    opacity: 1;
+    transition: none;
+    transform: scale(0.99) translateY(1px);
+}
+
+@media (max-width: 767px) {
+    .bt{
+        padding: 0.6rem 1.5em;
+    }
+    .icon, .text{
+        font-size: 0.8rem;
+    }
+}

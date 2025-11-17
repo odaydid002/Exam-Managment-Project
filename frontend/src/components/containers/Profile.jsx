@@ -1,14 +1,14 @@
 import image from '/images/anonymous-boy.png'
 
-function Profile(props) {
+function Profile({id="", width="30px", classes="", mrg="0", img=image, nav=false}) {
     const styles = {
-        width: `${props.width}px`,
+        width: `${width}`,
         flex: "0 0 auto",
     };
     return ( 
-        <div className={`flex center ${props.classes || ""}`} style={{width: "var(--sidebar-width)", margin: `${props.mrg}`}}>
-            <div id={props.id} style={styles} className={`flex center overflow-h circle`}>
-                <img className="full" src={props.image || image} alt="Profile" />
+        <div className={`flex center ${classes}`} style={nav?{width: "var(--sidebar-width)", margin: `${mrg}`}:{margin: `${mrg}`}}>
+            <div id={id} style={styles} className={`flex center overflow-h circle`}>
+                <img className="full" src={img} alt="Profile" />
             </div>
         </div>
      );

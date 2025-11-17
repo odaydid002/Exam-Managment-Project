@@ -1,3 +1,12 @@
+:root{
+  --bt-radius: 0.3125rem;
+  --input-radius: 0.3125rem;
+  --page-pd: 2em;
+  --ease-duration: 0.6s;
+  --sidebar-width: 4em;
+  --sidebar-expand: 12em;
+}
+
 * {
     box-sizing: border-box;
     scroll-behavior: smooth;
@@ -15,6 +24,33 @@
     background-color: var(--bg);
 }
 
-.page{
-  
+.page, .page-row{
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.page-row{
+  flex-direction: row;
+}
+
+.content{
+  width: calc(100vw - 6em);
+  height: 100%;
+}
+
+.nav{
+  width: 6em;
+  height: 100vh;
+}
+
+.h4p{
+    display: flex;
+}
+
+.h4pc{
+  display: none;
 }

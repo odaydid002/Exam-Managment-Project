@@ -1,0 +1,28 @@
+.container{
+    border-radius: 20px 20px 0 0;
+    border-top: 5px solid var(--bg);
+}
+
+.element{
+    width: 3em;
+}
+
+.element i{
+    font-size: 1.3rem;
+}
+
+.element p{
+    font-size: 0.5rem;
+    margin-top: 0.8em;
+    font-weight: bold;
+}
+
+.active i, .active p{
+    color: var(--color-main);
+    z-index: 2;
+}
+
+.active{
+    position: relative;
+    transition: ease-in-out 0.5s;
+}

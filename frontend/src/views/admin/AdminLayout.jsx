@@ -1,15 +1,21 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
 import AdminSidebar from './AdminSidebar';
+import AdminAppbar from './AdminAppbar';
 
 const AdminLayout = () => {
 
   document.title = "Unitime - Home";
   
   return (
-    <section className={`full overview-h flex`}>
-        <AdminSidebar />
-        <Outlet />
+    <section className='page-row'>
+        <div className="nav">
+          <AdminSidebar />
+          <AdminAppbar />
+        </div>
+        <div className="content">
+          <Outlet />
+        </div>
     </section>
   )
 }

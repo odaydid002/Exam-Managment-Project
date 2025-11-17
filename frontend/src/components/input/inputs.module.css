@@ -7,10 +7,8 @@
 
 .container{
     border-radius: 5px;
-    width: calc(100% - 1.3em);
-    margin-left: 0.65em;
-    padding: 0.10em 0;
-    padding-left: 0.85em;
+    padding: 0.5em 1em;
+    background-color: var(--trans-grey);
 }
 
 .borderless{
@@ -21,4 +19,72 @@
 .borderless:focus{
     outline: none;
     border: none;
+}
+
+.selectList {
+  padding: 0.5em;
+  max-height: 10em;
+  overflow-y: scroll;
+  background-color: var(--trans-grey);
+  border-radius: 5px;
+  width: max-content;
+  min-width: 100%;
+  top: calc(100% + 5px);
+  left: 0;
+  transform: none;
+  display: none;
+  z-index: 10;
+}
+
+.measure {
+  display: block !important;
+  visibility: hidden !important;
+  position: absolute !important;
+  left: -9999px; /* optional extra safety */
+}
+
+.selectElement{
+    padding: 0.5em 1em;
+    border-radius: 5px;
+}
+
+.selectElement:hover{
+    background-color: var(--color-main);
+}
+
+.selectElement:hover p{
+    color: white;
+}
+
+.selectList::-webkit-scrollbar {
+    width: 4px;
+    background-color: var(--trans-grey);
+    border-radius: 5px;
+}
+.selectList::-webkit-scrollbar-thumb {
+    background: var(--color-main);
+    border-radius: 5px;
+}
+
+.open .selectList{
+    display: flex;
+}
+
+.selectedLi{
+    background-color: var(--color-main);
+}
+
+.selectedLi p{
+    color: white;
+}
+
+.check{
+    visibility: hidden;
+    color: white;
+    margin-left: 1em;
+    font-size: 0.7rem;
+}
+
+.checked{
+    visibility: visible;
 }
