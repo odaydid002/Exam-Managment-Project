@@ -212,7 +212,7 @@ body{
   flex-direction: column;
   padding: 0 2em;
   background-color: var(--bgc);
-  margin-top: 1em;
+  margin-top: 0.5em;
   border-radius: 10px;
   height: 4em;
   overflow: hidden;
@@ -362,5 +362,8 @@ body{
     }
     .detailed-text{
       font-size: 0.65rem;
+    }
+    .title{
+      display: none;
     }
 }

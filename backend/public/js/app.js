@@ -9,7 +9,7 @@ const expendContainer = (apiContainer) => {
         counter++;
         activeCounter = child.classList.contains("expanded")?activeCounter + 1:activeCounter;
     })
-    apiContainer.style.height = `${4+(5 * counter - activeCounter) + 9.5 * activeCounter}em`
+    apiContainer.style.height = `${4+(4.5 * counter - activeCounter) + 9.5 * activeCounter}em`
 }
 
 fetch(data)
