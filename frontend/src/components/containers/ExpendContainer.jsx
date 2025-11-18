@@ -12,6 +12,7 @@ const ExpendContainer = (props) => {
   const varStyles = {
     width: w,
     height: props.h,
+    zIndex: 10,
   };
 
   return (

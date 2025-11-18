@@ -79,7 +79,7 @@ const StudentHome = () => {
       <SecondaryButton text='Remove user' icon='fa-solid fa-user-minus' onClick={() => {}}/>
       <Button text='Remove' icon='fa-solid fa-minus' onClick={() => {}} />
       <Button text='Create' onClick={() => {}} />
-      <SelectInputImage indexed options={list} onChange={(index) => {alert(list[index].value +' - '+ list[index].text)}}/>
+      <SelectInputImage options={list} onChange={(index) => {alert(list[index].value +' - '+ list[index].text)}}/>
       <SelectInput indexed options={list} onChange={(index) => {alert(list[index].value +' - '+ list[index].text)}}/>
     </>
   )
