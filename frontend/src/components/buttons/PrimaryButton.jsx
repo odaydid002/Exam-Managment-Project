@@ -3,7 +3,9 @@ import styles from './buttons.module.css';
 
 const PrimaryButton = ({ 
     type = "button", 
-    icon = "", text = "", 
+    css = "",
+    icon = "",
+    text = "", 
     w="max-content",
     mrg="0",
     onClick = () => {}}) => {
@@ -16,7 +18,7 @@ const PrimaryButton = ({
             <button 
                 type={type} 
                 onClick={onClick} 
-                className={`flex row a-center j-center ease-in-out ${styles.bt} ${styles.primary}`} 
+                className={`flex row a-center j-center ease-in-out ${styles.bt} ${styles.primary} ${css}`} 
                 style={varStyles}>
                     {icon && <i className={`${icon} ${styles.icon}`}></i>}
                     {text && <p className={styles.text}>{text}</p>}

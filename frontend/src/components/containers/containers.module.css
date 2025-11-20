@@ -1,0 +1,45 @@
+.card1{
+    width: 30vw;
+    min-width: 250px;
+    max-width: 300px;
+}
+
+.card2{
+    width: 25vw;
+    min-width: 300px;
+    max-width: 500px;
+}
+
+.card3{
+    border-left: 2px solid var(--border-low);
+    padding: 0 2em;
+}
+
+.card2Icon{
+    align-self: flex-start;
+    margin-right: 1em;
+}
+
+.cardIcon{
+    background-color: var(--color-main);
+    width: 2em;
+    height: 2em;
+    border-radius: 0.3125rem;
+}
+
+.cardIcon i{
+    font-size: 0.9rem;
+    color: white;
+}
+
+.cardTitle{
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin: 1em 0;
+}
+
+.cardDesc{
+    font-size: 0.8rem;
+    margin-bottom: 3em;
+}
+
