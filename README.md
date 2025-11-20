@@ -4,28 +4,65 @@ Figma Design --> https://www.figma.com/design/7GtBgiKFH4qe1hxJSpFcDE/Exam-managm
 
 Setup steps:
 
-0 - Set-ExecutionPolicy -Scope CurrentUser Unrestricted
+Set-ExecutionPolicy -Scope CurrentUser Unrestricted
 
-1 - git clone https://github.com/odaydid002/Exam-Managment-Project.git
+git clone https://github.com/odaydid002/Exam-Managment-Project.git
 
-2 - cd Exam-Managment-Project
+cd Exam-Managment-Project
 
-3 - cd backend
+cd backend
 
-4 - composer install
+composer install
 
-5 - cp .env.example .env
+cp .env.example .env
 
-6 - php artisan key:generate
+php artisan key:generate
 
-7 - php artisan migrate
+php artisan migrate
 
-8 - cd ..
+cd ..
 
-9 - cd frontend
+cd frontend
 
-10 - npm i
+npm i
 
-11 - npm run build
+npm run build
 
 /*--------------------------------------------------------------------------*/
+
+Update code:
+
+git pull
+
+cd frontend
+
+npm install
+
+npm run build
+
+cd ..
+
+cd backend 
+
+composer install
+
+php artisan migrate --force
+
+php artisan optimize:clear
+
+php artisan optimize
+
+/*--------------------------------------------------------------------------*/
+
+Run Frontend server:
+
+cd frontend
+
+npm run dev
+
+Run Backend server
+
+cd backend
+
+php artisan serve
+
