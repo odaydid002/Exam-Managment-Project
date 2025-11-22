@@ -10,7 +10,6 @@ const AdminDashboard = () => {
       </div>
       <div className={`${styles.dashboardContent}`}>
         <div className="view-test"></div>
-        <div className="view-test"></div>
       </div>
     </div>
   )
