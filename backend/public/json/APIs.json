@@ -1,0 +1,374 @@
+{
+  "data": [
+    {
+      "name": "Auth",
+      "description": "Authentification related APIs",
+      "endpoints": [
+        {
+          "method": "POST",
+          "rout": "/auth/signup",
+          "description": "Register new user",
+          "detail": "Admin/Responsable can create accounts manually",
+          "auth": false
+        },
+        {
+          "method": "POST",
+          "rout": "/auth/login",
+          "description": "User login",
+          "detail": "Return JWT tokens",
+          "auth": false
+        },
+        {
+          "method": "POST",
+          "rout": "/auth/logout",
+          "description": "Logout user",
+          "detail": "Invalidate token",
+          "auth": true
+        },
+        {
+          "method": "POST",
+          "rout": "/auth/refresh",
+          "description": "Refresh access token",
+          "detail": "Generate new access token using refresh token",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/auth/me",
+          "description": "Get current authenticated user",
+          "detail": "Returns user profile and role",
+          "auth": true
+        }
+      ]
+    },
+
+    {
+      "name": "Users",
+      "description": "User and roles management",
+      "endpoints": [
+        {
+          "method": "POST",
+          "rout": "/users/import",
+          "description": "Import students/teachers",
+          "detail": "Upload Excel file",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/users",
+          "description": "List all users",
+          "detail": "Filter by role",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/users/{id}",
+          "description": "Get user details",
+          "detail": "Return profile info",
+          "auth": true
+        },
+        {
+          "method": "PUT",
+          "rout": "/users/{id}",
+          "description": "Update user profile",
+          "detail": "Admin or user himself",
+          "auth": true
+        },
+        {
+          "method": "DELETE",
+          "rout": "/users/{id}",
+          "description": "Delete user account",
+          "detail": "Only Admin",
+          "auth": true
+        }
+      ]
+    },
+
+    {
+      "name": "Sessions",
+      "description": "Exam periods and sessions",
+      "endpoints": [
+        {
+          "method": "POST",
+          "rout": "/sessions",
+          "description": "Create exam period",
+          "detail": "Ex: 10-25 January",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/sessions",
+          "description": "List exam periods",
+          "detail": "Includes active period",
+          "auth": true
+        },
+        {
+          "method": "PUT",
+          "rout": "/sessions/{id}",
+          "description": "Update exam period",
+          "detail": "",
+          "auth": true
+        },
+        {
+          "method": "DELETE",
+          "rout": "/sessions/{id}",
+          "description": "Delete exam period",
+          "detail": "",
+          "auth": true
+        }
+      ]
+    },
+
+    {
+      "name": "Modules",
+      "description": "Modules and teaching assignments",
+      "endpoints": [
+        {
+          "method": "POST",
+          "rout": "/modules",
+          "description": "Create module",
+          "detail": "",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/modules",
+          "description": "List all modules",
+          "detail": "",
+          "auth": true
+        },
+        {
+          "method": "PUT",
+          "rout": "/modules/{id}",
+          "description": "Update module info",
+          "detail": "",
+          "auth": true
+        },
+        {
+          "method": "DELETE",
+          "rout": "/modules/{id}",
+          "description": "Delete module",
+          "detail": "",
+          "auth": true
+        },
+        {
+          "method": "POST",
+          "rout": "/modules/{id}/assign",
+          "description": "Assign teacher to module",
+          "detail": "",
+          "auth": true
+        }
+      ]
+    },
+
+    {
+      "name": "Groups",
+      "description": "Student groups and levels",
+      "endpoints": [
+        {
+          "method": "POST",
+          "rout": "/groups",
+          "description": "Create student group",
+          "detail": "Automatic or manual",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/groups",
+          "description": "List groups",
+          "detail": "",
+          "auth": true
+        }
+      ]
+    },
+
+    {
+      "name": "Rooms",
+      "description": "Exam rooms",
+      "endpoints": [
+        {
+          "method": "POST",
+          "rout": "/rooms",
+          "description": "Add exam room",
+          "detail": "Includes type + capacity",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/rooms",
+          "description": "List all rooms",
+          "detail": "",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/rooms/availability",
+          "description": "Check room availability",
+          "detail": "Based on date/time",
+          "auth": true
+        }
+      ]
+    },
+
+    {
+      "name": "Exams",
+      "description": "Exam creation, conflicts, and schedule",
+      "endpoints": [
+        {
+          "method": "POST",
+          "rout": "/exams",
+          "description": "Create exam",
+          "detail": "Date, hour, room, module, group",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/exams",
+          "description": "List all exams",
+          "detail": "Filters: module, teacher, group, room, date",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/exams/{id}",
+          "description": "Exam details",
+          "detail": "",
+          "auth": true
+        },
+        {
+          "method": "PUT",
+          "rout": "/exams/{id}",
+          "description": "Update exam",
+          "detail": "Change room, hour, date",
+          "auth": true
+        },
+        {
+          "method": "DELETE",
+          "rout": "/exams/{id}",
+          "description": "Delete exam",
+          "detail": "",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/exams/{id}/conflicts",
+          "description": "Check conflicts for exam",
+          "detail": "Room, teacher, group conflicts",
+          "auth": true
+        }
+      ]
+    },
+
+    {
+      "name": "Surveillance",
+      "description": "Surveillance assignment and schedules",
+      "endpoints": [
+        {
+          "method": "POST",
+          "rout": "/surveillance/assign",
+          "description": "Assign surveillants automatically",
+          "detail": "",
+          "auth": true
+        },
+        {
+          "method": "POST",
+          "rout": "/surveillance/manual",
+          "description": "Manually assign surveillant",
+          "detail": "",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/surveillance/teacher/{id}",
+          "description": "Teacher surveillance schedule",
+          "detail": "",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/surveillance",
+          "description": "List complete surveillance planning",
+          "detail": "",
+          "auth": true
+        }
+      ]
+    },
+
+    {
+      "name": "Notifications",
+      "description": "Automatic messages and updates",
+      "endpoints": [
+        {
+          "method": "POST",
+          "rout": "/notifications/send",
+          "description": "Send custom notification",
+          "detail": "Admin or system action",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/notifications",
+          "description": "List notifications for user",
+          "detail": "",
+          "auth": true
+        }
+      ]
+    },
+
+    {
+      "name": "PublicPlanning",
+      "description": "Public planning consultation",
+      "endpoints": [
+        {
+          "method": "GET",
+          "rout": "/public/planning/group/{id}",
+          "description": "Planning for group",
+          "detail": "",
+          "auth": false
+        },
+        {
+          "method": "GET",
+          "rout": "/public/planning/teacher/{id}",
+          "description": "Planning for teacher",
+          "detail": "",
+          "auth": false
+        },
+        {
+          "method": "GET",
+          "rout": "/public/planning/room/{id}",
+          "description": "Planning for room",
+          "detail": "",
+          "auth": false
+        }
+      ]
+    },
+
+    {
+      "name": "Files",
+      "description": "Export and import (PDF, Excel)",
+      "endpoints": [
+        {
+          "method": "GET",
+          "rout": "/export/planning/pdf",
+          "description": "Export planning as PDF",
+          "detail": "Filters supported",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/export/surveillance/pdf",
+          "description": "Export surveillance schedule PDF",
+          "detail": "",
+          "auth": true
+        },
+        {
+          "method": "GET",
+          "rout": "/export/planning/excel",
+          "description": "Export planning as Excel",
+          "detail": "",
+          "auth": true
+        }
+      ]
+    }
+  ]
+}

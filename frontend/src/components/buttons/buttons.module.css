@@ -13,6 +13,11 @@
     border: none;
 }
 
+.bText {
+    background-color: transparent;
+    border: none;
+}
+
 .bt{
     border-radius: var(--bt-radius);
     padding: 0.4rem 1em;
@@ -56,5 +61,7 @@
     }
     .icon, .text{
         font-size: 0.8rem;
+        white-space: nowrap;
     }
+    
 }

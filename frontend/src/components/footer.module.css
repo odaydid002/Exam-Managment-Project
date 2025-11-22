@@ -1,0 +1,42 @@
+.footer{
+    padding: 0 2em;
+}
+
+.text{
+    font-size: 0.8rem;
+    color: var(--text-low);
+}
+
+.socialList{
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.socialList i{
+    font-size: 1.1rem;
+    margin: 0 0.625em;
+    color: var(--text-low);
+    transition: ease-in-out 0.5s;
+}
+
+.f:hover{
+    color: rgb(50, 94, 198);
+}
+
+.i:hover{
+    color: rgb(215, 106, 215);
+}
+
+.g:hover{
+    color: white;
+}
+
+.l:hover{
+    color: rgb(108, 177, 233);
+}
+
+.y:hover{
+    color: rgb(232, 78, 78);
+}

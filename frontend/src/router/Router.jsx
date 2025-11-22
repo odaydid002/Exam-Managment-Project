@@ -29,21 +29,23 @@ import AdminTeachers from '../views/admin/AdminTeachers'
 import AdminSettings from '../views/admin/AdminSettings'
 import AdminGroups from '../views/admin/AdminGroups'
 
-import Error404 from '../views/error/Error404'
+import ErrorPage from '../views/error/ErrorPage'
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <Home />,
-    errorElement: <Error404 />
+    errorElement: <ErrorPage />
   },
   {
     path: "/Login",
     element: <Login />,
+    errorElement: <ErrorPage />
   },
   {
     path: "/student",
     element: <StudentLayout />,
+    errorElement: <ErrorPage />,
     children: [
       { index: true, element: <StudentHome /> },
       { path: "home", element: <StudentHome /> },
@@ -56,6 +58,7 @@ const router = createBrowserRouter([
   {
     path: "/teacher",
     element: <TeacherLayout />,
+    errorElement: <ErrorPage />,
     children: [
       { index: true, element: <TeacherHome /> },
       { path: "home", element: <TeacherHome /> },
@@ -68,6 +71,7 @@ const router = createBrowserRouter([
   {
     path: "/admin",
     element: <AdminLayout />,
+    errorElement: <ErrorPage />,
     children: [
       { index: true, element: <AdminDashboard /> },
       { path: "home", element: <AdminDashboard /> },

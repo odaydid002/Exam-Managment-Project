@@ -1,3 +1,15 @@
+/* Fonts */
+@font-face {
+    font-family: poppins;
+    src: url(../fonts/poppins.ttf);
+}
+
+@font-face {
+    font-family: poppins-black;
+    src: url(../fonts/Poppins-Black.ttf);
+}
+/*-------*/
+
 :root{
   --bt-radius: 0.3125rem;
   --input-radius: 0.3125rem;
@@ -20,8 +32,9 @@
     color: var(--text);
 }
 
-#root{
+#root, body{
     background-color: var(--bg);
+    overflow-x: hidden;
 }
 
 .page, .page-row{
@@ -54,3 +67,28 @@
 .h4pc{
   display: none;
 }
+
+.anim-float{
+  animation: float 6s ease-in-out infinite;
+}
+
+.anim-float-fast{
+  animation: float 4s ease-in-out infinite;
+}
+
+.anim-float-slow{
+  animation: float 14s ease-in-out infinite;
+}
+
+/*  Media */
+
+
+@media (max-width: 767px) {
+  .btm{
+    width: 100% !important;
+    margin: 0 1em !important;
+    margin-top: auto !important;
+  }
+}
+
+/*--------*/

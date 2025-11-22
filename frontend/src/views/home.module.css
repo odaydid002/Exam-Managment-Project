@@ -1,0 +1,83 @@
+@media (prefers-color-scheme: dark) {
+    .imageContainer1{
+        background: url(../assets/studentUIDark.png);
+    }
+    .imageContainer2{
+        background: url(../assets/adminUIDark.png);
+    }
+}
+@media (prefers-color-scheme: light) {
+    .imageContainer1{
+        background: url(../assets/studentUI.png);
+    }   
+    .imageContainer2{
+        background: url(../assets/adminUI.png);
+    }   
+}
+
+.imageContainer1{
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    min-height: 80%;
+    aspect-ratio: 756/491;
+    width: auto;
+    position: absolute;
+    right: 0%;
+}
+
+.imageContainer2{
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    width: 60vw;
+    height: auto;
+    margin: 3em 0;
+    aspect-ratio: 756/491;
+    box-shadow: inset 0 -80px 40px rgba(0, 0, 0, 0.5);
+}
+
+.header{
+    max-width: 50vw;
+}
+
+.titleXl{
+    font-family: poppins-black;
+    font-size: 2.5rem;
+    font-weight: bolder;
+    line-height: 1.1em;
+    color: white;
+}
+
+.para{
+    margin: 2em 0;
+    color: var(--text-low);
+    font-size: 1rem;
+}
+
+.boxImage{
+    height: 4.5em;
+    width: auto;
+    margin: 0 5vw;
+}
+
+.specSec{
+    padding: 0 10vw;
+}
+
+@media (max-width: 767px) {
+    .imageContainer1{
+        min-height: 40%;
+        right: 30%;
+        top: 35%;
+    }
+    .titleXl{
+        font-size: 1.5rem;
+    }
+    .para{
+        font-size: 0.7rem;
+    }
+    .boxImage{
+        height: 2.5em;
+    }
+}
