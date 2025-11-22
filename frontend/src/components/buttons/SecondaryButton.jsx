@@ -7,10 +7,12 @@ const SecondaryButton = ({
     text = "", 
     w="max-content",
     mrg="0",
+    pd="0.5rem 1em",
     onClick = () => {}})=> {
         const varStyles = {
             width: w,
-            margin: mrg
+            margin: mrg,
+            padding: pd,
         }
         return (
             <button 

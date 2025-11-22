@@ -11,7 +11,7 @@ const AdminAppbar = () => {
         <AppbarElement type="link" path="modules/" title="Modules" icon="fa-solid fa-book"/>
         <AppbarElement type="link" path="groups/" title="Groups" icon="fa-solid fa-users-line"/>
         <AppbarElement type="link" path="planning/" title="Planning" icon="fa-solid fa-calendar-days"/>
-        <AppbarElement type="link" path="profile/" title="Profile" icon="fa-solid fa-user"/>
+        <AppbarElement type="link" path="settings/" title="Settings" icon="fa-solid fa-gear"/>
     </Appbar>
   )
 }

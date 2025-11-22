@@ -9,11 +9,13 @@ const Button = ({
   w = "max-content",
   mrg = "0",
   classes = "",
+  pd="0.4rem 1em",
 }) => {
 
   const varStyles = {
     width: w,
     margin: mrg,
+    padding: pd,
   };
 
   return (

@@ -1,0 +1,18 @@
+.mainDoc{
+    padding: 1em 1em 1em 0;
+    overflow: hidden;
+}
+
+@media (max-width: 800px) {
+    .mainDoc{
+        padding: 1em;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+}
+
+@media (max-height: 600px) {
+    .mainDoc{
+        overflow-y: auto;
+    }
+}

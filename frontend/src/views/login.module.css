@@ -1,0 +1,55 @@
+.container{
+    background-color: var(--bgc);
+    padding: 2em;
+    border-radius: 20px;
+    z-index: 2;
+}
+
+.containerBg{
+    border-radius: 0.625rem;
+    width: 40vw;
+    min-width: 300px;
+    max-width: 450px;
+    height: auto;
+    aspect-ratio: 9/10;
+    margin-right: 2em;
+    background-color: var(--s2bg);
+}
+
+.minW{
+    width: 20vw;
+    max-width: 280px;
+    min-width: 250px;
+    gap: 1em;
+}
+
+.floatText{
+    position: absolute;
+    top: 10%;
+    right: 10%;
+}
+
+.img{
+    height: 120%;
+    bottom: -25%;
+    left: -45%;
+}
+
+.mxw1{
+    max-width: 240px;
+}
+.mxw2{
+    max-width: 250px;
+}
+
+@media (max-width: 767px) {
+    .minW{
+        min-width: unset;
+        max-width: unset;
+        gap: 3em;
+    }
+    .container{
+        padding: 0;
+        background-color: transparent;
+    }
+}

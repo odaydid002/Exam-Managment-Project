@@ -8,12 +8,13 @@ const NavSeparator = (props) => {
         marginTop: "auto",
         marginBottom: "0.25em",
         cursor: "default",
-        opacity: "0.5"
+        opacity: "0.2",
+        fontSize: "0.5rem"
     }
 
   return (
     <div style={styles}>
-        <p className='text-s c-text'>{props.title}</p>
+        <p className='c-text'>{props.title}</p>
     </div>
   )
 }

@@ -12,7 +12,7 @@ function SearchInput({ onClick, inputParms }) {
   return ( 
     <div className={`flex row a-center pdl overflow-h ${styles.container}`} style={varStyles}>
       <i className="fa-solid fa-magnifying-glass l clickable text" onClick={onClick}></i>
-      <input className={`${styles.search} ${styles.borderless} m text`} {...inputParms} type="search" />
+      <input placeholder='Search...' className={`${styles.search} ${styles.borderless} m text`} {...inputParms} type="search" />
     </div>
   );
 }

@@ -1,0 +1,82 @@
+:root{
+    --input-height: 2.5em;
+}
+
+.signIn input[type="email"] {
+    
+}
+
+.signIn input[type="password"] {
+    
+}
+
+.signIn{
+    z-index: 3;
+}
+
+.signIn input{
+    flex-grow: 1;
+    background-color: transparent;
+    border: none;
+    height: 100%;
+    font-size: 0.7rem;
+}
+
+.signIn i{
+    font-size: 0.65rem;
+    color: var(--text-low);
+    cursor: pointer;
+}
+
+.signIn label{
+    font-size: 0.65rem;
+    color: var(--text-low);
+    margin: 1em 0 0.5em 0;
+}
+
+.signIn input:focus{
+    outline: none;
+    border: none;
+}
+
+.inputContainer{
+    width: 100%;
+    height: var(--input-height);
+    margin-bottom: 1em;
+    background-color: rgba(128, 128, 128, 0.164);
+    padding: 0 0.625em;
+    border-radius: 5px;
+}
+
+.jst{
+    align-self: flex-start;
+}
+
+.err{
+    color: rgb(225, 63, 63);
+    width: 100%;
+    text-align: right;
+}
+
+@media (max-width: 767px) {
+    :root{
+        --input-height: 2.8em;
+    }
+    .inputContainer{
+        border-radius: 5px;
+    }
+    .signIn input{
+        font-size: 0.8rem;
+    }
+    .signIn label{
+        font-size: 0.7rem;
+    }
+    .signIn{
+        width: 100vw;
+        height: 100vh;
+        padding: 2em;
+    }
+    .jst{
+        align-self: center;
+    }
+}

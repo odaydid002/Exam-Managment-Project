@@ -14,7 +14,7 @@ const TeacherLayout = () => {
           <TeacherSidebar />
           <TeacherAppbar />
         </div>
-        <div className="content">
+        <div className={`full flex`}>
           <Outlet />
         </div>
     </section>

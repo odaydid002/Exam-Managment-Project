@@ -8,7 +8,9 @@ const Text = (
         color = "var(--text)",
         align = "center",
         mrg = "0",
-        pd = "0"
+        pd = "0",
+        w = "400",
+        lh = "unset"
     }
 ) => {
     const varStyles = {
@@ -16,7 +18,9 @@ const Text = (
         color: color,
         textAlign: align,
         margin: mrg,
-        padding: pd
+        padding: pd,
+        fontWeight: w,
+        lineHight: lh
     }
     return (
         <h1 className={`${css}`} style={varStyles}>{text}</h1>

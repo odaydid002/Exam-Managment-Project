@@ -43,3 +43,42 @@
     margin-bottom: 3em;
 }
 
+
+
+@media (prefers-color-scheme: dark) {
+    .bg{
+        background-color: var(--bg);
+    }
+    .bgm{
+        background-color:  var(--bg);
+    }
+}
+@media (prefers-color-scheme: light) {
+    .bg{
+        background-color: var(--color-second2);
+    }
+    .bgm{
+        background-color: var(--color-second2);
+    }
+}
+
+@media (max-width: 767px) {
+    @media (prefers-color-scheme: light) {
+        .bgm{
+            background-color: var(--bg);
+        }
+    }
+}
+
+.iconBg{
+    width: 35px;
+    height: 35px;
+    opacity: 0.08;
+}
+
+.infoCard{
+    border: 2px solid var(--border-low);
+    padding: 0.625em 1.5em;
+    min-width: 160px;
+    border-radius: 8px;
+}

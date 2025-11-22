@@ -20,7 +20,6 @@
 
 .bt{
     border-radius: var(--bt-radius);
-    padding: 0.4rem 1em;
     cursor: pointer;
 }
 

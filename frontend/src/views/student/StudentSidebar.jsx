@@ -9,7 +9,7 @@ import NavSeparator from '../../components/navigators/NavSeparator'
 
 const StudentSidebar = () => {
   return (
-    <ExpendContainer w="var(--sidebar-width)" xw="var(--sidebar-expand) " h="calc(100% - 2em)" classes="flex column bgc rounded-l ease-in-out mrg h4p">
+    <ExpendContainer w="var(--sidebar-width)" xw="var(--sidebar-expand) " h="calc(100% - 2em)"  minHeight="500px" classes="flex column bgc rounded-l ease-in-out h4p">
         <NavElement path="/" mrt="0">
           <Logo w={35} h={35} mrg="0 0 1em 0"/>
         </NavElement>
