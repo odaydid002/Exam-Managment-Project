@@ -11,12 +11,12 @@ const StudentLayout = () => {
   document.title = "Unitime - Home";
   
   return (
-    <section>
-        <div className="nav">
+    <section className='flex full-view column4p overflow-h'>
+        <div className="h100">
           <StudentSidebar />
           <StudentAppbar />
         </div>
-        <div className={`${styles.mainDoc} full border-high`}>
+        <div className={`${styles.mainDoc} full vh100`}>
           <Outlet />
         </div>
     </section>

@@ -2,19 +2,17 @@ import React from 'react'
 import Logo from '../../components/images/Logo'
 import Profile from '../../components/containers/profile'
 import ExpendContainer from '../../components/containers/ExpendContainer'
-import SearchInput from '../../components/input/SearchInput'
 import NavElement from '../../components/navigators/NavElement'
 import NavElementButton from '../../components/navigators/NavElementButton'
 import NavSeparator from '../../components/navigators/NavSeparator'
 
 const StudentSidebar = () => {
   return (
-    <ExpendContainer w="var(--sidebar-width)" xw="var(--sidebar-expand) " h="calc(100% - 2em)"  minHeight="500px" classes="flex column bgc rounded-l ease-in-out h4p">
+    <ExpendContainer w="var(--sidebar-width)" xw="var(--sidebar-expand)" h="calc(100vh - 2em)"  minHeight="600px" classes="pdv flex column bgc rounded-l ease-in-out mrg h4p">
         <NavElement path="/" mrt="0">
-          <Logo w={35} h={35} mrg="0 0 1em 0"/>
+          <Logo w={35} h={35}/>
         </NavElement>
-        <SearchInput />
-        <NavElement path="home/" title="Home" icon="fa-solid fa-house" mrt="1em" hover/>
+        <NavElement path="home/" title="Home" icon="fa-solid fa-house" hover/>
         <NavSeparator title="Main"/>
         <NavElement path="schedule/" title="Schedule" icon="fa-solid fa-calendar" mrt="0" hover/>
         <NavElement path="modules/" title="Modules" icon="fa-solid fa-book" mrt="0" hover/>
