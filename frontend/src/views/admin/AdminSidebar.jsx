@@ -14,8 +14,8 @@ const AdminSidebar = () => {
         <Logo w={35} h={35} mrg="0 0 1em 0"/>
         <NavElement path="home/" title="Home" icon="fa-solid fa-house" mrt="0" hover/>
         <NavSeparator title="Main"/>
-        <NavElement path="students/" title="Students" icon="fa-solid fa-user-graduate" mrt="0" hover/>
         <NavElement path="teachers/" title="Teachers" icon="fa-solid fa-user-tie" mrt="0" hover/>
+        <NavElement path="students/" title="Students" icon="fa-solid fa-user-graduate" mrt="0" hover/>
         <NavElement path="modules/" title="Modules" icon="fa-solid fa-book" mrt="0" hover/>
         <NavElement path="groups/" title="Groups" icon="fa-solid fa-users-line" mrt="0" hover/>
         <NavElement path="planning/" title="Planning" icon="fa-solid fa-calendar-days" mrt="0" hover/>

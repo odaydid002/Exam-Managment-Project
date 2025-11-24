@@ -372,6 +372,15 @@
 .grow-1{
     flex-grow: 1;
 }
+.grow-2{
+    flex-grow: 2;
+}
+.grow-3{
+    flex-grow: 3;
+}
+.borderless{
+  border: none;
+}
 /*------------*/
 
 /* Positions */
@@ -380,6 +389,12 @@
 }
 .pos-rel{
     position: relative;
+}
+.pos-sticky{
+    position: sticky;
+}
+.pos-sticky{
+    position: fixed;
 }
 .pos-center{
     left: 50%;
@@ -395,8 +410,12 @@
     transform: translateY(-50%)
 }
 .top-left{
-    top: 0;
-    right: -10px;
+    top: 1em;
+    right: 1em;
+}
+.bottom-left{
+    bottom: 1em;
+    right: 1em;
 }
 .pos-left{
     left: 0;

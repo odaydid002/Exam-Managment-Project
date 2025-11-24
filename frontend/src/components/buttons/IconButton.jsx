@@ -12,6 +12,7 @@ const IconButton = ({
 
   const varStyles = {
     width: w,
+    textAlign: "center",
     margin: mrg,
   };
 
@@ -19,7 +20,7 @@ const IconButton = ({
     <button
       type={type}
       onClick={onClick}
-      className={`flex row a-center j-center ease-in-out ${styles.bt} ${styles.bgless} ${classes}`}
+      className={`flex row center ease-in-out ${styles.bt} ${styles.bgless} ${classes}`}
       style={varStyles}>
         <i className={`${icon} ${styles.icon}`}></i>
     </button>

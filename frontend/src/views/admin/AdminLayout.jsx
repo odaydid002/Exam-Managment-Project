@@ -11,11 +11,11 @@ const AdminLayout = () => {
   
   return (
     <section className={`flex full-view column4p overflow-h ${styles.section}`}>
-        <div className={`border-high-b ${styles.navigator}`}>
+        <div className={`${styles.navigator}`}>
           <AdminSidebar />
           <AdminAppbar />
         </div>
-        <div className={`full border-high-y ${styles.content}`}>
+        <div className={`full ${styles.content}`}>
           <Outlet />
         </div>
     </section>

@@ -1,5 +1,6 @@
 :root{
     --pd:1em;
+    --pdc: 0.5em;
 }
 
 .navigator{
@@ -10,23 +11,123 @@
     height: 100vh;
 }
 
+.dashBGC{
+    background-color: var(--bgc);
+    border-radius: 0.625em;
+    padding: var(--pdc);
+}
 
 /*           Dashboard             */
+
 .dashboardLayout{
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.35fr 1fr;
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+    overflow: hidden;
+    overflow-y: auto;
+}
+.dashboardHeader{
+    padding: var(--pd) var(--pd) calc(var(--pd)/2) 0;
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: 0.5fr 1fr;
     grid-column-gap: 0px;
-    grid-row-gap: 0px;
-    overflow: hidden;
-}
-.dashboardHeader{
-    padding: var(--pd) var(--pd) calc(var(--pd)/2) 0;
+    grid-row-gap: var(--pd);
 }
 .dashboardContent{
     padding: calc(var(--pd)/2) var(--pd) var(--pd) 0;
 }
+.dashStatic{
+    min-width: 150px;
+    min-height: 100px;
+}
+.dashContentSide{
+    min-width: 250px;
+}
+.dashContent{
+    min-width: 250px;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.5fr 1fr;
+    grid-column-gap: 0px;
+    grid-row-gap: var(--pd);
+}
+
+.dashRooms{
+    min-height: 150px;
+}
+
+.dashReports{
+    min-height: 300px;
+}
+
+.dashContentSide{
+    min-height: 400px;
+}
+
 /*-----------------------------------*/
+
+/*              Teachers             */
+
+.teachersLayout{
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.1fr 1.9fr;
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+    overflow: hidden;
+    overflow-y: auto;
+}
+.teachersHeader{
+    padding: var(--pd) var(--pd) calc(var(--pd)/2) 0;
+}
+.teachersContent{
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.1fr 1.9fr;
+    grid-column-gap: 0px;
+    grid-row-gap: var(--pd);
+    padding: 0 var(--pd) var(--pd) 0;
+    min-width: 350px;
+}
+.teachersContent{
+    min-height: 600px;
+}
+
+/*-----------------------------------*/
+/*             Modules               */
+.modulesLayout{
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.1fr 0.3fr 1fr;
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+    min-width: 340px;
+    overflow-y: auto;
+}
+
+.modulesHeader{
+    padding: var(--pd) var(--pd) var(--pd) 0;
+}
+
+.modulesStatic{
+    min-width: 160px;
+    min-height: 100px;
+}
+
+.modulesStatics{
+    padding: 0 var(--pd) var(--pd) 0;
+}
+
+.modulesContent{
+    padding: 0 var(--pd) var(--pd) 0;
+    gap: var(--pd);
+    min-height: 500px;
+}
+/*-----------------------------------*/
+
 
 @media (max-width: 767px) {
     .navigator{
@@ -35,22 +136,47 @@
     .content{
         height: calc(100vh - 5em);
     }
-
+    
     /*           Dashboard             */
-    .dashboardLayout{
-        overflow-y: auto;
-    }
-    .dashboardLayout::-webkit-scrollbar {
+    .dashboardLayout::-webkit-scrollbar,
+    .teachersLayout::-webkit-scrollbar {
         width: 0;
     }
-    .dashboardLayout::-webkit-scrollbar {
+    .dashboardLayout::-webkit-scrollbar,
+    .teachersLayout::-webkit-scrollbar {
         width: 0;
     }
     .dashboardHeader{
         padding: var(--pd) var(--pd) calc(var(--pd)/2) var(--pd);
+        display: flex;
+        flex-direction: column;
     }
-    .dashboardContent{
+    .dashboardHeader{
+        gap: var(--pd);
+    }
+    .dashboardContent,
+    .teachersContent{
         padding: calc(var(--pd)/2) var(--pd) var(--pd) var(--pd);
+    }
+    /*-----------------------------------*/
+    /*              Teachers             */
+    .teachersLayout{
+        display: flex;
+        flex-direction: column;
+    }
+    /*-----------------------------------*/
+    /*              Modules              */
+    .modulesHeader{
+        padding: 0;
+        padding-top: var(--pd);
+    }
+    .modulesLayout{
+        display: flex;
+        flex-direction: column;
+    }
+    .modulesStatics,
+    .modulesContent{
+        padding-left: var(--pd);
     }
     /*-----------------------------------*/
 }
