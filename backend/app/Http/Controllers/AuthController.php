@@ -16,7 +16,7 @@ class AuthController extends Controller
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => 'required',
             'telephone' => 'required|string|max:20',
             'role' => 'required|in:chef,resp,Ens,Etu'
         ]);

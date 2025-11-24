@@ -8,12 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('utilisateurs', function (Blueprint $table) {
+        Schema::create('users', function (Blueprint $table) {
             $table->id('id_utilisateur');
             $table->string('nom');
             $table->string('prenom');
             $table->string('email')->unique();
-            $table->string('mot_de_passe');
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
             $table->string('telephone')->nullable();
             $table->enum('role', ['chef', 'responsable', 'enseignant', 'etudiant']);
             $table->timestamps();
@@ -44,7 +46,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('id_enseignant')
-                ->references('id_utilisateur')->on('utilisateurs');
+                ->references('id_utilisateur')->on('users');
         });
 
         Schema::create('examens', function (Blueprint $table) {
@@ -65,7 +67,7 @@ return new class extends Migration
             $table->foreign('id_module')->references('id_module')->on('modules');
             $table->foreign('id_salle')->references('id_salle')->on('salles');
             $table->foreign('id_groupe')->references('id_groupe')->on('groupes');
-            $table->foreign('id_responsable')->references('id_utilisateur')->on('utilisateurs');
+            $table->foreign('id_responsable')->references('id_utilisateur')->on('users');
         });
 
         Schema::create('surveillances', function (Blueprint $table) {
@@ -74,7 +76,7 @@ return new class extends Migration
             $table->unsignedBigInteger('id_examen');
             $table->timestamps();
 
-            $table->foreign('id_enseignant')->references('id_utilisateur')->on('utilisateurs');
+            $table->foreign('id_enseignant')->references('id_utilisateur')->on('users');
             $table->foreign('id_examen')->references('id_examen')->on('examens');
         });
 
@@ -88,7 +90,7 @@ return new class extends Migration
             $table->unsignedBigInteger('id_chef');
             $table->timestamps();
 
-            $table->foreign('id_chef')->references('id_utilisateur')->on('utilisateurs');
+            $table->foreign('id_chef')->references('id_utilisateur')->on('users');
         });
 
         Schema::create('notifications', function (Blueprint $table) {
@@ -100,7 +102,7 @@ return new class extends Migration
             $table->unsignedBigInteger('id_examen')->nullable();
             $table->timestamps();
 
-            $table->foreign('id_utilisateur')->references('id_utilisateur')->on('utilisateurs');
+            $table->foreign('id_utilisateur')->references('id_utilisateur')->on('users');
             $table->foreign('id_examen')->references('id_examen')->on('examens');
         });
     }
@@ -114,6 +116,6 @@ return new class extends Migration
         Schema::dropIfExists('modules');
         Schema::dropIfExists('salles');
         Schema::dropIfExists('groupes');
-        Schema::dropIfExists('utilisateurs');
+        Schema::dropIfExists('users');
     }
 };
