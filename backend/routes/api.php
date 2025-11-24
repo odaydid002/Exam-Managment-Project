@@ -33,11 +33,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Modules
     Route::apiResource('modules', ModuleController::class);
 
-    // Salles
-    Route::apiResource('salles', SalleController::class);
+// Routes pour Salle
+Route::get('/salles/disponibles', [SalleController::class, 'getSallesDisponibles']);
 
-    // Groupes
-    Route::apiResource('groupes', GroupeController::class);
+// Routes pour Groupe
+Route::get('/groupes/niveau/{niveau}', [GroupeController::class, 'getByNiveau']);
+Route::get('/groupes/specialite/{specialite}', [GroupeController::class, 'getBySpecialite']);
+Route::get('/groupes/statistiques', [GroupeController::class, 'getStatistiques']);
 
     // Plannings
     Route::apiResource('plannings', PlanningController::class);
