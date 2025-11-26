@@ -14,7 +14,7 @@
 .dashBGC{
     background-color: var(--bgc);
     border-radius: 0.625em;
-    padding: var(--pdc);
+    padding: var(--pd);
 }
 
 /*           Dashboard             */
@@ -44,7 +44,7 @@
     min-height: 100px;
 }
 .dashContentSide{
-    min-width: 250px;
+    min-width: 300px;
 }
 .dashContent{
     min-width: 250px;
@@ -90,18 +90,16 @@
     grid-column-gap: 0px;
     grid-row-gap: var(--pd);
     padding: 0 var(--pd) var(--pd) 0;
-    min-width: 350px;
 }
-.teachersContent{
-    min-height: 600px;
+.teachersTable{
+    min-height: 500px;
 }
-
 /*-----------------------------------*/
 /*             Modules               */
 .modulesLayout{
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: 0.1fr 0.3fr 1fr;
+    grid-template-rows: 0.1fr 0.25fr 1fr;
     grid-column-gap: 0px;
     grid-row-gap: 0px;
     min-width: 340px;
@@ -128,6 +126,53 @@
 }
 /*-----------------------------------*/
 
+/*           Planning             */
+
+.planningLayout{
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.1fr 1.9fr;
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+}
+
+.planningHead{
+    padding: var(--pd) 0;
+}
+
+.planningContent{
+    display: grid;
+    grid-template-columns: 0.3fr 1fr;
+    grid-template-rows: 1fr;
+    grid-column-gap: var(--pd);
+    grid-row-gap: 0px;
+}
+
+.planningSide{
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 0.7fr;
+    grid-column-gap: 0px;
+    grid-row-gap: var(--pd);
+    padding-bottom: var(--pd);
+}
+
+.planningMain{
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.1fr 1.9fr;
+    grid-column-gap: 0px;
+    grid-row-gap: var(--pd);
+    padding-bottom: var(--pd);
+    padding-right: var(--pd);
+}
+
+.plnn4p{
+    display: none;
+}
+
+/*-----------------------------------*/
+
 
 @media (max-width: 767px) {
     .navigator{
@@ -138,14 +183,6 @@
     }
     
     /*           Dashboard             */
-    .dashboardLayout::-webkit-scrollbar,
-    .teachersLayout::-webkit-scrollbar {
-        width: 0;
-    }
-    .dashboardLayout::-webkit-scrollbar,
-    .teachersLayout::-webkit-scrollbar {
-        width: 0;
-    }
     .dashboardHeader{
         padding: var(--pd) var(--pd) calc(var(--pd)/2) var(--pd);
         display: flex;
@@ -178,5 +215,42 @@
     .modulesContent{
         padding-left: var(--pd);
     }
+    /*-----------------------------------*/
+    /*           Planning             */
+
+    .planningMain{
+        padding: 0;
+    }
+
+    /*-----------------------------------*/
+}
+
+@media (max-width: 1075px) {
+    /*           Planning             */
+
+    .plnn4pc{
+        display: none;
+    }
+
+    .plnn4p{
+        display: flex;
+    }
+
+    .planningLayout{
+        display: flex;
+        flex-direction: column;
+    }
+    .planningContent,
+    .planningMain,
+    .planningCalendar{
+        flex-grow: 1;
+    }
+
+    .planningContent,
+    .planningMain{
+        display: flex;
+    }
+
+
     /*-----------------------------------*/
 }

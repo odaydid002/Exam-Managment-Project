@@ -5,6 +5,8 @@ import AdminAppbar from './AdminAppbar';
 
 import styles from './admin.module.css';
 
+import {forceDark, forceLight, setMainColor} from "../../hooks/apearance"
+
 const AdminLayout = () => {
 
   document.title = "Unitime - Home";

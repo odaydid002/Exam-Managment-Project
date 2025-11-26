@@ -54,6 +54,11 @@
     transform: scale(0.99) translateY(1px);
 }
 
+.iconBt{
+    border: none;
+    background-color: transparent;
+}
+
 @media (max-width: 767px) {
     .bt{
         padding: 0.6rem 1.5em;

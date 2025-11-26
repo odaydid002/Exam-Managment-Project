@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import styles from './inputs.module.css'
 
+import gsap from 'gsap'
+
 /*  Options List Strecture 
 
 [
@@ -21,12 +23,15 @@ const SelectInput = ({
   mrg = "0", w = "max-content", 
   options = [{value:"", text:""}], 
   onChange = () =>{},
-  indexed = false
+  indexed = false,
+  icon = null,
+  bg = 'var(--trans-grey)'
 }) => {
     const varStyles = {
         margin: mrg,
         width: w,
         cursor: "default",
+        backgroundColor: 'var(--trans-grey)'
     };
 
     const [selected, setSelected] = useState(0);
@@ -40,12 +45,12 @@ const SelectInput = ({
     if (!listRef.current || !containerRef.current) return;
         listRef.current.classList.add(styles.measure);
         const width = listRef.current.offsetWidth;
-        containerRef.current.style.width = width + "px";
+        containerRef.current.style.width = width + 10 + "px";
         listRef.current.classList.remove(styles.measure);
     }, []);
 
     useEffect(() => {
-    function handleClickOutside(e) {
+    function handleClickOutside(e) { 
         if (containerRef.current && !containerRef.current.contains(e.target)) {
         setOpen(false);
         }
@@ -63,14 +68,21 @@ const SelectInput = ({
       selected-index = {selected}
     >
       <div
-        className="flex row h100 a-center w100 j-spacebet"
+        className="flex row h100 a-center w100 j-spacebet gap"
         onClick={() => setOpen(!open)}
       >
+        {icon && <i className={icon} style={{
+          fontSize:"var(--text-m)",
+          color: "var(--text-low)"
+        }}></i>}
         <p className="text-m text-low">{options[selected].text}</p>
-        <i className="fa-solid fa-sort text-low text-m"></i>
+        <i className="fa-solid fa-sort" style={{
+          fontSize:"var(--text-m)",
+          color: "var(--text-low)"
+        }}></i>
       </div>
 
-      <ul ref={listRef} className={`flex column ${styles.selectList} pos-abs`}>
+      <ul ref={listRef} style={{backgroundColor: bg}} className={`flex column ${styles.selectList} pos-abs`}>
         {options.map((option, index) => (
           <li
             key={index}
@@ -80,7 +92,7 @@ const SelectInput = ({
               setSelected(index);
               setselectedVal(option.value);
               setOpen(false);
-              onChange(index);
+              onChange(option.value);
             }}
           >
             <div className="flex row a-center j-spacebet">

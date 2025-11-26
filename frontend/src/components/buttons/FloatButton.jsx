@@ -7,6 +7,7 @@ const FloatButton = (
     height = "auto",
     color = null,
     icon = null,
+    css = "",
     onClick = () => {}
   }
 ) => {
@@ -20,7 +21,7 @@ const FloatButton = (
     backgroundColor: color?color:"var(--color-main)"
   };
   return (
-    <button className={`borderless`} style={varStyles} onClick={onClick}>
+    <button className={`borderless ${css}`} style={varStyles} onClick={onClick}>
       {icon && <i className={`${icon}`} style={{
         color: color?"var(--text)":"white",
         fontSize: "var(--text-l)"

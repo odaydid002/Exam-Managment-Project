@@ -7,7 +7,8 @@ const Float = ({
     bottom = null, 
     left = null, 
     right = null,
-    children = null
+    children = null,
+    zIndex = 1
 }) => {
   return (
     <div className={css} style={{
@@ -16,6 +17,7 @@ const Float = ({
         right: right,
         bottom: bottom,
         left: left,
+        zIndex: zIndex
     }}>{children}</div>
   )
 }

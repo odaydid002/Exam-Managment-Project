@@ -105,6 +105,12 @@
   }
 }
 
+@media (max-width: 1100px) {
+  .h4w1000{
+    display: none;
+  }
+}
+
 /*--------*/
 
 

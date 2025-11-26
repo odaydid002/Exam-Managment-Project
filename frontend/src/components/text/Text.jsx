@@ -10,7 +10,8 @@ const Text = (
         mrg = "0",
         pd = "0",
         w = "400",
-        lh = "unset"
+        lh = "unset",
+        opacity = "1",
     }
 ) => {
     const varStyles = {
@@ -20,7 +21,8 @@ const Text = (
         margin: mrg,
         padding: pd,
         fontWeight: w,
-        lineHight: lh
+        lineHight: lh,
+        opacity: opacity
     }
     return (
         <h1 className={`${css}`} style={varStyles}>{text}</h1>

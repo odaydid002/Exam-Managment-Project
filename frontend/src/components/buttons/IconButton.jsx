@@ -4,25 +4,32 @@ import styles from './buttons.module.css';
 const IconButton = ({
   type = "button",
   icon = "",
+  color = "var(--text)",
   onClick = () => {},
-  w = "max-content",
+  size = "var(--text-m)",
   mrg = "0",
-  classes = "",
+  css = "",
+  width = "fit-content",
+  enabled = true,
 }) => {
 
   const varStyles = {
-    width: w,
+    fontSize: size,
     textAlign: "center",
     margin: mrg,
+    width: width,
+    hieght: 'auto',
+    aspectRatio: "1"
   };
 
   return (
     <button
+      disabled = {!enabled}
       type={type}
       onClick={onClick}
-      className={`flex row center ease-in-out ${styles.bt} ${styles.bgless} ${classes}`}
+      className={`flex row center ease-in-out ${styles.iconBt} ${css} ${enabled && "clickable"}`}
       style={varStyles}>
-        <i className={`${icon} ${styles.icon}`}></i>
+        <i style={{color: color, fontSize: size}} className={`${icon}`}></i>
     </button>
   );
 };

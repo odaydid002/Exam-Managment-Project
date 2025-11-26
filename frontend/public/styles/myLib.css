@@ -4,13 +4,14 @@
     /*  Colors  */
         --text: #E5E8EB;
         --text-low: #ffffff52;
-        --bg: #1C1C1D;
-        --bgc: #252728;
+        --bg: #161819;
+        --bgc: #202324;
         --s2bg: var(--bg);
-        --grad1: #1C1C1D;
+        --grad1: var(--bg);
         --grad2: black;
         --color-s2b: #1C1C1D;
         --color-s2w: var(--color-second);
+        --logo: var(--color-second);
     /*----------*/
     }
 }
@@ -26,6 +27,7 @@
         --grad2: #252728;
         --color-s2b: var(--color-second2);
         --color-s2w: var(--color-second2);
+        --logo: var(--color-second2);
     /*----------*/
     }
 }
@@ -48,7 +50,7 @@
     --icon-size: 1.5rem;
     --text-s: 0.6rem;
     --text-m: 0.8rem;
-    --text-l: 1rem;
+    --text-l: 0.9rem;
     --text-xl: 1.2rem;
     --text-xxl: 1.8rem;
     /*----------*/
@@ -64,6 +66,19 @@
         --text-l: 0.8rem;
         --text-xl: 1rem;
         --text-xxl: 1.2rem;
+        /*----------*/
+    }
+}
+
+@media (max-width: 1000px) {
+    :root{
+        /*    Font   */
+        --icon-size: 1.2rem;
+        --text-s: 0.6rem;
+        --text-m: 0.7rem;
+        --text-l: 0.9rem;
+        --text-xl: 1.1rem;
+        --text-xxl: 1.3rem;
         /*----------*/
     }
 }
@@ -158,6 +173,9 @@
 /* Display */
 .flex{
     display: flex;
+}
+.grid{
+    display: grid;
 }
 .column{
     flex-direction: column;
@@ -324,11 +342,40 @@
 .cText{
     color: var(--text);
 }
+.text-fill{
+    position: relative;
+    margin: 0 0.625em;
+}
+.text-fill::after{
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    padding: 0.25em 0.5em;
+    border-radius: 5px;
+    background-color: var(--border-low);
+}
 /*---------/
 
 /* Dimensions */
 .h-fit{
     height: fit-content;
+}
+
+.h-max{
+    height: max-content;
+}
+
+.w-max{
+    width: max-content;
+}
+
+.max-content{
+    height: max-content;
+    width: max-content;
 }
 
 .w-fit{

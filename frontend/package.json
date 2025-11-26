@@ -11,9 +11,13 @@
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
+    "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.2",
     "react": "^19.1.1",
+    "react-circular-progressbar": "^2.2.0",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.5"
+    "react-router-dom": "^7.9.5",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

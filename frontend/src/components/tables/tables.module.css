@@ -1,0 +1,57 @@
+.tableList{
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.1fr 0.1fr 1fr 0.1fr;
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+}
+
+.tableListHead,
+.listTableRow{
+    display: grid;
+    grid-template-rows: 1fr;
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+}
+
+.listTableRow{
+    padding: 0 0.5em;
+    height: 3em;
+    border-bottom: 2px solid var(--border-low);
+}
+
+.listTableRow:hover{
+    background-color: var(--border-low);
+}
+
+.tableListHead{
+    background-color: var(--bg);
+    border-radius: 5px;
+    padding: 0.4em 1em;
+    margin: 0.25em 0;
+    height: max-content;
+}
+
+.tableListBody{
+    overflow: hidden;
+    overflow-y: auto;
+}
+
+.inp{
+    border: none;
+    background-color: var(--border-low);
+    font-size: var(--text-m);
+    width: 40px;
+    border-radius: 5px;
+    padding: 0.125em;
+    text-align: center;
+}
+
+.inp:focus{
+    outline: none;
+}
+
+.tableListHead,
+.tableListBody{
+    overflow-x: auto;
+}

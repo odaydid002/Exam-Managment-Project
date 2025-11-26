@@ -1,5 +1,6 @@
 import React from 'react'
 import styles from './buttons.module.css';
+import Spinner from '../loaders/Spinner';
 
 const SecondaryButton = ({ 
     type = "button", 
@@ -9,20 +10,24 @@ const SecondaryButton = ({
     mrg="0",
     pd="0.5rem 1em",
     css = "",
+    isLoading = false,
     onClick = () => {}})=> {
         const varStyles = {
             width: w,
             margin: mrg,
             padding: pd,
+            cursor: `${isLoading?"default":"pointer"}`
         }
         return (
             <button 
+                disabled = {isLoading}
+                onClick={isLoading?() => {}:onClick} 
                 type={type} 
-                onClick={onClick} 
                 className={`flex row a-center j-center ease-in-out ${styles.bt} ${styles.second} ${css}`} 
                 style={varStyles}>
-                    {icon && <i className={`${icon} ${styles.icon}`}></i>}
-                    {text && <p className={styles.text}>{text}</p>}
+                    {isLoading && <Spinner mrg='0.2em 0' width='20px' thikness='3px'/>}
+                    {!isLoading && icon && <i className={`${icon} ${styles.icon}`}></i>}
+                    {!isLoading && text && <p className={styles.text}>{text}</p>}
             </button>
         );
 };
