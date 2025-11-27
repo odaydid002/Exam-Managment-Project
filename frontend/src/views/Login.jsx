@@ -1,4 +1,7 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
+import { useNavigate } from "react-router-dom";
+
+import { authCheck, authLogin } from '../API/auth';
 
 import styles from "./login.module.css"
 
@@ -11,10 +14,44 @@ import image from '../assets/pic.png'
 
 const Login = () => {
 
-  const [loading,setLoading] = useState(false);
+  const navigate = useNavigate();
+  useEffect(()=>{
+    authCheck(
+        ()=>{
+          navigate('/admin')
+        },
+        ()=>{
+          navigate('/login')
+        }
+      )
+  }, [])
 
-  const submit = () => {
+  const [loading,setLoading] = useState(false);
+  const [mail, setEmail] = useState("");
+  const [pass, setPassword] = useState("");
+
+  const submit = (email, password) => {
     setLoading(true);
+    setEmail(email)
+    setPassword(password)
+    authLogin(
+      {email: mail, password: pass},
+      () => {
+        setLoading(false);
+        authCheck(
+          ()=>{
+            //navigate('/admin')
+          },
+          ()=>{
+            navigate('/login')
+          }
+        )
+      },
+      () => {
+        alert('non logged')
+        setLoading(false);
+      }
+    )
   }
 
   return (

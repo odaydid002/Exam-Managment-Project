@@ -44,10 +44,9 @@
     position: absolute;
     left: 4px;
     right: 4px;
-    background: linear-gradient(var(--color-main), var(--color-main-low));
+    background-color: var(--color-s2b);
     border-radius: 6px;
-    padding: 6px;
+    padding: 1em;
     font-size: 0.75rem;
-    color: var(--text-high, white);
     overflow: hidden;
 }

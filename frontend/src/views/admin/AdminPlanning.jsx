@@ -31,7 +31,7 @@ const AdminPlanning = () => {
       day: "2026-10-01",
       startHour: 8,
       endHour: 9.5,
-      type: "normal",
+      type: "Exam",
       room: "B101",
       group: "G1",
       speciality: "Software Engineering",
@@ -40,7 +40,7 @@ const AdminPlanning = () => {
     },
     {
       day: "2026-10-02",
-      startHour: 10.5,
+      startHour: 9,
       endHour: 12,
       type: "TP",
       room: "L204",

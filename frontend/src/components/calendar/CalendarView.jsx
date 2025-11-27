@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "./Calendar.css";
 import Text from "../text/Text";
 import IconButton from "../buttons/IconButton";
+import Eclipse from "../shapes/Eclipse";
 
 export default function CalendarView({
     startDate,
@@ -143,17 +144,22 @@ export default function CalendarView({
                                     {events.map((ev, i) => (
                                         <div
                                             key={i}
-                                            className="event-box clickable z-2"
+                                            className="event-box flex column clickable"
                                             style={{
                                                 height: `${(ev.endHour - ev.startHour) * HOUR_HEIGHT + 10}px`, 
-                                                top: 0
+                                                top: `${i * 20}px`,
+                                                zIndex: `${t}`
                                             }}
-                                        >
-                                            <Text color="white" text={ev.room} align="center" size="var(--text-m)"/>
-                                            <Text color="white" text={ev.module} align="center" size="var(--text-m)" w="bold"/>
-                                            <Text color="white" text={ev.type} align="center" size="var(--text-m)"/>
-                                            <Text color="white" text={ev.level} align="center" size="var(--text-m)"/>
-                                            <Text color="white" text={ev.speciality} align="center" size="var(--text-m)"/>
+                                        >   
+                                            <div className="flex row a-center">
+                                                <i className="fa-solid fa-door-open text-m text-white"></i>
+                                                <Text color="var(--color-second)" text={ev.room} align="left" size="var(--text-l)" mrg="0 0 0.25em 0.5em"/>
+                                            </div>
+                                            <Text color="white" text={`${ev.type} - ${ev.module}`} align="center" mrg="auto 0" size="var(--text-m)" w="bold"/>
+                                            <Text color="white" text={ev.level} align="left" size="var(--text-s)"/>
+                                            <Text color="white" text={ev.speciality} align="left" size="var(--text-s)"/> 
+                                            <Eclipse css="pos-abs" top="60%" left="30%" color="var(--trans-grey)"/>                                           
+                                            <Eclipse css="pos-abs" top="-10%" left="-30%" w="6em" color="var(--trans-grey)"/>                                           
                                         </div>
                                     ))}
                                 </div>

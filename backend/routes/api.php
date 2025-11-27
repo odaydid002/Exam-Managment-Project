@@ -13,12 +13,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
+Route::get('/test', function () {
+    return response()->json(['message' => 'Hello API']);
+});
 Route::post('/auth/signup', [AuthController::class, 'signup']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     // Auth
+    Route::get('/auth/check', function (Request $request) {
+        return response()->json($request->user());
+    });
     Route::get('/auth/refreshToken', [AuthController::class, 'refreshToken']);
 
     // User
@@ -33,13 +39,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Modules
     Route::apiResource('modules', ModuleController::class);
 
-// Routes pour Salle
-Route::get('/salles/disponibles', [SalleController::class, 'getSallesDisponibles']);
+    // Routes pour Salle
+    Route::get('/salles/disponibles', [SalleController::class, 'getSallesDisponibles']);
 
-// Routes pour Groupe
-Route::get('/groupes/niveau/{niveau}', [GroupeController::class, 'getByNiveau']);
-Route::get('/groupes/specialite/{specialite}', [GroupeController::class, 'getBySpecialite']);
-Route::get('/groupes/statistiques', [GroupeController::class, 'getStatistiques']);
+    // Routes pour Groupe
+    Route::get('/groupes/niveau/{niveau}', [GroupeController::class, 'getByNiveau']);
+    Route::get('/groupes/specialite/{specialite}', [GroupeController::class, 'getBySpecialite']);
+    Route::get('/groupes/statistiques', [GroupeController::class, 'getStatistiques']);
 
     // Plannings
     Route::apiResource('plannings', PlanningController::class);

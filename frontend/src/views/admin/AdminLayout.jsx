@@ -10,7 +10,7 @@ import {forceDark, forceLight, setMainColor} from "../../hooks/apearance"
 const AdminLayout = () => {
 
   document.title = "Unitime - Home";
-  
+
   return (
     <section className={`flex full-view column4p overflow-h ${styles.section}`}>
         <div className={`${styles.navigator}`}>
