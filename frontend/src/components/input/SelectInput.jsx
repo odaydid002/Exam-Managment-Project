@@ -82,7 +82,7 @@ const SelectInput = ({
         }}></i>
       </div>
 
-      <ul ref={listRef} style={{backgroundColor: bg}} className={`flex column ${styles.selectList} pos-abs`}>
+      <ul ref={listRef} style={{backgroundColor: bg}} className={`flex column ${styles.selectList} pos-abs z-10`}>
         {options.map((option, index) => (
           <li
             key={index}

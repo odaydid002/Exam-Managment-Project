@@ -234,13 +234,18 @@
 .curs-default{
     cursor: default;
 }
-.clickable{
+.clickable,
+.clickable-2{
     cursor: pointer;
     transition: ease-in-out 0.6s;
 }
 .clickable:hover{
     opacity: 80%;
     transform: scale(0.98);
+}
+.clickable-2:hover{
+    z-index: 999 !important;
+    transform: scale(1.02);
 }
 /*--------*/
 

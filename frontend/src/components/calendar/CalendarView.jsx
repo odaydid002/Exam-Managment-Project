@@ -10,7 +10,7 @@ export default function CalendarView({
     startHour = 8,
     endHour = 17,
     eventsList = [],
-
+    onConflict = () => {}
 }) {
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -130,41 +130,76 @@ export default function CalendarView({
                             <Text text={d.date} size="var(--text-m)" />
                             <Text text={d.weekday} size="var(--text-m)" />
                         </div>
+                        {(() => {
+                            const dayKey = d.full.toISOString().split("T")[0];
+                            const dayEvents = eventsList.filter(ev => ev.day === dayKey);
 
-                        {timeSlots.map((t, rowIndex) => {
-                            const slotTime = numericTimeSlots[rowIndex];
+                            return timeSlots.map((t, rowIndex) => {
+                                const slotTime = numericTimeSlots[rowIndex];
 
-                            const events = eventsList.filter(ev =>
-                                ev.day === d.full.toISOString().split("T")[0] &&
-                                slotTime === ev.startHour
-                            );
+                                const events = dayEvents.filter(ev => slotTime === ev.startHour);
 
-                            return (
-                                <div key={t} className="day-cell w100 pos-rel">
-                                    {events.map((ev, i) => (
-                                        <div
-                                            key={i}
-                                            className="event-box flex column clickable"
-                                            style={{
-                                                height: `${(ev.endHour - ev.startHour) * HOUR_HEIGHT + 10}px`, 
-                                                top: `${i * 20}px`,
-                                                zIndex: `${t}`
-                                            }}
-                                        >   
-                                            <div className="flex row a-center">
-                                                <i className="fa-solid fa-door-open text-m text-white"></i>
-                                                <Text color="var(--color-second)" text={ev.room} align="left" size="var(--text-l)" mrg="0 0 0.25em 0.5em"/>
-                                            </div>
-                                            <Text color="white" text={`${ev.type} - ${ev.module}`} align="center" mrg="auto 0" size="var(--text-m)" w="bold"/>
-                                            <Text color="white" text={ev.level} align="left" size="var(--text-s)"/>
-                                            <Text color="white" text={ev.speciality} align="left" size="var(--text-s)"/> 
-                                            <Eclipse css="pos-abs" top="60%" left="30%" color="var(--trans-grey)"/>                                           
-                                            <Eclipse css="pos-abs" top="-10%" left="-30%" w="6em" color="var(--trans-grey)"/>                                           
-                                        </div>
-                                    ))}
-                                </div>
-                            );
-                        })}
+                                return (
+                                    <div key={t} className="day-cell w100 pos-rel">
+                                        {events.map((ev, i) => {
+                                            const zIndex = dayEvents.filter(e => e.startHour < ev.startHour).length + 1;
+
+                                            const conflictCount = dayEvents.filter(e =>
+                                                e.room === ev.room &&
+                                                e.startHour < ev.endHour &&
+                                                ev.startHour < e.endHour
+                                            ).length;
+
+                                            const borderStyle = conflictCount > 1 ? `2px solid rgb(255, 81, 0)` : 'none';
+                                            {conflictCount > 1 && onConflict(ev, dayKey);}
+
+                                            return (
+                                                <div
+                                                    key={i}
+                                                    className="event-box flex column clickable-2"
+                                                    style={{
+                                                        height: `${(ev.endHour - ev.startHour) * HOUR_HEIGHT + 10}px`,
+                                                        top: `${i * 20}px`,
+                                                        zIndex: zIndex,
+                                                        border: borderStyle,
+                                                        boxSizing: 'border-box'
+                                                    }}
+                                                >
+                                                    {conflictCount > 1 && (
+                                                        <div style={{
+                                                            position: 'absolute',
+                                                            top: '6px',
+                                                            right: '8px',
+                                                            background: 'rgb(255, 81, 0)',
+                                                            color: 'white',
+                                                            borderRadius: '999px',
+                                                            minWidth: '20px',
+                                                            height: '20px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontSize: '0.75em',
+                                                            padding: '0 6px',
+                                                            zIndex: zIndex + 1
+                                                        }}> <i className="fa-solid fa-exclamation-triangle text-white"></i> </div>
+                                                    )}
+
+                                                    <div className="flex row a-center">
+                                                        <i className="fa-solid fa-door-open text-m text-white"></i>
+                                                        <Text color="var(--color-second)" text={ev.room} align="left" size="var(--text-l)" mrg="0 0 0.25em 0.5em"/>
+                                                    </div>
+                                                    <Text color="white" text={`${ev.type} - ${ev.module}`} align="center" mrg="auto 0" size="var(--text-m)" w="bold"/>
+                                                    <Text color="white" text={ev.level} align="left" size="var(--text-s)"/>
+                                                    <Text color="white" text={ev.speciality} align="left" size="var(--text-s)"/>
+                                                    <Eclipse css="pos-abs" top="60%" left="30%" color="var(--trans-grey)"/>
+                                                    <Eclipse css="pos-abs" top="-10%" left="-30%" w="6em" color="var(--trans-grey)"/>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            });
+                        })()}
 
                     </div>
                 ))}
