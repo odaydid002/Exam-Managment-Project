@@ -11,22 +11,31 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id('id_utilisateur');
             $table->string('nom');
-            $table->string('prenom');
+            $table->string('number')->unique();
+            $table->string('department');
+            $table->string('level');
+            $table->string('speciality');
+            $table->string('section');
+            $table->string('group_code');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
-            $table->string('telephone')->nullable();
+            $table->string('phone')->nullable();
             $table->enum('role', ['chef', 'responsable', 'enseignant', 'etudiant']);
             $table->timestamps();
         });
 
         Schema::create('groupes', function (Blueprint $table) {
             $table->id('id_groupe');
-            $table->string('nom_groupe');
-            $table->string('niveau');
-            $table->string('specialite');
+            $table->string('name');
+            $table->string('level');
+            $table->string('speciality');
+            $table->string('section');
+            $table->integer('members')->default(0);
+            $table->unsignedBigInteger('delegate_id')->nullable();
             $table->timestamps();
+
+            $table->foreign('delegate_id')->references('id_utilisateur')->on('users');
         });
 
         Schema::create('salles', function (Blueprint $table) {
@@ -39,14 +48,15 @@ return new class extends Migration
 
         Schema::create('modules', function (Blueprint $table) {
             $table->id('id_module');
-            $table->string('nom_module');
-            $table->string('code_module');
-            $table->string('semestre');
+            $table->string('name');
+            $table->string('code')->unique();
+            $table->string('type');
+            $table->integer('factor');
+            $table->integer('credit');
             $table->unsignedBigInteger('id_enseignant');
             $table->timestamps();
 
-            $table->foreign('id_enseignant')
-                ->references('id_utilisateur')->on('users');
+            $table->foreign('id_enseignant')->references('id_utilisateur')->on('users');
         });
 
         Schema::create('examens', function (Blueprint $table) {
