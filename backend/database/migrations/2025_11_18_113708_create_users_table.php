@@ -164,7 +164,8 @@ return new class extends Migration
             $table->string('name', 100);
             $table->string('short_name', 20)->unique();
 
-            $table->enum('type', ['fundamental', 'speciality', 'optional'])->default('fundamental');
+            // allow any string for module type (previously an enum)
+            $table->string('type', 50)->default('fundamental');
             $table->integer('factor')->default(1);
             $table->integer('credits')->default(2);
 

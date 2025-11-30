@@ -5,6 +5,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\SpecialityController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\ModuleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -55,4 +56,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/students/add', [StudentController::class, 'store']);
     Route::put('/students/edit/{number}', [StudentController::class, 'update']);
     Route::delete('/students/delete/{number}', [StudentController::class, 'destroy']);
+
+    // Modules
+    Route::get('/modules/all', [ModuleController::class, 'index']);
+    Route::post('/modules/bulk', [ModuleController::class, 'bulkStore']);
+    Route::post('/modules/add', [ModuleController::class, 'store']);
+    Route::get('/modules/{code}', [ModuleController::class, 'show']);
+    Route::put('/modules/edit/{code}', [ModuleController::class, 'update']);
+    Route::delete('/modules/delete/{code}', [ModuleController::class, 'destroy']);
 });
