@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\SpecialityController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -36,4 +37,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/teachers/add', [TeacherController::class, 'store']);
     Route::put('/teachers/edit/{number}', [TeacherController::class, 'update']);
     Route::delete('/teachers/delete/{number}', [TeacherController::class, 'destroy']);
+    // Specialities
+    Route::get('/specialities/all', [SpecialityController::class, 'index']);
 });
