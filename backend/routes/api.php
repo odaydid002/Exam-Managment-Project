@@ -6,6 +6,7 @@ use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\SpecialityController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\RoomController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -64,4 +65,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/modules/{code}', [ModuleController::class, 'show']);
     Route::put('/modules/edit/{code}', [ModuleController::class, 'update']);
     Route::delete('/modules/delete/{code}', [ModuleController::class, 'destroy']);
+    
+    // Rooms
+    Route::get('/rooms/all', [RoomController::class, 'index']);
+    Route::post('/rooms/bulk', [RoomController::class, 'bulkStore']);
+    Route::post('/rooms/add', [RoomController::class, 'store']);
+    Route::get('/rooms/{id}', [RoomController::class, 'show']);
+    Route::put('/rooms/edit/{id}', [RoomController::class, 'update']);
+    Route::delete('/rooms/delete/{id}', [RoomController::class, 'destroy']);
 });
