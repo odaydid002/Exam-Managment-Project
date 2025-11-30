@@ -13,12 +13,15 @@ class AuthController extends Controller
     public function signup(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nom' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
+            'fname' => 'required|string|max:20',
+            'lname' => 'required|string|max:20',
+            'birth_date' => 'nullable|date',
+            'gender' => 'nullable|string|max:10',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required',
-            'telephone' => 'required|string|max:20',
-            'role' => 'required|in:chef,resp,Ens,Etu'
+            'phone' => 'nullable|string|max:20|unique:users,phone',
+            'role' => 'required|in:student,teacher,admin,employee',
+            'image' => 'nullable|string|max:255'
         ]);
 
         if ($validator->fails()) {
@@ -29,12 +32,15 @@ class AuthController extends Controller
         }
 
         $user = User::create([
-            'nom' => $request->nom,
-            'prenom' => $request->prenom,
+            'fname' => $request->fname,
+            'lname' => $request->lname,
+            'birth_date' => $request->birth_date,
+            'gender' => $request->gender,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'telephone' => $request->telephone,
-            'role' => $request->role
+            'phone' => $request->phone,
+            'role' => $request->role,
+            'image' => $request->image
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;

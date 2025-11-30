@@ -8,124 +8,269 @@ return new class extends Migration
 {
     public function up(): void
     {
+        /* =======================================================
+         * USERS
+         * ======================================================= */
         Schema::create('users', function (Blueprint $table) {
-            $table->id('id_utilisateur');
-            $table->string('nom');
-            $table->string('number')->unique();
-            $table->string('department');
-            $table->string('level');
-            $table->string('speciality');
-            $table->string('section');
-            $table->string('group_code');
-            $table->string('email')->unique();
-            $table->string('password');
-            $table->rememberToken();
-            $table->string('phone')->nullable();
-            $table->enum('role', ['chef', 'responsable', 'enseignant', 'etudiant']);
-            $table->timestamps();
+            $table->id();
+            $table->string('fname', 20);
+            $table->string('lname', 20);
+            $table->date('birth_date')->nullable();
+            $table->string('gender', 10)->nullable();
+
+            $table->string('email', 255)->unique();
+            $table->string('password', 255);
+            $table->string('phone', 20)->unique()->nullable();
+
+            $table->enum('role', ['student', 'teacher', 'admin', 'employee']);
+            $table->timestampsTz();
         });
 
-        Schema::create('groupes', function (Blueprint $table) {
-            $table->id('id_groupe');
-            $table->string('name');
-            $table->string('level');
-            $table->string('speciality');
-            $table->string('section');
-            $table->integer('members')->default(0);
-            $table->unsignedBigInteger('delegate_id')->nullable();
-            $table->timestamps();
+        /* =======================================================
+         * SETTINGS
+         * ======================================================= */
+        Schema::create('settings', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
 
-            $table->foreign('delegate_id')->references('id_utilisateur')->on('users');
+            $table->enum('theme', ['light', 'dark'])->default('light');
+            $table->enum('language', ['en', 'fr', 'ar'])->default('en');
+            $table->boolean('notifications')->default(true);
+            $table->string('main_color', 20)->default('#F1504A');
+
+            $table->timestampsTz();
         });
 
-        Schema::create('salles', function (Blueprint $table) {
-            $table->id('id_salle');
-            $table->string('nom_salle');
-            $table->integer('capacite');
-            $table->string('localisation');
-            $table->timestamps();
+        /* =======================================================
+         * ACADEMIC YEARS
+         * ======================================================= */
+        Schema::create('academic_years', function (Blueprint $table) {
+            $table->id();
+            $table->integer('start_year');
+            $table->integer('end_year');
+            $table->timestampsTz();
         });
 
+        /* =======================================================
+         * DEPARTMENTS
+         * ======================================================= */
+        Schema::create('departments', function (Blueprint $table) {
+            $table->id();
+            $table->string('name', 100);
+            $table->timestampsTz();
+        });
+
+        /* =======================================================
+         * ROOMS
+         * ======================================================= */
+        Schema::create('rooms', function (Blueprint $table) {
+            $table->id();
+            $table->string('name', 50);
+            $table->integer('capacity');
+            $table->boolean('disabled')->default(false);
+            $table->timestampsTz();
+        });
+
+        /* =======================================================
+         * SPECIALITIES
+         * ======================================================= */
+        Schema::create('specialities', function (Blueprint $table) {
+            $table->id();
+            $table->string('name', 100);
+            $table->string('short_name', 20);
+            $table->foreignId('department_id')->constrained('departments')->onDelete('cascade');
+            $table->text('description')->nullable();
+            $table->timestampsTz();
+        });
+
+        /* =======================================================
+         * SECTIONS
+         * ======================================================= */
+        Schema::create('sections', function (Blueprint $table) {
+            $table->id();
+            $table->string('name', 100);
+            $table->timestampsTz();
+        });
+
+        /* =======================================================
+         * GROUPS
+         * ======================================================= */
+        Schema::create('groups', function (Blueprint $table) {
+            $table->string('code', 20)->primary();
+            $table->string('name', 100);
+
+            $table->foreignId('section_id')->constrained('sections')->onDelete('cascade');
+            $table->timestampsTz();
+        });
+
+        /* =======================================================
+         * STUDENTS
+         * ======================================================= */
+        Schema::create('students', function (Blueprint $table) {
+            $table->id('number');
+
+            $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
+
+            $table->string('group_code', 20)->nullable();
+            $table->foreign('group_code')->references('code')->on('groups')->onDelete('set null');
+
+            $table->foreignId('speciality_id')->constrained('specialities')->onDelete('cascade');
+
+            $table->string('level', 50)->nullable();
+
+            $table->timestampsTz();
+        });
+
+        /* =======================================================
+         * GROUP DELEGATES
+         * ======================================================= */
+        Schema::create('group_delegates', function (Blueprint $table) {
+            $table->id();
+
+            $table->string('group_code', 30);
+            $table->foreign('group_code')->references('code')->on('groups')->onDelete('cascade')->onUpdate('cascade');
+
+            $table->unsignedBigInteger('student_number');
+            $table->foreign('student_number')->references('number')->on('students')->onDelete('cascade')->onUpdate('cascade');
+
+            $table->unique('student_number');
+            $table->unique('group_code');
+
+            $table->timestampTz('assigned_at')->useCurrent();
+            $table->timestampsTz();
+        });
+
+        /* =======================================================
+         * TEACHERS
+         * ======================================================= */
+        Schema::create('teachers', function (Blueprint $table) {
+            $table->id('number');
+
+            $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
+
+            $table->string('adj', 10)->default('Mr');
+            $table->foreignId('speciality_id')->nullable()->constrained('specialities')->onDelete('set null');
+
+            $table->string('position', 100)->nullable();
+
+            $table->timestampsTz();
+        });
+
+        /* =======================================================
+         * MODULES
+         * ======================================================= */
         Schema::create('modules', function (Blueprint $table) {
-            $table->id('id_module');
-            $table->string('name');
-            $table->string('code')->unique();
-            $table->string('type');
-            $table->integer('factor');
-            $table->integer('credit');
-            $table->unsignedBigInteger('id_enseignant');
-            $table->timestamps();
+            $table->string('code', 30)->primary();
+            $table->string('name', 100);
+            $table->string('short_name', 20)->unique();
 
-            $table->foreign('id_enseignant')->references('id_utilisateur')->on('users');
+            $table->enum('type', ['fundamental', 'speciality', 'optional'])->default('fundamental');
+            $table->integer('factor')->default(1);
+            $table->integer('credits')->default(2);
+
+            $table->timestampsTz();
         });
 
-        Schema::create('examens', function (Blueprint $table) {
-            $table->id('id_examen');
-            $table->date('date_examen');
-            $table->time('heure_debut');
-            $table->time('heure_fin');
-            $table->enum('type_examen', ['ecrit', 'tp', 'rattrapage']);
-            $table->enum('etat_validation', ['en_attente', 'valide'])->default('en_attente');
+        /* =======================================================
+         * TEACHER MODULES
+         * ======================================================= */
+        Schema::create('teacher_modules', function (Blueprint $table) {
+            $table->id();
 
-            $table->unsignedBigInteger('id_module');
-            $table->unsignedBigInteger('id_salle');
-            $table->unsignedBigInteger('id_groupe');
-            $table->unsignedBigInteger('id_responsable');
+            $table->foreignId('teacher_number')->constrained('teachers', 'number')->onDelete('cascade');
+            $table->string('module_code', 30);
+            $table->foreign('module_code')->references('code')->on('modules')->onDelete('cascade');
 
-            $table->timestamps();
+            $table->foreignId('speciality_id')->constrained('specialities')->onDelete('cascade');
 
-            $table->foreign('id_module')->references('id_module')->on('modules');
-            $table->foreign('id_salle')->references('id_salle')->on('salles');
-            $table->foreign('id_groupe')->references('id_groupe')->on('groupes');
-            $table->foreign('id_responsable')->references('id_utilisateur')->on('users');
+            $table->timestampsTz();
         });
 
-        Schema::create('surveillances', function (Blueprint $table) {
-            $table->id('id_surveillance');
-            $table->unsignedBigInteger('id_enseignant');
-            $table->unsignedBigInteger('id_examen');
-            $table->timestamps();
+        /* =======================================================
+         * EXAMS
+         * ======================================================= */
+        Schema::create('exams', function (Blueprint $table) {
+            $table->id();
 
-            $table->foreign('id_enseignant')->references('id_utilisateur')->on('users');
-            $table->foreign('id_examen')->references('id_examen')->on('examens');
+            $table->string('module_code', 30);
+            $table->foreign('module_code')->references('code')->on('modules')->onDelete('cascade');
+
+            $table->string('group_code', 20);
+            $table->foreign('group_code')->references('code')->on('groups')->onDelete('cascade');
+
+            $table->foreignId('room_id')->nullable()->constrained('rooms')->onDelete('set null');
+
+            $table->string('exam_type', 50)->default('Normal');
+            $table->timestamp('date');
+
+            $table->decimal('start_hour', 3, 1)->default(8.5);
+            $table->decimal('end_hour', 3, 1)->default(11.0);
+
+            $table->boolean('validated')->default(false);
+
+            $table->timestampsTz();
         });
 
-        Schema::create('plannings', function (Blueprint $table) {
-            $table->id('id_planning');
-            $table->string('titre_planning');
-            $table->date('date_creation');
-            $table->date('date_validation')->nullable();
-            $table->string('etat')->default('en_attente');
+        /* =======================================================
+         * SURVEILLANCE
+         * ======================================================= */
+        Schema::create('surveillance', function (Blueprint $table) {
+            $table->id();
 
-            $table->unsignedBigInteger('id_chef');
-            $table->timestamps();
+            $table->foreignId('exam_id')->constrained('exams')->onDelete('cascade');
+            $table->foreignId('teacher_number')->constrained('teachers', 'number')->onDelete('cascade');
 
-            $table->foreign('id_chef')->references('id_utilisateur')->on('users');
+            $table->timestampsTz();
         });
 
+        /* =======================================================
+         * NOTIFICATIONS
+         * ======================================================= */
         Schema::create('notifications', function (Blueprint $table) {
-            $table->id('id_notification');
-            $table->string('message');
-            $table->dateTime('date_envoi');
-            $table->string('type_notification');
-            $table->unsignedBigInteger('id_utilisateur');
-            $table->unsignedBigInteger('id_examen')->nullable();
-            $table->timestamps();
+            $table->id();
 
-            $table->foreign('id_utilisateur')->references('id_utilisateur')->on('users');
-            $table->foreign('id_examen')->references('id_examen')->on('examens');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+
+            $table->string('title', 255);
+            $table->text('message');
+            $table->boolean('is_read')->default(false);
+
+            $table->timestampsTz();
+        });
+
+        /* =======================================================
+         * GENERAL SETTINGS
+         * ======================================================= */
+        Schema::create('general_settings', function (Blueprint $table) {
+            $table->id();
+
+            $table->string('semester', 20);
+
+            $table->foreignId('academic_year_id')->constrained('academic_years')->onDelete('cascade');
+            $table->foreignId('department_id')->constrained('departments')->onDelete('cascade');
+
+            $table->timestampsTz();
         });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('general_settings');
         Schema::dropIfExists('notifications');
-        Schema::dropIfExists('plannings');
-        Schema::dropIfExists('surveillances');
-        Schema::dropIfExists('examens');
+        Schema::dropIfExists('surveillance');
+        Schema::dropIfExists('exams');
+        Schema::dropIfExists('teacher_modules');
         Schema::dropIfExists('modules');
-        Schema::dropIfExists('salles');
-        Schema::dropIfExists('groupes');
+        Schema::dropIfExists('teachers');
+        Schema::dropIfExists('group_delegates');
+        Schema::dropIfExists('students');
+        Schema::dropIfExists('groups');
+        Schema::dropIfExists('sections');
+        Schema::dropIfExists('specialities');
+        Schema::dropIfExists('rooms');
+        Schema::dropIfExists('departments');
+        Schema::dropIfExists('academic_years');
+        Schema::dropIfExists('settings');
         Schema::dropIfExists('users');
     }
 };

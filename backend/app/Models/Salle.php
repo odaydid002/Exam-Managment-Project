@@ -9,16 +9,20 @@ class Salle extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'id_salle';
+    protected $table = 'rooms';
 
     protected $fillable = [
-        'nom_salle',
-        'capacite',
-        'localisation'
+        'name',
+        'capacity',
+        'disabled',
+    ];
+
+    protected $casts = [
+        'disabled' => 'boolean',
     ];
 
     public function examens()
     {
-        return $this->hasMany(Examen::class, 'id_salle');
+        return $this->hasMany(Examen::class, 'room_id');
     }
 }

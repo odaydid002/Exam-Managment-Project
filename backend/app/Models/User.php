@@ -11,16 +11,18 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $primaryKey = 'id_utilisateur';
-    public $timestamps = true;
+    protected $table = 'users';
 
     protected $fillable = [
-        'nom',
-        'prenom',
+        'fname',
+        'lname',
         'email',
         'password',
-        'telephone',
-        'role'
+        'phone',
+        'role',
+        'birth_date',
+        'gender',
+            'image', // Added image to fillable fields
     ];
 
     protected $hidden = [
@@ -30,31 +32,27 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'birth_date' => 'date',
     ];
-
-    public function examensPlanifies()
-    {
-        return $this->hasMany(Examen::class, 'id_responsable');
-    }
-
-    public function surveillances()
-    {
-        return $this->hasMany(Surveillance::class, 'id_enseignant');
-    }
-
-    public function modules()
-    {
-        return $this->hasMany(Module::class, 'id_enseignant');
-    }
-
-    public function plannings()
-    {
-        return $this->hasMany(Planning::class, 'id_chef');
-    }
 
     public function notifications()
     {
-        return $this->hasMany(Notification::class, 'id_utilisateur');
+        return $this->hasMany(Notification::class, 'user_id');
+    }
+
+    public function student()
+    {
+        return $this->hasOne(Student::class, 'user_id');
+    }
+
+    public function teacher()
+    {
+        return $this->hasOne(Teacher::class, 'user_id');
+    }
+
+    public function setting()
+    {
+        return $this->hasOne(Setting::class, 'user_id');
     }
 
     public function hasRole($role)

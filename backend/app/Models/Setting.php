@@ -5,29 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Notification extends Model
+class Setting extends Model
 {
     use HasFactory;
-    protected $table = 'notifications';
+
+    protected $table = 'settings';
 
     protected $fillable = [
         'user_id',
-        'title',
-        'message',
-        'is_read',
+        'theme',
+        'language',
+        'notifications',
+        'main_color',
     ];
 
     protected $casts = [
-        'is_read' => 'boolean',
+        'notifications' => 'boolean',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
-    }
-
-    public function examen()
-    {
-        return $this->belongsTo(Examen::class, 'exam_id');
     }
 }

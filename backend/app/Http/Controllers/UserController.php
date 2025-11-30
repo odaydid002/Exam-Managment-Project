@@ -13,7 +13,7 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
-        if (auth()->id() != $id && !auth()->user()->hasRole(['chef', 'resp'])) {
+        if (auth()->id() != $id && !auth()->user()->hasRole(['admin', 'employee'])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -29,10 +29,12 @@ class UserController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nom' => 'sometimes|string|max:255',
-            'prenom' => 'sometimes|string|max:255',
+            'fname' => 'sometimes|string|max:20',
+            'lname' => 'sometimes|string|max:20',
+            'birth_date' => 'sometimes|date',
+            'gender' => 'sometimes|string|max:10',
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $id,
-            'telephone' => 'sometimes|string|max:20',
+            'phone' => 'sometimes|string|max:20|unique:users,phone,' . $id,
             'current_password' => 'required_with:password',
             'password' => 'sometimes|confirmed'
         ]);
@@ -44,6 +46,7 @@ class UserController extends Controller
             ], 422);
         }
 
+
         if ($request->has('password')) {
             if (!Hash::check($request->current_password, $user->password)) {
                 return response()->json(['message' => 'Current password is incorrect'], 422);
@@ -51,7 +54,12 @@ class UserController extends Controller
             $user->password = Hash::make($request->password);
         }
 
-        $user->update($request->except(['password', 'current_password', 'password_confirmation']));
+        $data = $request->except(['password', 'current_password', 'password_confirmation']);
+        $user->fill($data);
+        if ($request->has('password')) {
+            $user->password = Hash::make($request->password);
+        }
+        $user->save();
 
         return response()->json([
             'message' => 'Profile updated successfully',
@@ -63,12 +71,35 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
-        if (auth()->id() != $id && !auth()->user()->hasRole('chef')) {
+        if (auth()->id() != $id && !auth()->user()->hasRole(['admin', 'employee'])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $user->delete();
 
         return response()->json(['message' => 'Account deleted successfully']);
+    }
+
+    public function notifications()
+    {
+        $user = auth()->user();
+        $notifications = $user->notifications()->orderBy('created_at', 'desc')->get();
+
+        return response()->json(['notifications' => $notifications]);
+    }
+
+    public function markNotificationsRead(Request $request)
+    {
+        $request->validate([
+            'notification_ids' => 'required|array',
+            'notification_ids.*' => 'exists:notifications,id'
+        ]);
+
+        $user = auth()->user();
+        \App\Models\Notification::whereIn('id', $request->notification_ids)
+            ->where('user_id', $user->id)
+            ->update(['is_read' => true]);
+
+        return response()->json(['message' => 'Notifications marked as read']);
     }
 }

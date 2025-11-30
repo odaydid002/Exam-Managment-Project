@@ -9,16 +9,24 @@ class Groupe extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'id_groupe';
+    protected $table = 'groups';
+    protected $primaryKey = 'code';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
-        'nom_groupe',
-        'niveau',
-        'specialite'
+        'code',
+        'name',
+        'section_id',
     ];
 
     public function examens()
     {
-        return $this->hasMany(Examen::class, 'id_groupe');
+        return $this->hasMany(Examen::class, 'group_code', 'code');
+    }
+
+    public function section()
+    {
+        return $this->belongsTo(Section::class, 'section_id');
     }
 }

@@ -2,13 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\ExamenController;
-use App\Http\Controllers\ModuleController;
-use App\Http\Controllers\SalleController;
-use App\Http\Controllers\GroupeController;
-use App\Http\Controllers\PlanningController;
-use App\Http\Controllers\SurveillanceController;
-use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\TeacherController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -32,29 +26,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/{id}/profile', [UserController::class, 'updateProfile']);
     Route::delete('/user/{id}/deleteAccount', [UserController::class, 'deleteAccount']);
 
-    // Examens
-    Route::apiResource('examens', ExamenController::class);
-    Route::post('/examens/{id}/validate', [ExamenController::class, 'validateExamen']);
+    // Notifications (user-facing)
+    Route::get('/notifications', [UserController::class, 'notifications']);
+    Route::post('/notifications/mark-read', [UserController::class, 'markNotificationsRead']);
 
-    // Modules
-    Route::apiResource('modules', ModuleController::class);
-
-    // Routes pour Salle
-    Route::get('/salles/disponibles', [SalleController::class, 'getSallesDisponibles']);
-
-    // Routes pour Groupe
-    Route::get('/groupes/niveau/{niveau}', [GroupeController::class, 'getByNiveau']);
-    Route::get('/groupes/specialite/{specialite}', [GroupeController::class, 'getBySpecialite']);
-    Route::get('/groupes/statistiques', [GroupeController::class, 'getStatistiques']);
-
-    // Plannings
-    Route::apiResource('plannings', PlanningController::class);
-    Route::post('/plannings/{id}/validate', [PlanningController::class, 'validatePlanning']);
-
-    // Surveillances
-    Route::apiResource('surveillances', SurveillanceController::class);
-
-    // Notifications
-    Route::get('/notifications', [NotificationController::class, 'index']);
-    Route::post('/notifications/mark-read', [NotificationController::class, 'markAsRead']);
+    // Teachers
+    Route::get('/teachers/all', [TeacherController::class, 'index']);
+    Route::post('/teachers/bulk', [TeacherController::class, 'bulkStore']);
+    Route::post('/teachers/add', [TeacherController::class, 'store']);
+    Route::put('/teachers/{number}', [TeacherController::class, 'update']);
+    Route::delete('/teachers/{number}', [TeacherController::class, 'destroy']);
 });
