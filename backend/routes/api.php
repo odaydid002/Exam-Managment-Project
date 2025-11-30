@@ -37,6 +37,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/teachers/add', [TeacherController::class, 'store']);
     Route::put('/teachers/edit/{number}', [TeacherController::class, 'update']);
     Route::delete('/teachers/delete/{number}', [TeacherController::class, 'destroy']);
+
     // Specialities
     Route::get('/specialities/all', [SpecialityController::class, 'index']);
+    Route::post('/specialities/bulk', [SpecialityController::class, 'bulkStore']);
+    Route::post('/specialities/add', [SpecialityController::class, 'store']);
+    Route::get('/specialities/{id}', [SpecialityController::class, 'show']);
+    Route::put('/specialities/edit/{id}', [SpecialityController::class, 'update']);
+    Route::delete('/specialities/delete/{id}', [SpecialityController::class, 'destroy']);
 });
