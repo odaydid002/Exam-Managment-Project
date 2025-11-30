@@ -7,6 +7,7 @@ use App\Http\Controllers\SpecialityController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\GroupeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -73,4 +74,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rooms/{id}', [RoomController::class, 'show']);
     Route::put('/rooms/edit/{id}', [RoomController::class, 'update']);
     Route::delete('/rooms/delete/{id}', [RoomController::class, 'destroy']);
+
+    // Groups
+    Route::get('/groups/all', [GroupeController::class, 'index']);
+    Route::post('/groups/bulk', [GroupeController::class, 'bulkStore']);
+    Route::post('/groups/add', [GroupeController::class, 'store']);
+    Route::get('/groups/{code}', [GroupeController::class, 'show']);
+    Route::put('/groups/edit/{code}', [GroupeController::class, 'update']);
+    Route::delete('/groups/delete/{code}', [GroupeController::class, 'destroy']);
+    Route::post('/groups/{code}/delegate/set', [GroupeController::class, 'setDelegate']);
+    Route::put('/groups/{code}/delegate/edit', [GroupeController::class, 'changeDelegate']);
+    Route::delete('/groups/{code}/delegate/remove', [GroupeController::class, 'removeDelegate']);
 });
