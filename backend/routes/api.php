@@ -34,6 +34,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/teachers/all', [TeacherController::class, 'index']);
     Route::post('/teachers/bulk', [TeacherController::class, 'bulkStore']);
     Route::post('/teachers/add', [TeacherController::class, 'store']);
-    Route::put('/teachers/{number}', [TeacherController::class, 'update']);
-    Route::delete('/teachers/{number}', [TeacherController::class, 'destroy']);
+    Route::put('/teachers/edit/{number}', [TeacherController::class, 'update']);
+    Route::delete('/teachers/delete/{number}', [TeacherController::class, 'destroy']);
 });
