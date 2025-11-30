@@ -14,13 +14,16 @@ class Student extends Model
     protected $primaryKey = 'number';
 
     protected $fillable = [
+        'number',
         'user_id',
         'group_code',
         'speciality_id',
         'level',
     ];
 
-    public $incrementing = true;
+    // `number` is provided manually and is not an auto-incrementing integer
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     public function user()
     {

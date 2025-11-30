@@ -298,6 +298,67 @@ class TeacherController extends Controller
     }
 
     /**
+     * Show teacher or user by teacher number or user id.
+     * If $identifier matches a teacher.number, return that teacher; otherwise try to find by user id.
+     */
+    public function show($identifier)
+    {
+        // allow public access only for authenticated users
+        if (!auth()->user()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // try find by teacher number first
+        $teacher = Teacher::with(['user', 'speciality.department'])->where('number', $identifier)->first();
+        if ($teacher) {
+            $user = $teacher->user;
+            $speciality = $teacher->speciality;
+            $department = $speciality && $speciality->department ? $speciality->department->name : null;
+
+            return response()->json([
+                'fname' => $user->fname ?? null,
+                'lname' => $user->lname ?? null,
+                'adj' => $teacher->adj ?? null,
+                'number' => (string) $teacher->number,
+                'departement' => $department,
+                'position' => $teacher->position ?? null,
+                'speciality' => $speciality->name ?? null,
+                'phone' => $user->phone ?? null,
+                'email' => $user->email ?? null,
+                'image' => $user->image ?? null,
+            ]);
+        }
+
+        // otherwise try find user by id and return teacher if exists
+        $user = \App\Models\User::find($identifier);
+        if (!$user) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+
+        $teacher = $user->teacher ? $user->teacher->load('speciality.department') : null;
+        if (!$teacher) {
+            // return basic user info
+            return response()->json(['user' => $user]);
+        }
+
+        $speciality = $teacher->speciality;
+        $department = $speciality && $speciality->department ? $speciality->department->name : null;
+
+        return response()->json([
+            'fname' => $user->fname ?? null,
+            'lname' => $user->lname ?? null,
+            'adj' => $teacher->adj ?? null,
+            'number' => (string) $teacher->number,
+            'departement' => $department,
+            'position' => $teacher->position ?? null,
+            'speciality' => $speciality->name ?? null,
+            'phone' => $user->phone ?? null,
+            'email' => $user->email ?? null,
+            'image' => $user->image ?? null,
+        ]);
+    }
+
+    /**
      * Delete a teacher and the associated user.
      * To avoid FK constraint issues we delete the teacher first, then the user, in a transaction.
      */

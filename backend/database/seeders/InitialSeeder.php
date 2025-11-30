@@ -47,37 +47,7 @@ class InitialSeeder extends Seeder
             ]
         );
 
-        // Settings
-        // Settings - associate with actual user IDs
-        $adminId = DB::table('users')->where('email', 'admin@system.com')->value('id');
-        if ($adminId) {
-            DB::table('settings')->updateOrInsert(
-                ['user_id' => $adminId],
-                [
-                    'theme' => 'dark',
-                    'language' => 'en',
-                    'notifications' => true,
-                    'main_color' => '#F1504A',
-                    'updated_at' => $now,
-                    'created_at' => DB::raw('COALESCE(created_at, NOW())'),
-                ]
-            );
-        }
-
-        $employeeId = DB::table('users')->where('email', 'employee@system.com')->value('id');
-        if ($employeeId) {
-            DB::table('settings')->updateOrInsert(
-                ['user_id' => $employeeId],
-                [
-                    'theme' => 'light',
-                    'language' => 'en',
-                    'notifications' => true,
-                    'main_color' => '#f75eb7ff',
-                    'updated_at' => $now,
-                    'created_at' => DB::raw('COALESCE(created_at, NOW())'),
-                ]
-            );
-        }
+        // Settings seeding removed — settings will be created via DB trigger or application logic
 
         // Academic years
         DB::table('academic_years')->updateOrInsert(
