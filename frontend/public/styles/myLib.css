@@ -201,6 +201,9 @@
 .a-start{
     align-items: flex-start;
 }
+.a-end{
+    align-items: flex-end;
+}
 .flex-start{
     align-items: flex-start;
     justify-content: flex-start;

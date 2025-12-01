@@ -91,8 +91,8 @@ export const ListTable = ({
         gsap.from('.gsap-row', { 
             y: 30,
             opacity: 0,
-            duration: 1,
-            stagger: 0.05,
+            duration: 0.5,
+            stagger: 0.025,
          });
     });
 

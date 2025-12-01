@@ -15,264 +15,43 @@ import IconButton from '../../components/buttons/IconButton';
 import { ListTable } from '../../components/tables/ListTable';
 import Profile from '../../components/containers/profile';
 import Popup from '../../components/containers/Popup';
-import SelectInput from '../../components/input/SelectInput';
 import TextInput from '../../components/input/TextInput';
+import SelectInput from '../../components/input/SelectInput';
+import { useNotify } from '../../components/loaders/NotificationContext';
 import ImageInput from '../../components/input/ImageInput';
 import ConfirmDialog from '../../components/containers/ConfirmDialog';
+
+import { Teachers, Specialities } from '../../API'
+import * as XLSX from 'xlsx'
+
+
+const fetchTeachers = async () => {
+  try {
+    const resp = await Teachers.getAll()
+    const data = resp ?? []
+    const items = Array.isArray(data)
+      ? data
+      : (data.data || data.items || data.teachers || [])
+    return items
+  } catch (err) {
+    console.error('Failed fetching teachers', err.response || err.message)
+    return []
+  }
+}
 
 const AdminTeachers = () => {
 
   document.title = "Unitime - Teachers";
 
-  const testList = {
-    total: 20,
-    teachers: [
-      {
-        fname: "Lina",
-        lname: "Benali",
-        adj: "Ms",
-        number: "48291023",
-        departement: "Mathematics",
-        position: "Associate Professor",
-        speciality: "Algebra",
-        phone: "0654321987",
-        email: "lina.benali@univ-alger.dz",
-        image: "https://avatar.iran.liara.run/public/12"
-      },
-      {
-        fname: "Karim",
-        lname: "Saidi",
-        adj: "Mr",
-        number: "57382940",
-        departement: "Physics",
-        position: "Senior Lecturer",
-        speciality: "Optics",
-        phone: "0776543210",
-        email: "karim.saidi@univ-oran.dz",
-        image: "https://avatar.iran.liara.run/public/44"
-      },
-      {
-        fname: "Nour",
-        lname: "Hachemi",
-        adj: "Mrs",
-        number: "23987456",
-        departement: "Computer Science",
-        position: "Assistant Professor",
-        speciality: "Artificial Intelligence",
-        phone: "0667812345",
-        email: "nour.hachemi@univ-tlemcen.dz",
-        image: "https://avatar.iran.liara.run/public/57"
-      },
-      {
-        fname: "Samir",
-        lname: "Boumediene",
-        adj: "Mr",
-        number: "90213487",
-        departement: "IT",
-        position: "Lecturer",
-        speciality: "Networks",
-        phone: "0678123490",
-        email: "samir.boumediene@univ-annaba.dz",
-        image: "https://avatar.iran.liara.run/public/21"
-      },
-      {
-        fname: "Yasmina",
-        lname: "Cherif",
-        adj: "Ms",
-        number: "78340219",
-        departement: "Biology",
-        position: "Professor",
-        speciality: "Genetics",
-        phone: "0692347812",
-        email: "yasmina.cherif@univ-algiers.dz",
-        image: "https://avatar.iran.liara.run/public/31"
-      },
-      {
-        fname: "Hassan",
-        lname: "Mokhtar",
-        adj: "Mr",
-        number: "65439821",
-        departement: "Chemistry",
-        position: "Assistant Professor",
-        speciality: "Organic Chemistry",
-        phone: "0778234901",
-        email: "hassan.mokhtar@univ-setif.dz",
-        image: "https://avatar.iran.liara.run/public/18"
-      },
-      {
-        fname: "Sofia",
-        lname: "Ait Kaci",
-        adj: "Ms",
-        number: "31298745",
-        departement: "IT",
-        position: "Lecturer",
-        speciality: "Software Engineering",
-        phone: "0654987123",
-        email: "sofia.aitkaci@univ-boumerdes.dz",
-        image: "https://avatar.iran.liara.run/public/60"
-      },
-      {
-        fname: "Rachid",
-        lname: "Zerrouki",
-        adj: "Mr",
-        number: "90871234",
-        departement: "Physics",
-        position: "Professor",
-        speciality: "Thermodynamics",
-        phone: "0770192834",
-        email: "rachid.zerrouki@univ-oran.dz",
-        image: "https://avatar.iran.liara.run/public/7"
-      },
-      {
-        fname: "Meriem",
-        lname: "Djedidi",
-        adj: "Mrs",
-        number: "41523987",
-        departement: "Mathematics",
-        position: "Senior Lecturer",
-        speciality: "Statistics",
-        phone: "0698123745",
-        email: "meriem.djedidi@univ-tiziouzou.dz",
-        image: "https://avatar.iran.liara.run/public/5"
-      },
-      {
-        fname: "Walid",
-        lname: "Haddad",
-        adj: "Mr",
-        number: "56219087",
-        departement: "Computer Science",
-        position: "Assistant Professor",
-        speciality: "Databases",
-        phone: "0667123450",
-        email: "walid.haddad@univ-algiers.dz",
-        image: "https://avatar.iran.liara.run/public/66"
-      },
-      {
-        fname: "Imane",
-        lname: "Merabet",
-        adj: "Ms",
-        number: "78123409",
-        departement: "IT",
-        position: "Lecturer",
-        speciality: "Cybersecurity",
-        phone: "0679912345",
-        email: "imane.merabet@univ-oran.dz",
-        image: "https://avatar.iran.liara.run/public/15"
-      },
-      {
-        fname: "Farid",
-        lname: "Bensalem",
-        adj: "Mr",
-        number: "99451230",
-        departement: "Chemistry",
-        position: "Senior Lecturer",
-        speciality: "Analytical Chemistry",
-        phone: "0776234980",
-        email: "farid.bensalem@univ-setif.dz",
-        image: "https://avatar.iran.liara.run/public/22"
-      },
-      {
-        fname: "Sara",
-        lname: "Khelifi",
-        adj: "Ms",
-        number: "21345987",
-        departement: "Biology",
-        position: "Assistant Professor",
-        speciality: "Microbiology",
-        phone: "0698321457",
-        email: "sara.khelifi@univ-bejaia.dz",
-        image: "https://avatar.iran.liara.run/public/41"
-      },
-      {
-        fname: "Yacine",
-        lname: "Berrabah",
-        adj: "Mr",
-        number: "84521903",
-        departement: "Computer Science",
-        position: "Professor",
-        speciality: "Machine Learning",
-        phone: "0667189234",
-        email: "yacine.berrabah@univ-tlemcen.dz",
-        image: "https://avatar.iran.liara.run/public/19"
-      },
-      {
-        fname: "Amina",
-        lname: "Saheb",
-        adj: "Ms",
-        number: "10495823",
-        departement: "IT",
-        position: "Lecturer",
-        speciality: "Cloud Computing",
-        phone: "0672341985",
-        email: "amina.saheb@univ-guelma.dz",
-        image: "https://avatar.iran.liara.run/public/50"
-      },
-      {
-        fname: "Mohamed",
-        lname: "Hamadi",
-        adj: "Mr",
-        number: "67542189",
-        departement: "Physics",
-        position: "Assistant Professor",
-        speciality: "Quantum Mechanics",
-        phone: "0779432109",
-        email: "mohamed.hamadi@univ-batna.dz",
-        image: "https://avatar.iran.liara.run/public/38"
-      },
-      {
-        fname: "Nadia",
-        lname: "Boukercha",
-        adj: "Mrs",
-        number: "59281734",
-        departement: "Mathematics",
-        position: "Professor",
-        speciality: "Topology",
-        phone: "0694312875",
-        email: "nadia.boukercha@univ-annaba.dz",
-        image: "https://avatar.iran.liara.run/public/3"
-      },
-      {
-        fname: "Omar",
-        lname: "Lakhdar",
-        adj: "Mr",
-        number: "32981047",
-        departement: "Computer Science",
-        position: "Lecturer",
-        speciality: "Operating Systems",
-        phone: "0668721934",
-        email: "omar.lakhdar@univ-tlemcen.dz",
-        image: "https://avatar.iran.liara.run/public/11"
-      },
-      {
-        fname: "Rania",
-        lname: "Chergui",
-        adj: "Ms",
-        number: "74019283",
-        departement: "IT",
-        position: "Assistant Professor",
-        speciality: "Human–Computer Interaction",
-        phone: "0671923845",
-        email: "rania.chergui@univ-skikda.dz",
-        image: "https://avatar.iran.liara.run/public/9"
-      },
-      {
-        fname: "Fouad",
-        lname: "Messaoudi",
-        adj: "Mr",
-        number: "85123097",
-        departement: "Chemistry",
-        position: "Lecturer",
-        speciality: "Biochemistry",
-        phone: "0775219834",
-        email: "fouad.messaoudi@univ-oran.dz",
-        image: "https://avatar.iran.liara.run/public/27"
-      }
-    ]
-  };
+  const { notify } = useNotify();
+  const [listLoading, setListLoading] = useState(false);
+  const [dialogLoading, setDialogLoading] = useState(false);
+  const [teachersList, setTeachersList] = useState({ total: 0, teachers: [] })
+  const [specialitiesOptions, setSpecialitiesOptions] = useState([])
   const layoutPath = useRef(null);
   const layoutHead = useRef(null);
   const layoutBody = useRef(null);
-  const [listLoading, setListLoading] = useState(false);
+  const fileInputRef = useRef(null);
   const [addmodal, setAddmodal] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({
@@ -296,65 +75,88 @@ const AdminTeachers = () => {
   });
 
   useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      setListLoading(true)
+      const items = await fetchTeachers()
+      if (!mounted) return
+      setTeachersList({ total: items.length, teachers: items })
+      setListLoading(false)
+    }
+    load()
+    let mountedSpecs = true
+    const loadSpecs = async () => {
+      try {
+        const resp = await Specialities.getAll()
+        const data = resp ?? []
+        const list = Array.isArray(data) ? data : (data.data || data.items || data.specialities || [])
+        if (!mountedSpecs) return
+        const options = list.map(item => {
+          if (typeof item === 'string') return { value: item, text: item }
+          if (item.id && (item.name || item.title)) return { value: item.id, text: item.name || item.title }
+          if (item.code && item.label) return { value: item.code, text: item.label }
+          if (item.name) return { value: item.name, text: item.name }
+          if (item.speciality) return { value: item.speciality, text: item.speciality }
+          return { value: JSON.stringify(item), text: String(item) }
+        })
+        setSpecialitiesOptions(options)
+      } catch (err) {
+        console.error('Failed to fetch specialities', err)
+      }
+    }
+    loadSpecs()
+    return () => { mounted = false }
+  }, [])
+  useEffect(() => {
     const HH = layoutPath.current.offsetHeight + layoutHead.current.offsetHeight
     layoutBody.current.style.maxHeight = `calc(100vh - ${HH}px - 2.5em)`
   }, []);
-
   useGSAP(() => {
-    gsap.from('.gsap-y', {zIndex: 0});
-    gsap.from('.gsap-y', { 
-        y: 50,
-        zIndex: 0,
-        opacity: 0,
-        duration: 0.5,
-        stagger: 0.05,
+    gsap.from('.gsap-y', { zIndex: 0 });
+    gsap.from('.gsap-y', {
+      y: 50,
+      zIndex: 0,
+      opacity: 0,
+      duration: 0.5,
+      stagger: 0.05,
     })
   });
 
   const handleFormChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
-
   const handleImageChange = (file) => {
     setFormData(prev => ({ ...prev, image: file }));
   };
-
-  const handleAddTeacher = () => {
-    console.log('Adding teacher:', formData);
-    setFormData({
-      title: '',
-      fname: '',
-      lname: '',
-      number: '',
-      position: '',
-      speciality: '',
-      phone: '',
-      email: '',
-      image: null
-    });
-    setEditingTeacher(null);
-    setAddmodal(false);
-  };
-
   const handleEditTeacher = (teacher) => {
     setEditingTeacher(teacher);
     setFormData({
-      title: teacher.adj,
-      fname: teacher.fname,
-      lname: teacher.lname,
-      number: teacher.number,
-      position: teacher.position,
-      speciality: teacher.speciality,
-      phone: teacher.phone,
-      email: teacher.email,
-      image: teacher.image
+      title: teacher.adj || '',
+      fname: teacher.fname || '',
+      lname: teacher.lname || '',
+      number: teacher.number || '',
+      position: teacher.position || '',
+      speciality: teacher.speciality_id || teacher.speciality || '',
+      phone: teacher.phone || '',
+      email: teacher.email || '',
+      image: teacher.image || null
     });
     setAddmodal(true);
   };
-
   const handleDeleteTeacher = (teacher) => {
+    return (async () => {
+      if (!teacher || !teacher.number) return;
+      try {
+        await Teachers.remove(teacher.number);
+        const items = await fetchTeachers();
+        setTeachersList({ total: items.length, teachers: items });
+        notify("success", "Teacher deleted!");
+      } catch (err) {
+        console.error('Failed to delete teacher', err?.response || err?.message || err);
+        throw err
+      }
+    })()
   };
-
   const openConfirmDialog = (type, title, message, action, actionData = null) => {
     setConfirmDialog({
       isOpen: true,
@@ -365,24 +167,169 @@ const AdminTeachers = () => {
       actionData
     });
   };
-
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     const { action, actionData } = confirmDialog;
-
-    if (action === 'add') {
-      handleAddTeacher();
-    } else if (action === 'edit') {
-      handleAddTeacher();
-    } else if (action === 'delete') {
-      handleDeleteTeacher(actionData);
+    setDialogLoading(true)
+    try {
+      if (action === 'add') {
+        setAddmodal(false)
+        await submitAddTeacher()
+      } else if (action === 'edit') {
+        setAddmodal(false)
+        await submitEditTeacher()
+      } else if (action === 'delete') {
+        await handleDeleteTeacher(actionData);
+      }
+    } catch (err) {
+      console.error('Action failed', err)
+    } finally {
+      setDialogLoading(false)
+      setConfirmDialog({ ...confirmDialog, isOpen: false });
     }
-
-    setConfirmDialog({ ...confirmDialog, isOpen: false });
   };
-
   const handleCancelConfirm = () => {
     setConfirmDialog({ ...confirmDialog, isOpen: false });
   };
+  const submitAddTeacher = async () => {
+    if (!formData.fname || !formData.lname || !formData.number) {
+      console.error('Missing required fields')
+      return
+    }
+    setAddmodal(false)
+    try {
+      console.log('Submitting new teacher:', formData)
+      const fullName = `${formData.fname} ${formData.lname}`.trim()
+      const password = String(formData.number)
+
+      let payload
+      let useFormData = formData.image && typeof formData.image !== 'string' && !(formData.image instanceof String)
+
+      if (useFormData) {
+        payload = new FormData()
+        payload.append('adj', formData.title || '')
+        payload.append('fname', formData.fname || '')
+        payload.append('lname', formData.lname || '')
+        payload.append('number', formData.number || '')
+        payload.append('position', formData.position || '')
+        payload.append('speciality_id', formData.speciality ? parseInt(formData.speciality) : '')
+        payload.append('phone', formData.phone || '')
+        payload.append('email', formData.email || '')
+        payload.append('password', password)
+        payload.append('image', formData.image)
+      } else {
+        const imageUrl = formData.image && typeof formData.image === 'string'
+          ? formData.image
+          : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}`
+
+        payload = {
+          adj: formData.title || '',
+          fname: formData.fname || '',
+          lname: formData.lname || '',
+          number: formData.number || '',
+          position: formData.position || '',
+          speciality_id: formData.speciality ? parseInt(formData.speciality) : '',
+          phone: formData.phone || '',
+          email: formData.email || '',
+          password,
+          image: imageUrl
+        }
+      }
+
+      await Teachers.add(payload)
+
+      const items = await fetchTeachers()
+      setTeachersList({ total: items.length, teachers: items })
+
+      notify('success', 'Teacher added!')
+
+      // reset form
+      setFormData({
+        title: '',
+        fname: '',
+        lname: '',
+        number: '',
+        position: '',
+        speciality: '',
+        phone: '',
+        email: '',
+        image: null
+      })
+      setEditingTeacher(null)
+      setAddmodal(false)
+    } catch (err) {
+      console.error('Failed to add teacher', err?.response || err?.message || err)
+      notify('error', err?.response?.data?.message || err?.message || 'Failed to add teacher')
+    }
+  }
+  const submitEditTeacher = async () => {
+    if (!editingTeacher || !editingTeacher.number) {
+      console.error('No teacher selected for editing')
+      return
+    }
+    if (!formData.fname || !formData.lname) {
+      console.error('Missing required fields')
+      return
+    }
+    // dialog loading is handled by the confirmation dialog; avoid table shimmer
+    try {
+      const fullName = `${formData.fname} ${formData.lname}`.trim()
+      const teacherNumber = editingTeacher.number
+
+      let payload
+      let useFormData = formData.image && typeof formData.image !== 'string' && !(formData.image instanceof String)
+
+      if (useFormData) {
+        payload = new FormData()
+        payload.append('adj', formData.title || '')
+        payload.append('fname', formData.fname || '')
+        payload.append('lname', formData.lname || '')
+        payload.append('position', formData.position || '')
+        payload.append('speciality_id', formData.speciality ? parseInt(formData.speciality) : '')
+        payload.append('phone', formData.phone || '')
+        payload.append('email', formData.email || '')
+        payload.append('image', formData.image)
+      } else {
+        const imageUrl = formData.image && typeof formData.image === 'string'
+          ? formData.image
+          : editingTeacher.image || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}`
+
+        payload = {
+          adj: formData.title || '',
+          fname: formData.fname || '',
+          lname: formData.lname || '',
+          position: formData.position || '',
+          speciality_id: formData.speciality ? parseInt(formData.speciality) : '',
+          phone: formData.phone || '',
+          email: formData.email || '',
+          image: imageUrl
+        }
+      }
+
+      await Teachers.update(teacherNumber, payload)
+
+      const items = await fetchTeachers()
+      setTeachersList({ total: items.length, teachers: items })
+
+      notify('success', 'Teacher updated!')
+      // reset form
+      setFormData({
+        title: '',
+        fname: '',
+        lname: '',
+        number: '',
+        position: '',
+        speciality: '',
+        phone: '',
+        email: '',
+        image: null
+      })
+      setEditingTeacher(null)
+      setAddmodal(false)
+    } catch (err) {
+      console.error('Failed to update teacher', err?.response || err?.message || err)
+      notify('error', err?.response?.data?.message || err?.message || 'Failed to update teacher')
+    }
+  }
 
   return (
     <div className={`${styles.teachersLayout} full scrollbar`}>
@@ -391,6 +338,7 @@ const AdminTeachers = () => {
         type={confirmDialog.type}
         title={confirmDialog.title}
         message={confirmDialog.message}
+        isloading={dialogLoading}
         confirmText={confirmDialog.type === 'danger' ? 'Delete' : 'Confirm'}
         onConfirm={handleConfirmAction}
         onCancel={handleCancelConfirm}
@@ -398,14 +346,14 @@ const AdminTeachers = () => {
       <Popup isOpen={addmodal} blur={2} bg='rgba(0,0,0,0.1)' onClose={() => setAddmodal(false)}>
         <div className={`${styles.dashBGC}`} style={{ maxWidth: '700px', borderRadius: '0.8em', padding: '2em' }}>
           <div className="flex row a-center j-spacebet w100" style={{ marginBottom: '1.5em' }}>
-            <Text text={editingTeacher ? 'Edit Teacher' : 'Add Teacher'} size='var(--text-l)' w='600'/>
-            <IconButton icon='fa-solid fa-xmark' color='var(--text)' size='var(--text-l)' onClick={() => setAddmodal(false)}/>
+            <Text text={editingTeacher ? 'Edit Teacher' : 'Add Teacher'} size='var(--text-l)' w='600' />
+            <IconButton icon='fa-solid fa-xmark' color='var(--text)' size='var(--text-l)' onClick={() => setAddmodal(false)} />
           </div>
           <div className="flex row a-center gap" style={{ gap: '2em' }}>
             <div className="flex column gap" style={{ flex: 1 }}>
               <div className="flex row a-center gap">
-                <TextInput 
-                  label="Title" 
+                <TextInput
+                  label="Title"
                   placeholder='Mr'
                   value={formData.title}
                   dataList={["Mr", "Ms", "Mrs", "Dr", "Prof"]}
@@ -413,8 +361,8 @@ const AdminTeachers = () => {
                   onchange={(e) => handleFormChange('title', e.target.value)}
                 />
                 <div style={{ flex: 1 }}>
-                  <TextInput 
-                    label="First Name" 
+                  <TextInput
+                    label="First Name"
                     placeholder='First Name'
                     value={formData.fname}
                     width='100%'
@@ -422,8 +370,8 @@ const AdminTeachers = () => {
                   />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <TextInput 
-                    label="Last Name" 
+                  <TextInput
+                    label="Last Name"
                     placeholder='Last Name'
                     value={formData.lname}
                     width='100%'
@@ -432,17 +380,17 @@ const AdminTeachers = () => {
                 </div>
               </div>
               <div className="flex row a-center gap">
-                <TextInput 
-                  label="Number" 
-                  type='number' 
+                <TextInput
+                  label="Number"
+                  type='number'
                   placeholder='Enter Teacher Number'
                   value={formData.number}
                   width='100%'
                   onchange={(e) => handleFormChange('number', e.target.value)}
                 />
               </div>
-              <div className="flex row a-center gap">
-                <TextInput 
+              <div className="flex row a-end gap">
+                <TextInput
                   label="Position"
                   placeholder="Select Position"
                   value={formData.position}
@@ -450,64 +398,46 @@ const AdminTeachers = () => {
                   width='48%'
                   onchange={(e) => handleFormChange('position', e.target.value)}
                 />
-                <TextInput 
-                  label="Speciality"
-                  width='52%'
-                  placeholder='Enter Speciality'
-                  value={formData.speciality}
-                  dataList={[
-                    "Software Engineering",
-                    "Artificial Intelligence",
-                    "UX Design",
-                    "Cyber Security",
-                    "Data Science",
-                    "Network Administration",
-                    "Database Management",
-                    "Web Development",
-                    "Mobile Development",
-                    "Cloud Computing",
-                    "Game Development",
-                    "Machine Learning",
-                    "Robotics",
-                    "Computer Vision",
-                    "Human-Computer Interaction",
-                    "Information Systems",
-                  ]}
-                  onchange={(e) => handleFormChange('speciality', e.target.value)}
-                />
+                <div style={{ width: '52%' }}>
+                  <SelectInput
+                    value={formData.speciality}
+                    options={specialitiesOptions.length ? specialitiesOptions : [{ value: '', text: 'Select speciality' }]}
+                    onChange={(val) => handleFormChange('speciality', val)}
+                  />
+                </div>
               </div>
             </div>
-            <ImageInput 
+            <ImageInput
               label='Photo'
               width='180px'
               height='180px'
               onchange={handleImageChange}
             />
           </div>
-          <div className="flex row a-center gap w100" style={{margin: "1em 0 2em 0"}}>
-            <TextInput 
-              label="Email" 
+          <div className="flex row a-center gap w100" style={{ margin: "1em 0 2em 0" }}>
+            <TextInput
+              label="Email"
               placeholder='Enter Teacher Email'
               value={formData.email}
               width='60%'
               onchange={(e) => handleFormChange('email', e.target.value)}
             />
-            <TextInput 
-              label="Phone" 
+            <TextInput
+              label="Phone"
               placeholder='Enter Teacher Phone Number'
               value={formData.phone}
               width='40%'
               onchange={(e) => handleFormChange('phone', e.target.value)}
-             />
+            />
           </div>
           <div className="flex row a-center gap mrt">
             <SecondaryButton text='Cancel' onClick={() => setAddmodal(false)} />
-            <PrimaryButton 
-              text={editingTeacher ? 'Update Teacher' : 'Add Teacher'} 
+            <PrimaryButton
+              text={editingTeacher ? 'Update Teacher' : 'Add Teacher'}
               onClick={() => openConfirmDialog(
                 'normal',
                 editingTeacher ? 'Update Teacher' : 'Add Teacher',
-                editingTeacher 
+                editingTeacher
                   ? `Update teacher ${formData.fname} ${formData.lname}?`
                   : `Add new teacher ${formData.fname} ${formData.lname}?`,
                 editingTeacher ? 'edit' : 'add'
@@ -524,15 +454,179 @@ const AdminTeachers = () => {
       </div>
       <div className={`${styles.teachersContent}`}>
         <div ref={layoutHead} className={`${styles.teachersHead} flex row a-center j-spacebet`}>
-            <Text align='left' text='Teachers List' w='600' color='var(--text)' size='var(--text-l)' />
-            <div className="flex row h100 a-center gap h4p">
-              <SecondaryButton text="Import List" icon="fa-regular fa-file-excel" onClick={()=>{}}/>
-              <PrimaryButton text='Add Teacher' icon='fa-solid fa-plus' onClick={() => setAddmodal(true)}/>
-            </div>
-              <Float css='flex column a-center gap h4pc' bottom="6em" right="1em">
-                <FloatButton icon="fa-solid fa-file-arrow-up" onClick={()=>{}}/>
-                <FloatButton icon='fa-solid fa-plus' onClick={() => setAddmodal(true)}/>
-              </Float>
+          <Text align='left' text='Teachers List' w='600' color='var(--text)' size='var(--text-l)' />
+          <div className="flex row h100 a-center gap h4p">
+            <SecondaryButton text="Import List" icon="fa-regular fa-file-excel" onClick={() => fileInputRef.current && fileInputRef.current.click()} />
+            <PrimaryButton text='Add Teacher' icon='fa-solid fa-plus' onClick={() => setAddmodal(true)} />
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const f = e.target.files && e.target.files[0]
+              if (!f) return
+              
+              const reader = new FileReader()
+              reader.onload = async (event) => {
+                try {
+                  const data = event.target.result
+                  const workbook = XLSX.read(data, { type: 'binary' })
+                  const firstSheetName = workbook.SheetNames[0]
+                  const worksheet = workbook.Sheets[firstSheetName]
+                  const raw = XLSX.utils.sheet_to_json(worksheet, { defval: null })
+
+                  if (!raw || !raw.length) {
+                    notify('error', 'Imported file is empty')
+                    return
+                  }
+
+                  console.log('Parsed rows:', raw)
+                  console.log('Column headers:', Object.keys(raw[0] || {}))
+                  console.log('Available specialities:', specialitiesOptions)
+
+                  // Fetch fresh specialities list from backend to get accurate ID mapping
+                  let freshSpecialities = []
+                  try {
+                    const resp = await Specialities.getAll()
+                    freshSpecialities = Array.isArray(resp) ? resp : (resp.data || resp.items || resp.specialities || [])
+                    console.log('Fresh specialities from backend:', freshSpecialities)
+                  } catch (err) {
+                    console.warn('Could not fetch specialities, using cached:', err)
+                    // Fall back to cached options if API fails
+                  }
+
+                  // Build mapping from speciality name to ID
+                  const nameToIdMap = new Map()
+                  freshSpecialities.forEach(spec => {
+                    if (spec && spec.id && (spec.name || spec.title || spec.speciality)) {
+                      const name = (spec.name || spec.title || spec.speciality || '').toLowerCase().trim()
+                      nameToIdMap.set(name, spec.id)
+                    }
+                  })
+
+                  console.log('Speciality name-to-ID mapping:', Array.from(nameToIdMap.entries()))
+
+                  // Transform rows: map speciality name to speciality_id
+                  const transformed = raw.map(row => {
+                    const r = { ...row }
+                    
+                    // If there's a 'speciality' column with a name, map it to speciality_id
+                    if (r.speciality != null && typeof r.speciality === 'string') {
+                      const specialityName = r.speciality.toLowerCase().trim()
+                      const mappedId = nameToIdMap.get(specialityName)
+                      if (mappedId) {
+                        r.speciality_id = mappedId
+                        delete r.speciality  // Remove the name, keep only ID
+                      } else {
+                        console.warn(`Could not map speciality name: "${r.speciality}"`)
+                        r.speciality_id = null
+                      }
+                    } else if (r.speciality_id != null) {
+                      // If speciality_id already present, normalize it to number
+                      if (typeof r.speciality_id === 'string' && r.speciality_id.trim() !== '') {
+                        const n = parseInt(r.speciality_id, 10)
+                        r.speciality_id = isNaN(n) ? null : n
+                      }
+                      delete r.speciality
+                    }
+                    
+                    return r
+                  })
+
+                  console.log('Transformed rows:', transformed)
+
+                  // Detect unmapped specialities to notify the user
+                  const unmapped = transformed
+                    .filter(r => (r.speciality_id == null || r.speciality_id === ''))
+                    .map((r, idx) => `Row ${idx + 1}`)
+
+
+                  // Normalize field names - map common Excel header variations to expected API field names
+                  const normalizeRow = (row) => {
+                    const normalized = {}
+                    const fieldMap = {
+                      'adj': ['adj', 'title', 'salutation'],
+                      'fname': ['fname', 'first name', 'firstname', 'first_name'],
+                      'lname': ['lname', 'last name', 'lastname', 'last_name'],
+                      'number': ['number', 'teacher number', 'id', 'code'],
+                      'position': ['position', 'job title', 'job_title'],
+                      'speciality': ['speciality', 'speciality_id', 'specialty', 'department'],
+                      'speciality_id': ['speciality_id', 'speciality'],
+                      'phone': ['phone', 'phone number', 'phone_number'],
+                      'email': ['email', 'e-mail']
+                    }
+
+                    // For each expected field, try to find it in the row (case-insensitive)
+                    Object.entries(fieldMap).forEach(([apiField, possibleNames]) => {
+                      const rowKeyLower = Object.keys(row).find(key => 
+                        possibleNames.includes(String(key).toLowerCase().trim())
+                      )
+                      if (rowKeyLower && row[rowKeyLower] != null) {
+                        normalized[apiField] = row[rowKeyLower]
+                      }
+                    })
+
+                    // Add password: use teacher number as password (same as manual add)
+                    if (normalized.number) {
+                      normalized.password = String(normalized.number)
+                    }
+
+                    // Ensure speciality_id is a number, not null or empty string
+                    if (normalized.speciality_id != null) {
+                      const idNum = parseInt(normalized.speciality_id, 10)
+                      normalized.speciality_id = isNaN(idNum) ? null : idNum
+                    }
+
+                    return normalized
+                  }
+
+                  // Normalize all transformed rows
+                  const normalized = transformed.map(normalizeRow)
+                  console.log('Normalized rows:', normalized)
+
+                  setDialogLoading(true)
+                  try {
+                    const payload = { teachers: normalized }
+                    console.log('Sending payload:', payload)
+                    const response = await Teachers.bulkStore(payload)
+                    console.log('Backend response:', response)
+                    if (unmapped && unmapped.length) {
+                      notify('error', `Imported but ${unmapped.length} rows have unmapped specialities`)
+                    } else {
+                      notify('success', 'Teachers imported successfully')
+                    }
+                    const items = await fetchTeachers()
+                    setTeachersList({ total: items.length, teachers: items })
+                  } catch (err) {
+                    console.error('Bulk import failed:', err)
+                    console.error('Error response data:', err?.response?.data)
+                    console.error('Error status:', err?.response?.status)
+                    console.error('Full error object:', JSON.stringify(err, null, 2))
+                    notify('error', err?.response?.data?.message || err?.message || 'Bulk import failed')
+                  } finally {
+                    setDialogLoading(false)
+                  }
+                } catch (err) {
+                  console.error('Failed reading file', err)
+                  notify('error', 'Failed to read the selected file')
+                } finally {
+                  e.target.value = ''
+                }
+              }
+              reader.onerror = () => {
+                console.error('FileReader error')
+                notify('error', 'Failed to read the selected file')
+                e.target.value = ''
+              }
+              reader.readAsBinaryString(f)
+            }}
+          />
+          <Float css='flex column a-center gap h4pc' bottom="6em" right="1em">
+            <FloatButton icon="fa-solid fa-file-arrow-up" onClick={() => { }} />
+            <FloatButton icon='fa-solid fa-plus' onClick={() => setAddmodal(true)} />
+          </Float>
         </div>
         <div ref={layoutBody} className={`gsap-y ${styles.teachersTable} ${styles.dashBGC} ${listLoading && "shimmer"}`}>
           {!listLoading && <ListTable
@@ -540,64 +634,64 @@ const AdminTeachers = () => {
             rowTitles={["Teacher", "Number", "Department", "Position", "Speciality", "phone", "Email", "Action"]}
             rowTemplate="0.6fr repeat(4, 0.4fr) 0.3fr 0.6fr 0.2fr"
 
-            dataList={{ total: testList.total, items: testList.teachers }}
+            dataList={{ total: teachersList.total, items: teachersList.teachers }}
 
             filterFunction={(s, text) =>
-                `${s.fname} ${s.lname}`.toLowerCase().includes(text.toLowerCase()) ||
-                s.email.toLowerCase().includes(text.toLowerCase()) ||
-                s.number.includes(text)
+              `${s.fname} ${s.lname}`.toLowerCase().includes(text.toLowerCase()) ||
+              s.email.toLowerCase().includes(text.toLowerCase()) ||
+              s.number.includes(text)
             }
 
             sortFunction={(a, b, sort) => {
-                if (sort === "A-Z") return a.fname.localeCompare(b.fname);
-                if (sort === "Z-A") return b.fname.localeCompare(a.fname);
-                return 0;
+              if (sort === "A-Z") return a.fname.localeCompare(b.fname);
+              if (sort === "Z-A") return b.fname.localeCompare(a.fname);
+              return 0;
             }}
 
             exportConfig={{
-                title: "Teachers List",
-                fileName: "Teachers_list",
-                headers: ["#", "Name", "Number", "Department", "Position", "Speciality", "Email", "Phone"],
-                mapRow: (s, i) => [
-                    i + 1,
-                    `${s.adj}. ${s.fname} ${s.lname}`,
-                    s.number,
-                    s.departement,
-                    s.position,
-                    s.speciality,
-                    s.email,
-                    s.phone
-                ]
+              title: "Teachers List",
+              fileName: "Teachers_list",
+              headers: ["#", "Name", "Number", "Department", "Position", "Speciality", "Email", "Phone"],
+              mapRow: (s, i) => [
+                i + 1,
+                `${s.adj}. ${s.fname} ${s.lname}`,
+                s.number,
+                s.departement,
+                s.position,
+                s.speciality,
+                s.email,
+                s.phone
+              ]
             }}
 
             rowRenderer={(teacher) => (
-                <>
-                    <div className="flex row a-center gap">
-                        <Profile img={teacher.image} width='35px' classes='clickable' border="2px solid var(--bg)"/>
-                        <Text align='left' text={`${teacher.adj}. ${teacher.fname} ${teacher.lname}`} size='var(--text-m)'/>
-                    </div>
+              <>
+                <div className="flex row a-center gap">
+                  <Profile img={teacher.image} width='35px' classes='clickable' border="2px solid var(--bg)" />
+                  <Text align='left' text={`${teacher.adj}. ${teacher.fname} ${teacher.lname}`} size='var(--text-m)' />
+                </div>
 
-                    <Text align='left' text={teacher.number} size='var(--text-m)'/>
-                    <Text align='left' text={teacher.departement} size='var(--text-m)'/>
-                    <Text align='left' text={teacher.position} size='var(--text-m)'/>
-                    <Text align='left' text={teacher.speciality} size='var(--text-m)'/>
-                    <Text align='left' text={teacher.phone} size='var(--text-m)'/>
-                    <Text align='left' text={teacher.email} size='var(--text-m)'/>
+                <Text align='left' text={teacher.number} size='var(--text-m)' />
+                <Text align='left' text={teacher.departement} size='var(--text-m)' />
+                <Text align='left' text={teacher.position} size='var(--text-m)' />
+                <Text align='left' text={teacher.speciality} size='var(--text-m)' />
+                <Text align='left' text={teacher.phone} size='var(--text-m)' />
+                <Text align='left' text={teacher.email} size='var(--text-m)' />
 
-                    <div className="flex row center gap">
-                        <IconButton icon="fa-regular fa-pen-to-square" onClick={() => handleEditTeacher(teacher)} />
-                        <IconButton 
-                          icon="fa-regular fa-trash-can" 
-                          onClick={() => openConfirmDialog(
-                            'danger',
-                            'Delete Teacher',
-                            `Delete ${teacher.adj}. ${teacher.fname} ${teacher.lname}? This action cannot be undone.`,
-                            'delete',
-                            teacher
-                          )}
-                        />
-                    </div>
-                </>
+                <div className="flex row center gap">
+                  <IconButton icon="fa-regular fa-pen-to-square" onClick={() => handleEditTeacher(teacher)} />
+                  <IconButton
+                    icon="fa-regular fa-trash-can"
+                    onClick={() => openConfirmDialog(
+                      'danger',
+                      'Delete Teacher',
+                      `Delete ${teacher.adj}. ${teacher.fname} ${teacher.lname}? This action cannot be undone.`,
+                      'delete',
+                      teacher
+                    )}
+                  />
+                </div>
+              </>
             )}
           />}
         </div>

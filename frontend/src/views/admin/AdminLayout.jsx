@@ -2,6 +2,7 @@ import React from 'react'
 import { Outlet } from 'react-router-dom'
 import AdminSidebar from './AdminSidebar';
 import AdminAppbar from './AdminAppbar';
+import { NotifyProvider } from "../../components/loaders/NotificationContext";
 
 import styles from './admin.module.css';
 
@@ -17,9 +18,11 @@ const AdminLayout = () => {
           <AdminSidebar />
           <AdminAppbar />
         </div>
-        <div className={`full ${styles.content}`}>
-          <Outlet />
-        </div>
+        <NotifyProvider>
+          <div className={`full ${styles.content}`}>
+            <Outlet />
+          </div>
+        </NotifyProvider>
     </section>
   )
 }

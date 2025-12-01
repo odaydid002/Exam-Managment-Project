@@ -20,12 +20,13 @@ import gsap from 'gsap'
 */
 
 const SelectInput = ({ 
-  mrg = "0", w = "max-content", 
+  mrg = "0", w = "fit-content", 
   options = [{value:"", text:""}], 
   onChange = () =>{},
   indexed = false,
   icon = null,
-  bg = 'var(--trans-grey)'
+  bg = 'var(--trans-grey)',
+  value = null
 }) => {
     const varStyles = {
         margin: mrg,
@@ -40,6 +41,17 @@ const SelectInput = ({
 
     const containerRef = useRef(null);
     const listRef = useRef(null);
+
+    useEffect(() => {
+      // Set initial selected value from prop
+      if (value !== null && options.length > 0) {
+        const foundIndex = options.findIndex(opt => opt.value === value || opt.value === String(value))
+        if (foundIndex !== -1) {
+          setSelected(foundIndex)
+          setselectedVal(options[foundIndex].value)
+        }
+      }
+    }, [value, options])
 
     useEffect(() => {
     if (!listRef.current || !containerRef.current) return;

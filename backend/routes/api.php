@@ -82,7 +82,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/groups/{code}', [GroupeController::class, 'show']);
     Route::put('/groups/edit/{code}', [GroupeController::class, 'update']);
     Route::delete('/groups/delete/{code}', [GroupeController::class, 'destroy']);
-    Route::post('/groups/{code}/delegate/set', [GroupeController::class, 'setDelegate']);
-    Route::put('/groups/{code}/delegate/edit', [GroupeController::class, 'changeDelegate']);
-    Route::delete('/groups/{code}/delegate/remove', [GroupeController::class, 'removeDelegate']);
+        // Group Delegate
+        Route::post('/groups/{code}/delegate/set', [GroupeController::class, 'setDelegate']);
+        Route::put('/groups/{code}/delegate/edit', [GroupeController::class, 'changeDelegate']);
+        Route::delete('/groups/{code}/delegate/remove', [GroupeController::class, 'removeDelegate']);
 });

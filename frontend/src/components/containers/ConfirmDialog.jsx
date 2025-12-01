@@ -11,6 +11,7 @@ const ConfirmDialog = ({
     message = 'Are you sure?',
     confirmText = 'Confirm',
     cancelText = 'Cancel',
+    isloading = false,
     onConfirm = () => {},
     onCancel = () => {},
 }) => {
@@ -76,26 +77,30 @@ const ConfirmDialog = ({
                     {isDanger ? (
                         <button
                             onClick={onConfirm}
+                            disabled={isloading}
                             style={{
                                 padding: '0.6em 1.5em',
-                                background: 'rgb(255, 81, 0)',
+                                background: isloading ? 'rgb(200, 80, 50)' : 'rgb(255, 81, 0)',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '0.5em',
-                                cursor: 'pointer',
+                                cursor: isloading ? 'not-allowed' : 'pointer',
                                 fontSize: 'var(--text-m)',
                                 fontWeight: 'bold',
                                 transition: 'all 0.2s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.6em',
+                                justifyContent: 'center'
                             }}
-                            onMouseEnter={(e) => e.target.style.background = 'rgb(255, 65, 0)'}
-                            onMouseLeave={(e) => e.target.style.background = 'rgb(255, 81, 0)'}
                         >
-                            {confirmText}
+                            {isloading ? (<><i className="fa-solid fa-spinner fa-spin"></i> Processing...</>) : confirmText}
                         </button>
                     ) : (
                         <PrimaryButton
                             text={confirmText}
                             onClick={onConfirm}
+                            isLoading={isloading}
                         />
                     )}
                 </div>
