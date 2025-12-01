@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -14,192 +14,73 @@ import IconButton from '../../components/buttons/IconButton';
 import FloatButton from '../../components/buttons/FloatButton';
 import { ListTable } from '../../components/tables/ListTable';
 import Profile from '../../components/containers/profile';
+import Popup from '../../components/containers/Popup';
+import TextInput from '../../components/input/TextInput';
+import SelectInput from '../../components/input/SelectInput';
+import ImageInput from '../../components/input/ImageInput';
+import ConfirmDialog from '../../components/containers/ConfirmDialog';
+import { Students, Specialities, Groups } from '../../API'
+import * as XLSX from 'xlsx'
+import { useNotify } from '../../components/loaders/NotificationContext';
 
 const AdminStudents = () => {
 
   document.title = "Unitime - Students";
 
-  const testList = {
-    total: 13,
-    students: [
-        {
-            fname: "Amine",
-            lname: "Belkacem",
-            gender: "M",
-            number: "39082793",
-            level: "1 Master",
-            departement: "IT",
-            speciality: "SE",
-            section: "A1",
-            group: "G2",
-            email: "amine.belkacem@univ-tlemcen.dz",
-            image: "https://avatar.iran.liara.run/public/36"
-        },
-        {
-            fname: "Sara",
-            lname: "Bennani",
-            gender: "F",
-            number: "40192833",
-            level: "2 Licence",
-            departement: "IT",
-            speciality: "AI",
-            section: "B2",
-            group: "G1",
-            email: "sara.bennani@univ-tlemcen.dz",
-            image: "https://avatar.iran.liara.run/public/15"
-        },
-        {
-            fname: "Yacine",
-            lname: "Khaldi",
-            gender: "M",
-            number: "37819203",
-            level: "3 Licence",
-            departement: "IT",
-            speciality: "NW",
-            section: "C3",
-            group: "G4",
-            email: "yacine.khaldi@univ-tlemcen.dz",
-            image: "https://avatar.iran.liara.run/public/42"
-        },
+  const [listLoading, setListLoading] = useState(false)
+  const [dialogLoading, setDialogLoading] = useState(false)
+  const [studentsList, setStudentsList] = useState({ total: 0, students: [] })
+  const [specialitiesOptions, setSpecialitiesOptions] = useState([])
+  const [groupsOptions, setGroupsOptions] = useState([])
+  const [addmodal, setAddmodal] = useState(false)
+  const [editingStudent, setEditingStudent] = useState(null)
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: 'normal', title: '', message: '', action: null, actionData: null })
+  const [formData, setFormData] = useState({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', email: '', image: null })
+  const fileInputRef = useRef(null)
+  const { notify } = useNotify()
+  const [importLoading, setImportLoading] = useState(false)
+  
+  const fetchStudents = async () => {
+    try {
+      setListLoading(true)
+      const resp = await Students.getAll()
+      const data = resp ?? []
+      const items = Array.isArray(data) ? data : (data.data || data.items || data.students || [])
+      setStudentsList({ total: items.length, students: items })
+    } catch (err) {
+      console.error('Failed to fetch students', err)
+      notify('error', 'Failed to fetch students')
+    } finally {
+      setListLoading(false)
+    }
+  }
 
-        {
-            fname: "Lina",
-            lname: "Saidi",
-            gender: "F",
-            number: "41239822",
-            level: "1 Licence",
-            departement: "Math",
-            speciality: "ST",
-            section: "S1",
-            group: "G1",
-            email: "lina.saidi@univ-tlemcen.dz",
-            image: "https://avatar.iran.liara.run/public/25"
-        },
-        {
-            fname: "Walid",
-            lname: "Dahmani",
-            gender: "M",
-            number: "40922188",
-            level: "2 Master",
-            departement: "Physics",
-            speciality: "OP",
-            section: "P2",
-            group: "G3",
-            email: "walid.dahmani@univ-tlemcen.dz",
-            image: "https://avatar.iran.liara.run/public/38"
-        },
-        {
-            fname: "Nour",
-            lname: "Harrar",
-            gender: "F",
-            number: "39871204",
-            level: "3 Licence",
-            departement: "IT",
-            speciality: "CY",
-            section: "C1",
-            group: "G2",
-            email: "nour.harrar@univ-tlemcen.dz",
-            image: "https://avatar.iran.liara.run/public/82"
-        },
-        {
-            fname: "Samir",
-            lname: "Meftah",
-            gender: "M",
-            number: "42019277",
-            level: "1 Master",
-            departement: "Biology",
-            speciality: "GE",
-            section: "B3",
-            group: "G1",
-            email: "samir.meftah@univ-tlemcen.dz",
-            image: "https://avatar.iran.liara.run/public/9"
-        },
-        {
-            fname: "Dina",
-            lname: "Merabet",
-            gender: "F",
-            number: "40281739",
-            level: "2 Licence",
-            departement: "Chemistry",
-            speciality: "OC",
-            section: "O2",
-            group: "G2",
-            email: "dina.merabet@univ-tlemcen.dz",
-            image: "https://avatar.iran.liara.run/public/74"
-        },
-        {
-            fname: "Karim",
-            lname: "Bouzid",
-            gender: "M",
-            number: "41103928",
-            level: "3 Licence",
-            departement: "IT",
-            speciality: "SE",
-            section: "A2",
-            group: "G3",
-            email: "karim.bouzid@univ-tlemcen.dz",
-            image: "https://avatar.iran.liara.run/public/33"
-        },
-        {
-            fname: "Hiba",
-            lname: "Talbi",
-            gender: "F",
-            number: "41723980",
-            level: "1 Licence",
-            departement: "Economics",
-            speciality: "FI",
-            section: "F1",
-            group: "G2",
-            email: "hiba.talbi@univ-tlemcen.dz",
-            image: "https://avatar.iran.liara.run/public/77"
-        },
-        {
-            fname: "Omar",
-            lname: "Cherif",
-            gender: "M",
-            number: "39502817",
-            level: "1 Master",
-            departement: "IT",
-            speciality: "AI",
-            section: "B1",
-            group: "G4",
-            email: "omar.cherif@univ-tlemcen.dz",
-            image: "https://avatar.iran.liara.run/public/8"
-        },
-        {
-            fname: "Rania",
-            lname: "Bakir",
-            gender: "F",
-            number: "42173820",
-            level: "2 Licence",
-            departement: "IT",
-            speciality: "NW",
-            section: "N3",
-            group: "G1",
-            email: "rania.bakir@univ-tlemcen.dz",
-            image: "https://avatar.iran.liara.run/public/56"
-        },
-        {
-            fname: "Imad",
-            lname: "Zerrouki",
-            gender: "M",
-            number: "38920173",
-            level: "3 Licence",
-            departement: "Mathematics",
-            speciality: "AM",
-            section: "M4",
-            group: "G3",
-            email: "imad.zerrouki@univ-tlemcen.dz",
-            image: "https://avatar.iran.liara.run/public/19"
-        }
-    ]
-  };
+  useEffect(() => {
+    let mounted = true
+    fetchStudents()
+    const loadExtras = async () => {
+      try {
+        const sp = await Specialities.getAll()
+        const listS = Array.isArray(sp) ? sp : (sp.data || sp.items || sp.specialities || [])
+        const sOptions = listS.map(item => ({ value: item.id || item.value || item.name, text: item.name || item.title || item.speciality || item }))
+        if (mounted) setSpecialitiesOptions(sOptions)
+      } catch (err) { console.warn('Failed to load specialities', err) }
+      try {
+        const gr = await Groups.getAll()
+        const listG = Array.isArray(gr) ? gr : (gr.data || gr.items || gr.groups || [])
+        const gOptions = listG.map(item => ({ value: item.id || item.value || item.name, text: item.name || item.title || item.group || item }))
+        if (mounted) setGroupsOptions(gOptions)
+      } catch (err) { console.warn('Failed to load groups', err) }
+    }
+    loadExtras()
+    return () => { mounted = false }
+  }, [])
 
   const layoutPath = useRef(null);
   const layoutHead = useRef(null);
   const layoutBody = useRef(null);
 
-  useEffect(() => {
+    useEffect(() => {
       const HH = layoutPath.current.offsetHeight + layoutHead.current.offsetHeight
       layoutBody.current.style.maxHeight = `calc(100vh - ${HH}px - 2.5em)`
       }, []);
@@ -216,6 +97,67 @@ const AdminStudents = () => {
 
   return (
     <div className={`${styles.teachersLayout} full scrollbar`}>
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        type={confirmDialog.type}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        isloading={dialogLoading}
+        confirmText={confirmDialog.type === 'danger' ? 'Delete' : 'Confirm'}
+        onConfirm={async () => {
+          setDialogLoading(true)
+          try {
+            if (confirmDialog.action === 'delete') {
+              await Students.remove(confirmDialog.actionData.number)
+              notify('success', 'Student deleted')
+              await fetchStudents()
+            }
+          } catch (err) { console.error(err); notify('error', 'Action failed') } finally { setDialogLoading(false); setConfirmDialog({ ...confirmDialog, isOpen: false }) }
+        }}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+      />
+      <Popup isOpen={addmodal} blur={2} bg='rgba(0,0,0,0.1)' onClose={() => setAddmodal(false)}>
+        <div className={`${styles.dashBGC}`} style={{ maxWidth: '700px', borderRadius: '0.8em', padding: '2em' }}>
+          <div className="flex row a-center j-spacebet w100" style={{ marginBottom: '1.5em' }}>
+            <Text text={editingStudent ? 'Edit Student' : 'Add Student'} size='var(--text-l)' w='600' />
+            <IconButton icon='fa-solid fa-xmark' color='var(--text)' size='var(--text-l)' onClick={() => setAddmodal(false)} />
+          </div>
+          <div className="flex row a-center gap" style={{ gap: '2em' }}>
+            <div className="flex column gap" style={{ flex: 1 }}>
+              <div className="flex row a-center gap">
+                <div style={{ flex: 1 }}>
+                  <TextInput label="First Name" placeholder='First Name' value={formData.fname} width='100%' onchange={(e) => setFormData(prev => ({ ...prev, fname: e.target.value }))} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <TextInput label="Last Name" placeholder='Last Name' value={formData.lname} width='100%' onchange={(e) => setFormData(prev => ({ ...prev, lname: e.target.value }))} />
+                </div>
+              </div>
+              <div className="flex row a-center gap">
+                <TextInput label="Number" placeholder='Student Number' value={formData.number} width='40%' onchange={(e) => setFormData(prev => ({ ...prev, number: e.target.value }))} />
+                <TextInput label="Email" placeholder='Email' value={formData.email} width='60%' onchange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} />
+              </div>
+              <div className="flex row a-end gap">
+                <TextInput label="Level" placeholder='Level' value={formData.level} width='48%' onchange={(e) => setFormData(prev => ({ ...prev, level: e.target.value }))} />
+                <div style={{ width: '52%' }}>
+                  <SelectInput value={formData.speciality} options={specialitiesOptions.length ? specialitiesOptions : [{ value: '', text: 'Select speciality' }]} onChange={(val) => setFormData(prev => ({ ...prev, speciality: val }))} />
+                </div>
+              </div>
+            </div>
+            <ImageInput label='Photo' width='140px' height='140px' onchange={(file) => setFormData(prev => ({ ...prev, image: file }))} />
+          </div>
+          <div className="flex row a-center gap w100" style={{ margin: "1em 0 2em 0" }}>
+            <TextInput label="Phone" placeholder='Phone' value={formData.phone} width='50%' onchange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))} />
+            <TextInput label="Section" placeholder='Section' value={formData.section} width='50%' onchange={(e) => setFormData(prev => ({ ...prev, section: e.target.value }))} />
+          </div>
+          <div className="flex row a-center gap mrt">
+            <SecondaryButton text='Cancel' onClick={() => setAddmodal(false)} />
+            <PrimaryButton text={editingStudent ? 'Update Student' : 'Add Student'} onClick={async () => {
+              // confirmation
+              setConfirmDialog({ isOpen: true, type: 'normal', title: editingStudent ? 'Update Student' : 'Add Student', message: editingStudent ? `Update student ${formData.fname} ${formData.lname}?` : `Add new student ${formData.fname} ${formData.lname}?`, action: editingStudent ? 'edit' : 'add', actionData: null })
+            }} />
+          </div>
+        </div>
+      </Popup>
       <div ref={layoutPath} className={`${styles.teachersHeader} h4p`}>
         <div className={`${styles.teachersPath} flex`}>
           <Text css='h4p' align='left' text='Main /' color='var(--text-low)' size='var(--text-m)' />
@@ -226,72 +168,202 @@ const AdminStudents = () => {
         <div ref={layoutHead} className={`${styles.teachersHead} flex row a-center j-spacebet`}>
             <Text align='left' text='Students List' w='600' color='var(--text)' size='var(--text-l)'/>
             <div className="flex row h100 a-center gap h4p">
-              <SecondaryButton text="Import List" icon="fa-regular fa-file-excel" onClick={()=>{}}/>
-              <PrimaryButton text='Add Student' icon='fa-solid fa-plus' onClick={()=>{}}/>
+              <SecondaryButton isLoading={importLoading} text="Import List" icon="fa-regular fa-file-excel" onClick={() => fileInputRef.current && fileInputRef.current.click()} />
+              <PrimaryButton text='Add Student' icon='fa-solid fa-plus' onClick={() => { setEditingStudent(null); setFormData({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', email: '', image: null }); setAddmodal(true) }} />
             </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const f = e.target.files && e.target.files[0]
+                  if (!f) return
+                  const reader = new FileReader()
+                  reader.onload = async (event) => {
+                    try {
+                      const data = event.target.result
+                      setImportLoading(true)
+                      const workbook = XLSX.read(data, { type: 'binary' })
+                      const firstSheetName = workbook.SheetNames[0]
+                      const worksheet = workbook.Sheets[firstSheetName]
+                      const raw = XLSX.utils.sheet_to_json(worksheet, { defval: null })
+
+                      if (!raw || !raw.length) {
+                        notify('error', 'Imported file is empty')
+                        return
+                      }
+
+                      let freshSpecialities = []
+                      let freshGroups = []
+                      try {
+                        const sp = await Specialities.getAll()
+                        freshSpecialities = Array.isArray(sp) ? sp : (sp.data || sp.items || sp.specialities || [])
+                      } catch (err) { console.warn('Failed to fetch specialities for mapping', err) }
+                      try {
+                        const gr = await Groups.getAll()
+                        freshGroups = Array.isArray(gr) ? gr : (gr.data || gr.items || gr.groups || [])
+                      } catch (err) { console.warn('Failed to fetch groups for mapping', err) }
+
+                      const specMap = new Map()
+                      freshSpecialities.forEach(s => {
+                        const name = (s.name || s.title || s.speciality || '').toLowerCase().trim()
+                        if (name) specMap.set(name, s.id || s.value || s.key || s)
+                      })
+                      const groupMap = new Map()
+                      freshGroups.forEach(g => {
+                        const name = (g.name || g.title || g.group || '').toLowerCase().trim()
+                        if (name) groupMap.set(name, g.id || g.value || g.key || g)
+                      })
+
+                      const fieldMap = {
+                        fname: ['fname', 'first name', 'firstname', 'first_name'],
+                        lname: ['lname', 'last name', 'lastname', 'last_name'],
+                        number: ['number', 'student number', 'id', 'code'],
+                        level: ['level', 'lvl'],
+                        departement: ['department', 'departement', 'faculty', 'dept'],
+                        speciality: ['speciality', 'specialty', 'specialisation', 'speciality_id'],
+                        section: ['section'],
+                        group: ['group', 'group name', 'group_id'],
+                        email: ['email', 'e-mail']
+                      }
+
+                      const normalizeRow = (row) => {
+                        const normalized = {}
+                        Object.entries(fieldMap).forEach(([apiField, possibles]) => {
+                          const key = Object.keys(row).find(k => possibles.includes(String(k).toLowerCase().trim()))
+                          if (key && row[key] != null) normalized[apiField] = row[key]
+                        })
+
+                        if (normalized.speciality && typeof normalized.speciality === 'string') {
+                          const id = specMap.get(normalized.speciality.toLowerCase().trim())
+                          normalized.speciality_id = id != null ? id : null
+                          delete normalized.speciality
+                        } else if (row.speciality_id != null) {
+                          const n = parseInt(row.speciality_id, 10)
+                          normalized.speciality_id = isNaN(n) ? null : n
+                        }
+
+                        if (normalized.group && typeof normalized.group === 'string') {
+                          const gid = groupMap.get(normalized.group.toLowerCase().trim())
+                          normalized.group_id = gid != null ? gid : null
+                          delete normalized.group
+                        } else if (row.group_id != null) {
+                          const n = parseInt(row.group_id, 10)
+                          normalized.group_id = isNaN(n) ? null : n
+                        }
+
+                        return normalized
+                      }
+
+                      const transformed = raw.map(normalizeRow)
+                      console.log('Students import - parsed:', raw)
+                      console.log('Students import - transformed:', transformed)
+
+                      const unmappedSpecs = transformed.map((r, i) => ({ row: i + 1, ok: r.speciality_id != null }))
+                        .filter(x => !x.ok).map(x => x.row)
+                      const unmappedGroups = transformed.map((r, i) => ({ row: i + 1, ok: r.group_id != null }))
+                        .filter(x => !x.ok).map(x => x.row)
+
+                      try {
+                        const payload = { students: transformed }
+                        const resp = await Students.bulkStore(payload)
+                        console.log('Students bulk response:', resp)
+                        if (unmappedSpecs.length || unmappedGroups.length) {
+                          notify('error', `Imported but unmapped items - specialities rows: ${unmappedSpecs.join(', ') || 'none'}; groups rows: ${unmappedGroups.join(', ') || 'none'}`)
+                        } else {
+                          notify('success', 'Students imported successfully')
+                        }
+                        await fetchStudents()
+                      } catch (err) {
+                        console.error('Students bulk import failed', err)
+                        notify('error', err?.response?.data?.message || err?.message || 'Bulk import failed')
+                      }
+
+                    } catch (err) {
+                      console.error('Failed reading file', err)
+                      notify('error', 'Failed to read the selected file')
+                    } finally {
+                      setImportLoading(false)
+                      e.target.value = ''
+                    }
+                  }
+                  reader.onerror = () => {
+                    console.error('FileReader error')
+                    notify('error', 'Failed to read the selected file')
+                    e.target.value = ''
+                    setImportLoading(false)
+                  }
+                  reader.readAsBinaryString(f)
+                }}
+              />
               <Float css='flex column a-center gap h4pc' bottom="6em" right="1em">
-                <FloatButton icon="fa-solid fa-file-arrow-up" onClick={()=>{}} isLoading ={true}/>
-                <FloatButton icon='fa-solid fa-plus' onClick={()=>{}}/>
+                <FloatButton icon="fa-solid fa-file-arrow-up" onClick={() => fileInputRef.current && fileInputRef.current.click()} isLoading={importLoading} />
+                <FloatButton icon='fa-solid fa-plus' onClick={() => { setEditingStudent(null); setFormData({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', email: '', image: null }); setAddmodal(true) }} />
               </Float>
         </div>
         <div ref={layoutBody} className={`gsap-y ${styles.teachersTable} ${styles.dashBGC} full`}>
           <ListTable
-            title="Students"
-            rowTitles={["Student", "Number", "Department", "Level", "Speciality", "Section", "Group", "Email", "Action"]}
-            rowTemplate="0.4fr 0.4fr 0.3fr 0.3fr 0.3fr 0.2fr 0.2fr 0.6fr 0.2fr"
+          title="Students"
+          rowTitles={["Student", "Number", "Department", "Level", "Speciality", "Section", "Group", "Email", "Action"]}
+          rowTemplate="0.4fr 0.4fr 0.3fr 0.3fr 0.3fr 0.2fr 0.2fr 0.6fr 0.2fr"
 
-            dataList={{ total: testList.total, items: testList.students }}
+          dataList={{ total: studentsList.total, items: studentsList.students }}
 
-            filterFunction={(s, text) =>
-                `${s.fname} ${s.lname}`.toLowerCase().includes(text.toLowerCase()) ||
-                s.email.toLowerCase().includes(text.toLowerCase()) ||
-                s.number.includes(text)
-            }
+          filterFunction={(s, text) =>
+            `${s.fname} ${s.lname}`.toLowerCase().includes(text.toLowerCase()) ||
+            (s.email || '').toLowerCase().includes(text.toLowerCase()) ||
+            (s.number || '').includes(text)
+          }
 
-            sortFunction={(a, b, sort) => {
-                if (sort === "A-Z") return a.fname.localeCompare(b.fname);
-                if (sort === "Z-A") return b.fname.localeCompare(a.fname);
-                return 0;
-            }}
+          sortFunction={(a, b, sort) => {
+            if (sort === "A-Z") return a.fname.localeCompare(b.fname);
+            if (sort === "Z-A") return b.fname.localeCompare(a.fname);
+            return 0;
+          }}
 
-            exportConfig={{
-                title: "Students List",
-                fileName: "students_list",
-                headers: ["#", "Name", "Email", "Number", "Level", "Department", "Speciality", "Section", "Group"],
-                mapRow: (s, i) => [
-                    i + 1,
-                    `${s.fname} ${s.lname}`,
-                    s.email,
-                    s.number,
-                    s.level,
-                    s.departement,
-                    s.speciality,
-                    s.section,
-                    s.group
-                ]
-            }}
+          exportConfig={{
+            title: "Students List",
+            fileName: "students_list",
+            headers: ["#", "Name", "Email", "Number", "Level", "Department", "Speciality", "Section", "Group"],
+            mapRow: (s, i) => [
+              i + 1,
+              `${s.fname} ${s.lname}`,
+              s.email,
+              s.number,
+              s.level,
+              s.departement,
+              s.speciality,
+              s.section,
+              s.group
+            ]
+          }}
 
-            rowRenderer={(student) => (
-                <>
-                    <div className="flex row a-center gap">
-                        <Profile img={student.image} width='35px' classes='clickable' border="2px solid var(--bg)"/>
-                        <Text align='left' text={`${student.fname} ${student.lname}`} size='var(--text-m)'/>
-                    </div>
+          rowRenderer={(student) => (
+            <>
+              <div className="flex row a-center gap">
+                <Profile img={student.image} width='35px' classes='clickable' border="2px solid var(--bg)"/>
+                <Text align='left' text={`${student.fname} ${student.lname}`} size='var(--text-m)'/>
+              </div>
 
-                    <Text align='left' text={student.number} size='var(--text-m)'/>
-                    <Text align='left' text={student.departement} size='var(--text-m)'/>
-                    <Text align='left' text={student.level} size='var(--text-m)'/>
-                    <Text align='left' text={student.speciality} size='var(--text-m)'/>
-                    <Text align='left' text={student.section} size='var(--text-m)'/>
-                    <Text align='left' text={student.group} size='var(--text-m)'/>
-                    <Text align='left' text={student.email} size='var(--text-m)'/>
+              <Text align='left' text={student.number} size='var(--text-m)'/>
+              <Text align='left' text={student.departement} size='var(--text-m)'/>
+              <Text align='left' text={student.level} size='var(--text-m)'/>
+              <Text align='left' text={student.speciality} size='var(--text-m)'/>
+              <Text align='left' text={student.section} size='var(--text-m)'/>
+              <Text align='left' text={student.group} size='var(--text-m)'/>
+              <Text align='left' text={student.email} size='var(--text-m)'/>
 
-                    <div className="flex row center gap">
-                        <IconButton icon="fa-regular fa-pen-to-square" />
-                        <IconButton icon="fa-regular fa-trash-can" />
-                    </div>
-                </>
-            )}
+              <div className="flex row center gap">
+                <IconButton icon="fa-regular fa-pen-to-square" onClick={() => {
+                  setEditingStudent(student)
+                  setFormData({ fname: student.fname || '', lname: student.lname || '', number: student.number || '', level: student.level || '', departement: student.departement || '', speciality: student.speciality_id || student.speciality || '', section: student.section || '', group: student.group || '', email: student.email || '', image: student.image || null })
+                  setAddmodal(true)
+                }} />
+                <IconButton icon="fa-regular fa-trash-can" onClick={() => setConfirmDialog({ isOpen: true, type: 'danger', title: 'Delete Student', message: `Delete ${student.fname} ${student.lname}?`, action: 'delete', actionData: student })} />
+              </div>
+            </>
+          )}
           />
 
         </div>

@@ -26,6 +26,7 @@ class StudentController extends Controller
             $user = $s->user;
             $group = $s->group;
             $speciality = $s->speciality;
+            $department = $speciality && method_exists($speciality, 'department') ? $speciality->department : null;
 
             return [
                 'fname' => $user->fname ?? null,
@@ -33,6 +34,8 @@ class StudentController extends Controller
                 'number' => (string) $s->number,
                 'group_code' => $group->code ?? null,
                 'speciality' => $speciality->name ?? null,
+                'department' => $department->name ?? null,
+                'department_id' => $department->id ?? null,
                 'level' => $s->level ?? null,
                 'phone' => $user->phone ?? null,
                 'email' => $user->email ?? null,
@@ -295,12 +298,16 @@ class StudentController extends Controller
             $group = $student->group;
             $speciality = $student->speciality;
 
+            $department = $speciality && method_exists($speciality, 'department') ? $speciality->department : null;
+
             return response()->json([
                 'fname' => $user->fname ?? null,
                 'lname' => $user->lname ?? null,
                 'number' => (string) $student->number,
                 'group_code' => $group->code ?? null,
                 'speciality' => $speciality->name ?? null,
+                'department' => $department->name ?? null,
+                'department_id' => $department->id ?? null,
                 'level' => $student->level ?? null,
                 'phone' => $user->phone ?? null,
                 'email' => $user->email ?? null,
@@ -321,12 +328,16 @@ class StudentController extends Controller
         $group = $student->group;
         $speciality = $student->speciality;
 
+        $department = $speciality && method_exists($speciality, 'department') ? $speciality->department : null;
+
         return response()->json([
             'fname' => $user->fname ?? null,
             'lname' => $user->lname ?? null,
             'number' => (string) $student->number,
             'group_code' => $group->code ?? null,
             'speciality' => $speciality->name ?? null,
+            'department' => $department->name ?? null,
+            'department_id' => $department->id ?? null,
             'level' => $student->level ?? null,
             'phone' => $user->phone ?? null,
             'email' => $user->email ?? null,

@@ -40,7 +40,7 @@ const Login = () => {
         setLoading(false);
         authCheck(
           ()=>{
-            //navigate('/admin')
+            navigate('/admin')
           },
           ()=>{
             navigate('/login')

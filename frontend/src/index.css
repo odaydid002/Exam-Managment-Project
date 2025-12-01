@@ -110,6 +110,13 @@ input:-webkit-autofill:active{
   cursor: default;
 }
 
+.ellipsis{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+}
+
 /*  Media */
 
 @media (max-width: 767px) {

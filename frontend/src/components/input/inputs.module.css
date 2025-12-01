@@ -38,7 +38,7 @@
   display: block !important;
   visibility: hidden !important;
   position: absolute !important;
-  left: -9999px; /* optional extra safety */
+  left: -9999px;
 }
 
 .selectElement{
@@ -85,4 +85,12 @@
 
 .checked{
     visibility: visible;
+}
+
+.ellipsis p,
+.ellipsis .text-m {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
 }

@@ -1,24 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import styles from './inputs.module.css'
 
-import gsap from 'gsap'
-
-/*  Options List Strecture 
-
-[
-    {
-        value:"",
-        text:"",
-    },
-    {
-        value:"",
-        text:"",
-    },
-    ...
-]
-
-*/
-
 const SelectInput = ({ 
   mrg = "0", w = "fit-content", 
   options = [{value:"", text:""}], 
@@ -43,7 +25,6 @@ const SelectInput = ({
     const listRef = useRef(null);
 
     useEffect(() => {
-      // Set initial selected value from prop
       if (value !== null && options.length > 0) {
         const foundIndex = options.findIndex(opt => opt.value === value || opt.value === String(value))
         if (foundIndex !== -1) {
@@ -54,12 +35,41 @@ const SelectInput = ({
     }, [value, options])
 
     useEffect(() => {
-    if (!listRef.current || !containerRef.current) return;
-        listRef.current.classList.add(styles.measure);
-        const width = listRef.current.offsetWidth;
-        containerRef.current.style.width = width + 10 + "px";
-        listRef.current.classList.remove(styles.measure);
-    }, []);
+      if (!listRef.current || !containerRef.current) return;
+      const measure = () => {
+        try {
+          const listEl = listRef.current;
+          const containerEl = containerRef.current;
+
+          const items = listEl.querySelectorAll('li');
+          let max = 0;
+          items.forEach(li => {
+            const p = li.querySelector('p')
+            const w = p ? p.getBoundingClientRect().width : li.getBoundingClientRect().width
+            if (w > max) max = w
+          })
+
+          const selectedP = containerEl.querySelector('> div p')
+          if (selectedP) {
+            const sw = selectedP.getBoundingClientRect().width
+            if (sw > max) max = sw
+          }
+
+          const EXTRA = 72
+          const finalWidth = Math.ceil(max + EXTRA)
+          containerEl.style.width = finalWidth + 'px'
+        } catch (err) {
+          containerRef.current.style.width = 'auto'
+        }
+      }
+
+      const t = setTimeout(measure, 0)
+      window.addEventListener('resize', measure)
+      return () => {
+        clearTimeout(t)
+        window.removeEventListener('resize', measure)
+      }
+    }, [options, value, selected])
 
     useEffect(() => {
     function handleClickOutside(e) { 
