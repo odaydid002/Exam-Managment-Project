@@ -18,7 +18,9 @@ cp .env.example .env
 
 php artisan key:generate
 
-php artisan migrate
+php artisan migrate:fresh
+
+php artisan db:seed --class=InitialSeeder
 
 cd ..
 
@@ -46,7 +48,9 @@ cd backend
 
 composer install
 
-php artisan migrate --force
+php artisan migrate:fresh
+
+php artisan db:seed --class=InitialSeeder
 
 php artisan optimize:clear
 
