@@ -9,6 +9,7 @@ import styles from './admin.module.css'
 import Text from '../../components/text/Text';
 import Float from '../../components/containers/Float';
 import PrimaryButton from '../../components/buttons/PrimaryButton';
+import Button from '../../components/buttons/Button';
 import SecondaryButton from '../../components/buttons/SecondaryButton';
 import IconButton from '../../components/buttons/IconButton';
 import FloatButton from '../../components/buttons/FloatButton';
@@ -47,6 +48,7 @@ const AdminStudents = () => {
       const data = resp ?? []
       const items = Array.isArray(data) ? data : (data.data || data.items || data.students || [])
       setStudentsList({ total: items.length, students: items })
+      console.log('Fetched students:', items)
     } catch (err) {
       console.error('Failed to fetch students', err)
       notify('error', 'Failed to fetch students')
@@ -94,6 +96,79 @@ const AdminStudents = () => {
     })
   });
 
+  const submitAddStudent = async () => {
+    if (!formData.fname || !formData.lname || !formData.number) {
+      notify('error', 'Missing required fields')
+      return
+    }
+    setDialogLoading(true)
+    try {
+      // Generate dicebear avatar URL if no image is provided
+      const studentName = `${formData.fname} ${formData.lname}`.trim()
+      const imageUrl = formData.image && typeof formData.image === 'string' ? formData.image : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(studentName)}`
+      
+      const payload = {
+        number: formData.number,
+        fname: formData.fname,
+        lname: formData.lname,
+        email: formData.email || null,
+        password: String(formData.number),
+        phone: formData.phone || null,
+        gender: formData.gender || null,
+        image: imageUrl,
+        group_code: formData.group ? formData.group : null,
+        speciality_id: formData.speciality ? parseInt(formData.speciality) : null,
+        level: formData.level || null,
+      }
+
+      await Students.add(payload)
+      notify('success', 'Student added')
+      await fetchStudents()
+      setFormData({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', gender: '', email: '', image: null })
+      setEditingStudent(null)
+      setAddmodal(false)
+    } catch (err) {
+      console.error('Failed to add student', err)
+      notify('error', err?.response?.data?.message || err?.message || 'Failed to add student')
+    } finally {
+      setDialogLoading(false)
+    }
+  }
+
+  const submitEditStudent = async () => {
+    if (!editingStudent || !editingStudent.number) return
+    setDialogLoading(true)
+    try {
+      // Generate dicebear avatar URL if no image is provided
+      const studentName = `${formData.fname} ${formData.lname}`.trim()
+      const imageUrl = formData.image && typeof formData.image === 'string' ? formData.image : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(studentName)}`
+      
+      const payload = {
+        fname: formData.fname || undefined,
+        lname: formData.lname || undefined,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        gender: formData.gender || undefined,
+        image: imageUrl,
+        group_code: formData.group ? formData.group : undefined,
+        speciality_id: formData.speciality ? parseInt(formData.speciality) : undefined,
+        level: formData.level || undefined,
+      }
+
+      await Students.update(editingStudent.number, payload)
+      notify('success', 'Student updated')
+      await fetchStudents()
+      setFormData({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', gender: '', email: '', image: null })
+      setEditingStudent(null)
+      setAddmodal(false)
+    } catch (err) {
+      console.error('Failed to update student', err)
+      notify('error', err?.response?.data?.message || err?.message || 'Failed to update student')
+    } finally {
+      setDialogLoading(false)
+    }
+  }
+
 
   return (
     <div className={`${styles.teachersLayout} full scrollbar`}>
@@ -111,6 +186,10 @@ const AdminStudents = () => {
               await Students.remove(confirmDialog.actionData.number)
               notify('success', 'Student deleted')
               await fetchStudents()
+            } else if (confirmDialog.action === 'add') {
+              await submitAddStudent()
+            } else if (confirmDialog.action === 'edit') {
+              await submitEditStudent()
             }
           } catch (err) { console.error(err); notify('error', 'Action failed') } finally { setDialogLoading(false); setConfirmDialog({ ...confirmDialog, isOpen: false }) }
         }}
@@ -132,12 +211,30 @@ const AdminStudents = () => {
                   <TextInput label="Last Name" placeholder='Last Name' value={formData.lname} width='100%' onchange={(e) => setFormData(prev => ({ ...prev, lname: e.target.value }))} />
                 </div>
               </div>
-              <div className="flex row a-center gap">
-                <TextInput label="Number" placeholder='Student Number' value={formData.number} width='40%' onchange={(e) => setFormData(prev => ({ ...prev, number: e.target.value }))} />
-                <TextInput label="Email" placeholder='Email' value={formData.email} width='60%' onchange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} />
+                <div className="flex row a-end gap">
+                <TextInput label="Number" placeholder='Student Number' value={formData.number} width='80%' onchange={(e) => setFormData(prev => ({ ...prev, number: e.target.value }))} />
+                <SelectInput label="Gender" value={formData.gender} options={[{text: "Male", value: "male"}, {text: "Female", value:"female"}]} onChange={(val) => setFormData(prev => ({ ...prev, gender: val }))} />
               </div>
               <div className="flex row a-end gap">
-                <TextInput label="Level" placeholder='Level' value={formData.level} width='48%' onchange={(e) => setFormData(prev => ({ ...prev, level: e.target.value }))} />
+                <TextInput 
+                  label="Level" 
+                  placeholder='Level' 
+                  value={formData.level} 
+                  width='48%' 
+                  onchange={(e) => setFormData(prev => ({ ...prev, level: e.target.value }))}
+                  dataList={[
+                    "Master 1",
+                    "Master 2",
+                    "Licence 1",
+                    "Licence 2",
+                    "Licence 3",
+                    "Engineer 1",
+                    "Engineer 2",
+                    "Engineer 3",
+                    "Engineer 4",
+                    "Engineer 5",
+                  ]}
+                />
                 <div style={{ width: '52%' }}>
                   <SelectInput value={formData.speciality} options={specialitiesOptions.length ? specialitiesOptions : [{ value: '', text: 'Select speciality' }]} onChange={(val) => setFormData(prev => ({ ...prev, speciality: val }))} />
                 </div>
@@ -146,13 +243,12 @@ const AdminStudents = () => {
             <ImageInput label='Photo' width='140px' height='140px' onchange={(file) => setFormData(prev => ({ ...prev, image: file }))} />
           </div>
           <div className="flex row a-center gap w100" style={{ margin: "1em 0 2em 0" }}>
-            <TextInput label="Phone" placeholder='Phone' value={formData.phone} width='50%' onchange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))} />
-            <TextInput label="Section" placeholder='Section' value={formData.section} width='50%' onchange={(e) => setFormData(prev => ({ ...prev, section: e.target.value }))} />
+            <TextInput label="Phone" placeholder='Phone' value={formData.phone} width='40%' onchange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))} />
+            <TextInput label="Email" placeholder='Email' value={formData.email} width='60%' onchange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} />
           </div>
           <div className="flex row a-center gap mrt">
             <SecondaryButton text='Cancel' onClick={() => setAddmodal(false)} />
             <PrimaryButton text={editingStudent ? 'Update Student' : 'Add Student'} onClick={async () => {
-              // confirmation
               setConfirmDialog({ isOpen: true, type: 'normal', title: editingStudent ? 'Update Student' : 'Add Student', message: editingStudent ? `Update student ${formData.fname} ${formData.lname}?` : `Add new student ${formData.fname} ${formData.lname}?`, action: editingStudent ? 'edit' : 'add', actionData: null })
             }} />
           </div>
@@ -167,9 +263,9 @@ const AdminStudents = () => {
       <div className={`${styles.teachersContent}`}>
         <div ref={layoutHead} className={`${styles.teachersHead} flex row a-center j-spacebet`}>
             <Text align='left' text='Students List' w='600' color='var(--text)' size='var(--text-l)'/>
-            <div className="flex row h100 a-center gap h4p">
+              <div className="flex row h100 a-center gap h4p">
               <SecondaryButton isLoading={importLoading} text="Import List" icon="fa-regular fa-file-excel" onClick={() => fileInputRef.current && fileInputRef.current.click()} />
-              <PrimaryButton text='Add Student' icon='fa-solid fa-plus' onClick={() => { setEditingStudent(null); setFormData({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', email: '', image: null }); setAddmodal(true) }} />
+              <PrimaryButton text='Add Student' icon='fa-solid fa-plus' onClick={() => { setEditingStudent(null); setFormData({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', gender: '', email: '', image: null }); setAddmodal(true) }} />
             </div>
               <input
                 ref={fileInputRef}
@@ -224,6 +320,7 @@ const AdminStudents = () => {
                         departement: ['department', 'departement', 'faculty', 'dept'],
                         speciality: ['speciality', 'specialty', 'specialisation', 'speciality_id'],
                         section: ['section'],
+                        image: ['image', 'photo', 'picture', 'img'],
                         group: ['group', 'group name', 'group_id'],
                         email: ['email', 'e-mail']
                       }
@@ -252,6 +349,9 @@ const AdminStudents = () => {
                           const n = parseInt(row.group_id, 10)
                           normalized.group_id = isNaN(n) ? null : n
                         }
+
+                        const num = normalized.number || row.number || row.Number || row.code || null
+                        normalized.password = num != null ? String(num) : null
 
                         return normalized
                       }
@@ -299,14 +399,14 @@ const AdminStudents = () => {
               />
               <Float css='flex column a-center gap h4pc' bottom="6em" right="1em">
                 <FloatButton icon="fa-solid fa-file-arrow-up" onClick={() => fileInputRef.current && fileInputRef.current.click()} isLoading={importLoading} />
-                <FloatButton icon='fa-solid fa-plus' onClick={() => { setEditingStudent(null); setFormData({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', email: '', image: null }); setAddmodal(true) }} />
+                <FloatButton icon='fa-solid fa-plus' onClick={() => { setEditingStudent(null); setFormData({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', gender: '', email: '', image: null }); setAddmodal(true) }} />
               </Float>
         </div>
         <div ref={layoutBody} className={`gsap-y ${styles.teachersTable} ${styles.dashBGC} full`}>
           <ListTable
           title="Students"
-          rowTitles={["Student", "Number", "Department", "Level", "Speciality", "Section", "Group", "Email", "Action"]}
-          rowTemplate="0.4fr 0.4fr 0.3fr 0.3fr 0.3fr 0.2fr 0.2fr 0.6fr 0.2fr"
+          rowTitles={["Student", "Number", "Department", "Level", "Speciality", "Group", "Email", "Action"]}
+          rowTemplate="0.4fr 0.2fr 0.3fr 0.2fr 0.4fr 0.3fr 0.5fr 0.2fr"
 
           dataList={{ total: studentsList.total, items: studentsList.students }}
 
@@ -325,16 +425,15 @@ const AdminStudents = () => {
           exportConfig={{
             title: "Students List",
             fileName: "students_list",
-            headers: ["#", "Name", "Email", "Number", "Level", "Department", "Speciality", "Section", "Group"],
+            headers: ["#", "Name", "Email", "Number", "Level", "Department", "Speciality", "Group"],
             mapRow: (s, i) => [
               i + 1,
               `${s.fname} ${s.lname}`,
               s.email,
               s.number,
               s.level,
-              s.departement,
+              s.department,
               s.speciality,
-              s.section,
               s.group
             ]
           }}
@@ -343,21 +442,22 @@ const AdminStudents = () => {
             <>
               <div className="flex row a-center gap">
                 <Profile img={student.image} width='35px' classes='clickable' border="2px solid var(--bg)"/>
-                <Text align='left' text={`${student.fname} ${student.lname}`} size='var(--text-m)'/>
+                <Text align='left' css='ellipsis' text={`${student.fname} ${student.lname}`} size='var(--text-m)'/>
               </div>
 
-              <Text align='left' text={student.number} size='var(--text-m)'/>
-              <Text align='left' text={student.departement} size='var(--text-m)'/>
-              <Text align='left' text={student.level} size='var(--text-m)'/>
-              <Text align='left' text={student.speciality} size='var(--text-m)'/>
-              <Text align='left' text={student.section} size='var(--text-m)'/>
-              <Text align='left' text={student.group} size='var(--text-m)'/>
-              <Text align='left' text={student.email} size='var(--text-m)'/>
+              <Text align='left' css='ellipsis' text={student.number} size='var(--text-m)'/>
+              <Text align='left' css='ellipsis' text={student.department} size='var(--text-m)'/>
+              <Text align='left' css='ellipsis' text={student.level} size='var(--text-m)'/>
+              <Text align='left' css='ellipsis' text={student.speciality} size='var(--text-m)'/>
+              {student.group_code?
+              <Text align='left' css='ellipsis' text={student.group} size='var(--text-m)'/>:
+              <Button mrg='0 0 0 0.25em' text="Attach Group" />}
+              <Text align='left' css='ellipsis' text={student.email} size='var(--text-m)'/>
 
               <div className="flex row center gap">
                 <IconButton icon="fa-regular fa-pen-to-square" onClick={() => {
                   setEditingStudent(student)
-                  setFormData({ fname: student.fname || '', lname: student.lname || '', number: student.number || '', level: student.level || '', departement: student.departement || '', speciality: student.speciality_id || student.speciality || '', section: student.section || '', group: student.group || '', email: student.email || '', image: student.image || null })
+                  setFormData({ fname: student.fname || '', lname: student.lname || '', number: student.number || '', level: student.level || '', departement: student.department || '', speciality: student.speciality_id || student.speciality || '', section: student.section || '', group: student.group_code || student.group || '', gender: student.gender || '', email: student.email || '', image: student.image || null })
                   setAddmodal(true)
                 }} />
                 <IconButton icon="fa-regular fa-trash-can" onClick={() => setConfirmDialog({ isOpen: true, type: 'danger', title: 'Delete Student', message: `Delete ${student.fname} ${student.lname}?`, action: 'delete', actionData: student })} />

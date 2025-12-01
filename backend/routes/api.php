@@ -8,6 +8,8 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\GroupeController;
+use App\Http\Controllers\ImageController;
+use App\Http\Controllers\ExamenController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +17,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/test', function () {
     return response()->json(['message' => 'Hello API']);
 });
+// Serve uploaded images (public)
+Route::get('/images/{path}', [ImageController::class, 'show'])->where('path', '.*');
 Route::post('/auth/signup', [AuthController::class, 'signup']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 
@@ -61,6 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Modules
     Route::get('/modules/all', [ModuleController::class, 'index']);
+    Route::get('/modules/stats', [ModuleController::class, 'stats']);
     Route::post('/modules/bulk', [ModuleController::class, 'bulkStore']);
     Route::post('/modules/add', [ModuleController::class, 'store']);
     Route::get('/modules/{code}', [ModuleController::class, 'show']);
@@ -86,4 +91,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/groups/{code}/delegate/set', [GroupeController::class, 'setDelegate']);
         Route::put('/groups/{code}/delegate/edit', [GroupeController::class, 'changeDelegate']);
         Route::delete('/groups/{code}/delegate/remove', [GroupeController::class, 'removeDelegate']);
+        
+    // Image upload (authenticated)
+    Route::post('/images/upload', [ImageController::class, 'upload']);
+    
+    // Exams
+    Route::get('/exams/all', [ExamenController::class, 'index']);
+    Route::post('/exams/bulk', [ExamenController::class, 'bulkStore']);
+    Route::post('/exams/add', [ExamenController::class, 'store']);
+    Route::get('/exams/{id}', [ExamenController::class, 'show']);
+    Route::put('/exams/edit/{id}', [ExamenController::class, 'update']);
+    Route::delete('/exams/delete/{id}', [ExamenController::class, 'destroy']);
 });

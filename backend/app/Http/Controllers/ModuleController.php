@@ -182,5 +182,21 @@ class ModuleController extends Controller
             'errors' => $errors,
         ]);
     }
+
+    // Return statistics about modules: total and counts by factor categories
+    public function stats()
+    {
+        $total = Module::count();
+        $fundamental = Module::where('factor', '>=', 3)->count();
+        $methodological = Module::where('factor', 2)->count();
+        $transversal = Module::where('factor', 1)->count();
+
+        return response()->json([
+            'total' => $total,
+            'fundamental' => $fundamental,
+            'methodological' => $methodological,
+            'transversal' => $transversal,
+        ]);
+    }
 }
 

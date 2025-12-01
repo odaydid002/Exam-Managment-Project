@@ -280,19 +280,19 @@ const AdminModules = () => {
       </div>
       <div ref={layoutHead} className={`${styles.modulesStatics} flex row gap wrap j-center`}>
         <div className={`gsap-y ${styles.modulesStatic} ${styles.dashBGC} grow-1 ${staticsLoading && "shimmer"}`}>
-          {!staticsLoading && <StaticsCard title='Total' value={formatNumber(0)} icon="fa-solid fa-book-bookmark" color='#2B8CDF'/>}
+          {!staticsLoading && <StaticsCard title='Total Modules' value={formatNumber(0)} icon="fa-solid fa-book-bookmark" color='#2B8CDF'/>}
 
         </div>
         <div className={`gsap-y ${styles.modulesStatic} ${styles.dashBGC} grow-1 ${staticsLoading && "shimmer"}`}>
-          {!staticsLoading && <StaticsCard title='Courses' value={formatNumber(0)} icon="fa-solid fa-book-open" color='#F1504A'/>}
+          {!staticsLoading && <StaticsCard title='Fundamental' value={formatNumber(0)} icon="fa-solid fa-book-open" color='#F1504A'/>}
 
         </div>
         <div className={`gsap-y ${styles.modulesStatic} ${styles.dashBGC} grow-1 ${staticsLoading && "shimmer"}`}>
-          {!staticsLoading && <StaticsCard title='Tutorials' value={formatNumber(0)} icon="fa-solid fa-person-chalkboard" color='#9A8CE5'/>}
+          {!staticsLoading && <StaticsCard title='Methodological' value={formatNumber(0)} icon="fa-solid fa-person-chalkboard" color='#9A8CE5'/>}
 
         </div>
         <div className={`gsap-y ${styles.modulesStatic} ${styles.dashBGC} grow-1 ${staticsLoading && "shimmer"}`}>
-          {!staticsLoading && <StaticsCard title='Practical' value={formatNumber(0)} icon="fa-solid fa-flask-vial" color='#4FB6A3'/>}
+          {!staticsLoading && <StaticsCard title='Transversal' value={formatNumber(0)} icon="fa-solid fa-flask-vial" color='#4FB6A3'/>}
 
         </div>
       </div>
