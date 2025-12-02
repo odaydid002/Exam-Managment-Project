@@ -10,6 +10,7 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\GroupeController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ExamenController;
+use App\Http\Controllers\SectionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -46,6 +47,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/specialities/{id}', [SpecialityController::class, 'show']);
     Route::put('/specialities/edit/{id}', [SpecialityController::class, 'update']);
     Route::delete('/specialities/delete/{id}', [SpecialityController::class, 'destroy']);
+
+    // Sections
+    Route::get('/sections/all', [SectionController::class, 'index']);
+    Route::post('/sections/add', [SectionController::class, 'store']);
+    Route::get('/sections/{id}', [SectionController::class, 'show']);
+    Route::put('/sections/edit/{id}', [SectionController::class, 'update']);
+    Route::delete('/sections/delete/{id}', [SectionController::class, 'destroy']);
 
     // Teachers
     Route::get('/teachers/all', [TeacherController::class, 'index']);
@@ -87,6 +95,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/groups/all', [GroupeController::class, 'index']);
     Route::post('/groups/bulk', [GroupeController::class, 'bulkStore']);
     Route::post('/groups/add', [GroupeController::class, 'store']);
+    Route::post('/groups/{code}/assign', [GroupeController::class, 'assignStudent']);
     Route::get('/groups/{code}', [GroupeController::class, 'show']);
     Route::put('/groups/edit/{code}', [GroupeController::class, 'update']);
     Route::delete('/groups/delete/{code}', [GroupeController::class, 'destroy']);

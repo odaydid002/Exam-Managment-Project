@@ -268,6 +268,7 @@ const AdminGroups = () => {
           <Text align='left' text='Groups List' size='var(--text-l)' />
           <div className="flex row a-center gap mrla">
             <PrimaryButton text='Add Group' icon='fa-solid fa-plus' onClick={()=>{}} css='h4p'/>
+            <PrimaryButton text='Generate' icon='fa-solid fa-wand-magic-sparkles' onClick={()=>{}} css='h4p'/>
             <SecondaryButton text='Export' onClick={()=>{}} css='h4p'/>
           </div>
         </div>
