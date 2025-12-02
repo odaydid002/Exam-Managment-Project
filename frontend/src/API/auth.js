@@ -1,5 +1,5 @@
 import api from './app'
-
+  
 const authCheck = async () => {
     const res = await api.get('/auth/check')
     return res.data
@@ -25,6 +25,7 @@ const refreshToken = async () => {
     }
     return res.data
 }
+
 
 const logout = () => {
     localStorage.removeItem('token')
