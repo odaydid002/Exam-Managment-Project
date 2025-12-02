@@ -360,20 +360,11 @@ const AdminStudents = () => {
                       console.log('Students import - parsed:', raw)
                       console.log('Students import - transformed:', transformed)
 
-                      const unmappedSpecs = transformed.map((r, i) => ({ row: i + 1, ok: r.speciality_id != null }))
-                        .filter(x => !x.ok).map(x => x.row)
-                      const unmappedGroups = transformed.map((r, i) => ({ row: i + 1, ok: r.group_id != null }))
-                        .filter(x => !x.ok).map(x => x.row)
-
                       try {
                         const payload = { students: transformed }
                         const resp = await Students.bulkStore(payload)
                         console.log('Students bulk response:', resp)
-                        if (unmappedSpecs.length || unmappedGroups.length) {
-                          notify('error', `Imported but unmapped items - specialities rows: ${unmappedSpecs.join(', ') || 'none'}; groups rows: ${unmappedGroups.join(', ') || 'none'}`)
-                        } else {
-                          notify('success', 'Students imported successfully')
-                        }
+                        notify('success', 'Students imported successfully')
                         await fetchStudents()
                       } catch (err) {
                         console.error('Students bulk import failed', err)
@@ -402,8 +393,8 @@ const AdminStudents = () => {
                 <FloatButton icon='fa-solid fa-plus' onClick={() => { setEditingStudent(null); setFormData({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', gender: '', email: '', image: null }); setAddmodal(true) }} />
               </Float>
         </div>
-        <div ref={layoutBody} className={`gsap-y ${styles.teachersTable} ${styles.dashBGC} full`}>
-          <ListTable
+        <div ref={layoutBody} className={`gsap-y ${styles.teachersTable} ${styles.dashBGC} full ${listLoading && "shimmer"}`}>
+          {!listLoading && <ListTable
           title="Students"
           rowTitles={["Student", "Number", "Department", "Level", "Speciality", "Group", "Email", "Action"]}
           rowTemplate="0.4fr 0.2fr 0.3fr 0.2fr 0.4fr 0.3fr 0.5fr 0.2fr"
@@ -451,7 +442,7 @@ const AdminStudents = () => {
               <Text align='left' css='ellipsis' text={student.speciality} size='var(--text-m)'/>
               {student.group_code?
               <Text align='left' css='ellipsis' text={student.group} size='var(--text-m)'/>:
-              <Button mrg='0 0 0 0.25em' text="Attach Group" />}
+              <Button mrg='0 0 0 0.25em' text="Attach Group" icon='fa-solid fa-plus'/>}
               <Text align='left' css='ellipsis' text={student.email} size='var(--text-m)'/>
 
               <div className="flex row center gap">
@@ -464,7 +455,7 @@ const AdminStudents = () => {
               </div>
             </>
           )}
-          />
+          />}
 
         </div>
       </div>
