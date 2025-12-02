@@ -15,4 +15,14 @@ const deleteAccount = async (id) => {
   return res.data
 }
 
-export { getProfile, updateProfile, deleteAccount }
+const getNotifications = async () => {
+  const res = await api.get('/notifications')
+  return res.data
+}
+
+const markNotificationsRead = async (payload) => {
+  const res = await api.post('/notifications/mark-read', payload)
+  return res.data
+}
+
+export { getProfile, updateProfile, deleteAccount, getNotifications, markNotificationsRead }

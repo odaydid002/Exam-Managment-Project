@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react'
 import { useNavigate } from "react-router-dom";
 
 import { authCheck, authLogin } from '../API/auth';
+import { useNotify } from '../components/loaders/NotificationContext';
 
 import styles from "./login.module.css"
 
@@ -16,42 +17,55 @@ const Login = () => {
 
   const navigate = useNavigate();
   useEffect(()=>{
-    authCheck(
-        ()=>{
-          navigate('/admin')
-        },
-        ()=>{
-          navigate('/login')
-        }
-      )
-  }, [])
+    let mounted = true
+    const check = async () => {
+      try {
+        const data = await authCheck()
+        if (!mounted) return
+        const user = data?.user || data
+        const role = user?.role || user?.type || user?.role_name
+        if (role === 'teacher') navigate('/teacher')
+        else if (role === 'student') navigate('/student')
+        else if (role === 'employee' || role === 'admin') navigate('/admin')
+        else navigate('/login')
+      } catch (err) {
+        if (!mounted) return
+        navigate('/login')
+      }
+    }
+
+    check()
+    return () => { mounted = false }
+  }, [navigate])
+
+  const { notify } = useNotify()
 
   const [loading,setLoading] = useState(false);
-  const [mail, setEmail] = useState("");
-  const [pass, setPassword] = useState("");
 
-  const submit = (email, password) => {
-    setLoading(true);
-    setEmail(email)
-    setPassword(password)
-    authLogin(
-      {email: mail, password: pass},
-      () => {
-        setLoading(false);
-        authCheck(
-          ()=>{
-            navigate('/admin')
-          },
-          ()=>{
-            navigate('/login')
-          }
-        )
-      },
-      () => {
-        alert('non logged')
-        setLoading(false);
+  const goToRoleRoute = (user) => {
+    const role = user?.role || user?.type || user?.role_name
+    if (role === 'teacher') navigate('/teacher')
+    else if (role === 'student') navigate('/student')
+    else if (role === 'employee' || role === 'admin') navigate('/admin')
+    else navigate('/admin')
+  }
+
+  const submit = async (email, password) => {
+    setLoading(true)
+    try {
+      const resp = await authLogin({ email, password })
+      let user = resp?.user || resp
+      if (!user || !user.role) {
+        const checked = await authCheck()
+        user = checked?.user || checked
       }
-    )
+      notify('success', 'Login successful')
+      goToRoleRoute(user)
+    } catch (err) {
+      notify('error', 'Login failed: ' + (err?.message || 'Check credentials'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

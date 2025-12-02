@@ -103,7 +103,6 @@ const AdminStudents = () => {
     }
     setDialogLoading(true)
     try {
-      // Generate dicebear avatar URL if no image is provided
       const studentName = `${formData.fname} ${formData.lname}`.trim()
       const imageUrl = formData.image && typeof formData.image === 'string' ? formData.image : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(studentName)}`
       
@@ -139,7 +138,6 @@ const AdminStudents = () => {
     if (!editingStudent || !editingStudent.number) return
     setDialogLoading(true)
     try {
-      // Generate dicebear avatar URL if no image is provided
       const studentName = `${formData.fname} ${formData.lname}`.trim()
       const imageUrl = formData.image && typeof formData.image === 'string' ? formData.image : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(studentName)}`
       
@@ -442,7 +440,7 @@ const AdminStudents = () => {
               <Text align='left' css='ellipsis' text={student.speciality} size='var(--text-m)'/>
               {student.group_code?
               <Text align='left' css='ellipsis' text={student.group} size='var(--text-m)'/>:
-              <Button mrg='0 0 0 0.25em' text="Attach Group" icon='fa-solid fa-plus'/>}
+              <Button mrg='0 0 0 0.25em' text="Assign Group" icon='fa-solid fa-plus'/>}
               <Text align='left' css='ellipsis' text={student.email} size='var(--text-m)'/>
 
               <div className="flex row center gap">

@@ -5,6 +5,11 @@ const getAll = async () => {
   return res.data
 }
 
+const stats = async () => {
+  const res = await api.get('/modules/stats')
+  return res.data
+}
+
 const bulkStore = async (list) => {
   const res = await api.post('/modules/bulk', list)
   return res.data
@@ -30,4 +35,19 @@ const remove = async (code) => {
   return res.data
 }
 
-export { getAll, bulkStore, add, get, update, remove }
+const assignTeacher = async (code, payload) => {
+  const res = await api.post(`/modules/${code}/assign`, payload)
+  return res.data
+}
+
+const updateAssignment = async (code, teacherNumber, payload) => {
+  const res = await api.put(`/modules/${code}/assign/${teacherNumber}`, payload)
+  return res.data
+}
+
+const unassignTeacher = async (code, teacherNumber) => {
+  const res = await api.delete(`/modules/${code}/assign/${teacherNumber}`)
+  return res.data
+}
+
+export { getAll, stats, bulkStore, add, get, update, remove, assignTeacher, updateAssignment, unassignTeacher }

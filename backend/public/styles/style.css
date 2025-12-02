@@ -367,3 +367,91 @@ body{
       display: none;
     }
 }
+
+/* Code block styling */
+.code-block {
+    background-color: var(--bgc);
+    border: 1px solid var(--border-low);
+    border-radius: 0.5rem;
+    padding: 1em;
+    margin: 0.5em 0;
+    font-size: 0.8rem;
+    font-family: 'Courier New', monospace;
+    overflow-x: auto;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.code-block code {
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+}
+
+/* Parameters table styling */
+.params-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5em 0;
+    font-size: 0.75rem;
+    border: 1px solid var(--border-low);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.params-table thead {
+    background-color: var(--border-low);
+}
+
+.params-table th {
+    padding: 0.75em;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text);
+    border-right: 1px solid var(--border-low);
+}
+
+.params-table th:last-child {
+    border-right: none;
+}
+
+.params-table td {
+    padding: 0.75em;
+    border-right: 1px solid var(--border-low);
+    border-bottom: 1px solid var(--border-low);
+    color: var(--text);
+}
+
+.params-table td:last-child {
+    border-right: none;
+}
+
+.params-table tr:last-child td {
+    border-bottom: none;
+}
+
+.params-table code {
+    background-color: var(--trans-grey);
+    padding: 0.2em 0.4em;
+    border-radius: 0.2rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.3em 0.6em;
+    border-radius: 0.3rem;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.badge.required {
+    background-color: rgba(241, 80, 74, 0.2);
+    color: #F1504A;
+}
+
+.badge.optional {
+    background-color: rgba(117, 117, 117, 0.2);
+    color: var(--text-low);
+}

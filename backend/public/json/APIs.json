@@ -8,29 +8,135 @@
           "method": "POST",
           "rout": "/auth/signup",
           "description": "Register new user",
-          "detail": "",
-          "auth": false
+          "detail": "Create a new user account. Returns user object and access token.",
+          "auth": false,
+          "parameters": [
+            {
+              "name": "email",
+              "type": "string (email)",
+              "required": true,
+              "description": "User's email address"
+            },
+            {
+              "name": "password",
+              "type": "string",
+              "required": true,
+              "description": "Password (min 6 characters)"
+            },
+            {
+              "name": "password_confirmation",
+              "type": "string",
+              "required": true,
+              "description": "Password confirmation must match"
+            },
+            {
+              "name": "name",
+              "type": "string",
+              "required": true,
+              "description": "User's full name"
+            },
+            {
+              "name": "type",
+              "type": "string (enum)",
+              "required": true,
+              "description": "User type: 'student', 'teacher', 'admin', 'employee'"
+            }
+          ],
+          "request": {
+            "email": "user@example.com",
+            "password": "password123",
+            "password_confirmation": "password123",
+            "name": "John Doe",
+            "type": "student"
+          },
+          "response": {
+            "user": {
+              "id": 1,
+              "email": "user@example.com",
+              "name": "John Doe",
+              "type": "student",
+              "role": "student"
+            },
+            "access_token": "token_string"
+          }
         },
         {
           "method": "POST",
           "rout": "/auth/login",
           "description": "Login and receive tokens",
-          "detail": "",
-          "auth": false
+          "detail": "Authenticate user with email and password. Returns access token for subsequent authenticated requests.",
+          "auth": false,
+          "parameters": [
+            {
+              "name": "email",
+              "type": "string (email)",
+              "required": true,
+              "description": "User's email address"
+            },
+            {
+              "name": "password",
+              "type": "string",
+              "required": true,
+              "description": "User's password"
+            }
+          ],
+          "request": {
+            "email": "user@example.com",
+            "password": "password123"
+          },
+          "response": {
+            "user": {
+              "id": 1,
+              "email": "user@example.com",
+              "name": "John Doe",
+              "type": "student",
+              "role": "student"
+            },
+            "access_token": "token_string"
+          }
         },
         {
           "method": "GET",
           "rout": "/auth/check",
           "description": "Check current authenticated user",
-          "detail": "",
-          "auth": true
+          "detail": "Verify authentication and retrieve current user info. Requires valid token in Authorization header.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "Authorization",
+              "type": "header (Bearer token)",
+              "required": true,
+              "description": "Bearer token from login response"
+            }
+          ],
+          "request": null,
+          "response": {
+            "id": 1,
+            "email": "user@example.com",
+            "name": "John Doe",
+            "type": "student",
+            "role": "student",
+            "created_at": "2024-12-01T10:00:00Z"
+          }
         },
         {
           "method": "GET",
           "rout": "/auth/refreshToken",
           "description": "Refresh authentication token",
-          "detail": "",
-          "auth": true
+          "detail": "Generate a new access token to extend session. Requires valid current token.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "Authorization",
+              "type": "header (Bearer token)",
+              "required": true,
+              "description": "Current valid bearer token"
+            }
+          ],
+          "request": null,
+          "response": {
+            "access_token": "new_token_string"
+          }
         }
       ]
     },
@@ -43,36 +149,76 @@
           "method": "GET",
           "rout": "/user/{id}/profile",
           "description": "Get user profile",
-          "detail": "",
-          "auth": true
+          "detail": "Retrieve authenticated user's profile information.",
+          "auth": true,
+          "request": null,
+          "response": {
+            "id": 1,
+            "email": "user@example.com",
+            "name": "John Doe",
+            "type": "student",
+            "image": "path/to/image.jpg"
+          }
         },
         {
           "method": "PUT",
           "rout": "/user/{id}/profile",
           "description": "Update user profile",
-          "detail": "",
-          "auth": true
+          "detail": "Modify user's profile information including image upload.",
+          "auth": true,
+          "request": {
+            "name": "John Doe",
+            "email": "john.new@example.com"
+          },
+          "response": {
+            "message": "Profile updated successfully",
+            "data": {
+              "id": 1,
+              "email": "john.new@example.com",
+              "name": "John Doe"
+            }
+          }
         },
         {
           "method": "DELETE",
           "rout": "/user/{id}/deleteAccount",
           "description": "Delete user account",
-          "detail": "",
-          "auth": true
+          "detail": "Permanently delete user account and all associated data.",
+          "auth": true,
+          "request": null,
+          "response": {
+            "message": "Account deleted successfully"
+          }
         },
         {
           "method": "GET",
           "rout": "/notifications",
           "description": "List notifications",
-          "detail": "",
-          "auth": true
+          "detail": "Fetch user's notifications.",
+          "auth": true,
+          "request": null,
+          "response": {
+            "total": 5,
+            "notifications": [
+              {
+                "id": 1,
+                "message": "New exam scheduled",
+                "read": false,
+                "created_at": "2024-12-01T10:00:00Z"
+              }
+            ]
+          }
         },
         {
           "method": "POST",
           "rout": "/notifications/mark-read",
           "description": "Mark all notifications as read",
-          "detail": "",
-          "auth": true
+          "detail": "Mark all user notifications as read.",
+          "auth": true,
+          "request": null,
+          "response": {
+            "message": "Notifications marked as read"
+          }
         }
       ]
     },
@@ -85,43 +231,109 @@
           "method": "GET",
           "rout": "/specialities/all",
           "description": "List all specialities",
-          "detail": "",
-          "auth": true
+          "detail": "Retrieve list of all specialities with pagination.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "page",
+              "type": "integer",
+              "required": false,
+              "description": "Page number for pagination (default: 1)"
+            },
+            {
+              "name": "per_page",
+              "type": "integer",
+              "required": false,
+              "description": "Records per page (default: 15)"
+            }
+          ]
         },
         {
           "method": "POST",
           "rout": "/specialities/bulk",
           "description": "Bulk import specialities",
-          "detail": "",
-          "auth": true
+          "detail": "Import multiple specialities at once.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "specialities",
+              "type": "array",
+              "required": true,
+              "description": "Array of speciality objects to import"
+            },
+            {
+              "name": "specialities[].name",
+              "type": "string",
+              "required": true,
+              "description": "Speciality name"
+            }
+          ]
         },
         {
           "method": "POST",
           "rout": "/specialities/add",
           "description": "Add speciality",
-          "detail": "",
-          "auth": true
+          "detail": "Create a new speciality.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "name",
+              "type": "string",
+              "required": true,
+              "description": "Speciality name"
+            }
+          ]
         },
         {
           "method": "GET",
           "rout": "/specialities/{id}",
           "description": "Get speciality details",
-          "detail": "",
-          "auth": true
+          "detail": "Fetch specific speciality by ID.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "id",
+              "type": "integer",
+              "required": true,
+              "description": "Speciality ID"
+            }
+          ]
         },
         {
           "method": "PUT",
           "rout": "/specialities/edit/{id}",
           "description": "Update speciality",
-          "detail": "",
-          "auth": true
+          "detail": "Modify speciality information.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "id",
+              "type": "integer",
+              "required": true,
+              "description": "Speciality ID (path parameter)"
+            },
+            {
+              "name": "name",
+              "type": "string",
+              "required": false,
+              "description": "Speciality name"
+            }
+          ]
         },
         {
           "method": "DELETE",
           "rout": "/specialities/delete/{id}",
           "description": "Delete speciality",
-          "detail": "",
-          "auth": true
+          "detail": "Remove a speciality from the system.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "id",
+              "type": "integer",
+              "required": true,
+              "description": "Speciality ID"
+            }
+          ]
         }
       ]
     },
@@ -134,43 +346,266 @@
           "method": "GET",
           "rout": "/teachers/all",
           "description": "List all teachers",
-          "detail": "",
-          "auth": true
+          "detail": "Retrieve list of all teachers with pagination support.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "page",
+              "type": "integer",
+              "required": false,
+              "description": "Page number for pagination (default: 1)"
+            },
+            {
+              "name": "per_page",
+              "type": "integer",
+              "required": false,
+              "description": "Records per page (default: 15)"
+            }
+          ],
+          "request": null,
+          "response": {
+            "total": 10,
+            "teachers": [
+              {
+                "id": 1,
+                "number": "T001",
+                "fname": "Ahmed",
+                "lname": "Benamor",
+                "email": "ahmed@example.com",
+                "speciality_id": 1,
+                "image": "path/to/image.jpg"
+              }
+            ]
+          }
         },
         {
           "method": "GET",
           "rout": "/teachers/{identifier}",
           "description": "Get teacher details",
-          "detail": "",
-          "auth": true
+          "detail": "Fetch specific teacher by ID, number, or email.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "identifier",
+              "type": "string|integer",
+              "required": true,
+              "description": "Teacher ID, number, or email (in URL path)"
+            }
+          ],
+          "request": null,
+          "response": {
+            "id": 1,
+            "number": "T001",
+            "fname": "Ahmed",
+            "lname": "Benamor",
+            "email": "ahmed@example.com",
+            "speciality_id": 1,
+            "image": "path/to/image.jpg",
+            "modules": []
+          }
         },
         {
           "method": "POST",
           "rout": "/teachers/bulk",
           "description": "Bulk import teachers",
-          "detail": "",
-          "auth": true
+          "detail": "Import multiple teachers at once. Accepts array of teacher objects.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "teachers",
+              "type": "array of objects",
+              "required": true,
+              "description": "Array of teacher objects to import"
+            },
+            {
+              "name": "teachers[].number",
+              "type": "string",
+              "required": true,
+              "description": "Teacher identification number (unique)"
+            },
+            {
+              "name": "teachers[].fname",
+              "type": "string",
+              "required": true,
+              "description": "Teacher's first name"
+            },
+            {
+              "name": "teachers[].lname",
+              "type": "string",
+              "required": true,
+              "description": "Teacher's last name"
+            },
+            {
+              "name": "teachers[].email",
+              "type": "string (email)",
+              "required": true,
+              "description": "Teacher's email (must be unique)"
+            },
+            {
+              "name": "teachers[].password",
+              "type": "string",
+              "required": true,
+              "description": "Initial password (min 6 chars)"
+            },
+            {
+              "name": "teachers[].speciality_id",
+              "type": "integer",
+              "required": true,
+              "description": "Speciality ID teacher belongs to"
+            }
+          ],
+          "request": {
+            "teachers": [
+              {
+                "number": "T001",
+                "fname": "Ahmed",
+                "lname": "Benamor",
+                "email": "ahmed@example.com",
+                "password": "T001",
+                "speciality_id": 1
+              }
+            ]
+          },
+          "response": {
+            "message": "Teachers imported successfully",
+            "count": 1
+          }
         },
         {
           "method": "POST",
           "rout": "/teachers/add",
           "description": "Add teacher",
-          "detail": "",
-          "auth": true
+          "detail": "Create a new teacher record.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "number",
+              "type": "string",
+              "required": true,
+              "description": "Teacher identification number (unique)"
+            },
+            {
+              "name": "fname",
+              "type": "string",
+              "required": true,
+              "description": "First name"
+            },
+            {
+              "name": "lname",
+              "type": "string",
+              "required": true,
+              "description": "Last name"
+            },
+            {
+              "name": "email",
+              "type": "string (email)",
+              "required": true,
+              "description": "Email address (must be unique)"
+            },
+            {
+              "name": "password",
+              "type": "string",
+              "required": true,
+              "description": "Password (min 6 characters)"
+            },
+            {
+              "name": "speciality_id",
+              "type": "integer",
+              "required": true,
+              "description": "Speciality ID"
+            }
+          ],
+          "request": {
+            "number": "T001",
+            "fname": "Ahmed",
+            "lname": "Benamor",
+            "email": "ahmed@example.com",
+            "password": "password123",
+            "speciality_id": 1
+          },
+          "response": {
+            "id": 1,
+            "number": "T001",
+            "fname": "Ahmed",
+            "lname": "Benamor",
+            "email": "ahmed@example.com",
+            "speciality_id": 1
+          }
         },
         {
           "method": "PUT",
           "rout": "/teachers/edit/{number}",
           "description": "Update teacher",
-          "detail": "",
-          "auth": true
+          "detail": "Modify an existing teacher's information.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "number",
+              "type": "string",
+              "required": true,
+              "description": "Teacher number (in URL path)"
+            },
+            {
+              "name": "fname",
+              "type": "string",
+              "required": false,
+              "description": "First name"
+            },
+            {
+              "name": "lname",
+              "type": "string",
+              "required": false,
+              "description": "Last name"
+            },
+            {
+              "name": "email",
+              "type": "string (email)",
+              "required": false,
+              "description": "Email address"
+            },
+            {
+              "name": "speciality_id",
+              "type": "integer",
+              "required": false,
+              "description": "Speciality ID"
+            }
+          ],
+          "request": {
+            "fname": "Ahmed",
+            "lname": "Benamor",
+            "email": "ahmed.new@example.com",
+            "speciality_id": 2
+          },
+          "response": {
+            "message": "Teacher updated successfully",
+            "data": {
+              "id": 1,
+              "number": "T001",
+              "fname": "Ahmed",
+              "lname": "Benamor",
+              "email": "ahmed.new@example.com",
+              "speciality_id": 2
+            }
+          }
         },
         {
           "method": "DELETE",
           "rout": "/teachers/delete/{number}",
           "description": "Delete teacher",
-          "detail": "",
-          "auth": true
+          "detail": "Remove a teacher record from the system.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "number",
+              "type": "string",
+              "required": true,
+              "description": "Teacher number (in URL path)"
+            }
+          ],
+          "request": null,
+          "response": {
+            "message": "Teacher deleted successfully"
+          }
         }
       ]
     },
@@ -183,43 +618,315 @@
           "method": "GET",
           "rout": "/students/all",
           "description": "List all students",
-          "detail": "",
-          "auth": true
+          "detail": "Retrieve list of all students with filters and pagination.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "page",
+              "type": "integer",
+              "required": false,
+              "description": "Page number for pagination (default: 1)"
+            },
+            {
+              "name": "per_page",
+              "type": "integer",
+              "required": false,
+              "description": "Records per page (default: 15)"
+            }
+          ],
+          "request": null,
+          "response": {
+            "total": 50,
+            "students": [
+              {
+                "id": 1,
+                "number": "S001",
+                "fname": "Fatima",
+                "lname": "Ahmed",
+                "email": "fatima@example.com",
+                "gender": "female",
+                "speciality_id": 1,
+                "group_code": "G1",
+                "image": "path/to/image.jpg"
+              }
+            ]
+          }
         },
         {
           "method": "GET",
           "rout": "/students/{identifier}",
           "description": "Get student details",
-          "detail": "",
-          "auth": true
+          "detail": "Fetch specific student by ID, number, or email.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "identifier",
+              "type": "string",
+              "required": true,
+              "description": "Student ID, number, or email"
+            }
+          ],
+          "request": null,
+          "response": {
+            "id": 1,
+            "number": "S001",
+            "fname": "Fatima",
+            "lname": "Ahmed",
+            "email": "fatima@example.com",
+            "gender": "female",
+            "speciality_id": 1,
+            "group_code": "G1",
+            "image": "path/to/image.jpg"
+          }
         },
         {
           "method": "POST",
           "rout": "/students/bulk",
           "description": "Bulk import students",
-          "detail": "",
-          "auth": true
+          "detail": "Import multiple students at once with group and speciality mapping.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "students",
+              "type": "array",
+              "required": true,
+              "description": "Array of student objects to import"
+            },
+            {
+              "name": "students[].number",
+              "type": "string",
+              "required": true,
+              "description": "Student registration number"
+            },
+            {
+              "name": "students[].fname",
+              "type": "string",
+              "required": true,
+              "description": "Student first name"
+            },
+            {
+              "name": "students[].lname",
+              "type": "string",
+              "required": true,
+              "description": "Student last name"
+            },
+            {
+              "name": "students[].email",
+              "type": "string",
+              "required": true,
+              "description": "Student email address"
+            },
+            {
+              "name": "students[].password",
+              "type": "string",
+              "required": true,
+              "description": "Student account password"
+            },
+            {
+              "name": "students[].gender",
+              "type": "enum",
+              "required": true,
+              "description": "Student gender (male, female)"
+            },
+            {
+              "name": "students[].speciality_id",
+              "type": "integer",
+              "required": true,
+              "description": "ID of the student's speciality"
+            },
+            {
+              "name": "students[].group_code",
+              "type": "string",
+              "required": true,
+              "description": "Group code for the student"
+            }
+          ],
+          "request": {
+            "students": [
+              {
+                "number": "S001",
+                "fname": "Fatima",
+                "lname": "Ahmed",
+                "email": "fatima@example.com",
+                "password": "S001",
+                "gender": "female",
+                "speciality_id": 1,
+                "group_code": "G1"
+              }
+            ]
+          },
+          "response": {
+            "message": "Students imported successfully",
+            "count": 1
+          }
         },
         {
           "method": "POST",
           "rout": "/students/add",
           "description": "Add student",
-          "detail": "",
-          "auth": true
+          "detail": "Create a new student record.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "number",
+              "type": "string",
+              "required": true,
+              "description": "Student registration number"
+            },
+            {
+              "name": "fname",
+              "type": "string",
+              "required": true,
+              "description": "Student first name"
+            },
+            {
+              "name": "lname",
+              "type": "string",
+              "required": true,
+              "description": "Student last name"
+            },
+            {
+              "name": "email",
+              "type": "string",
+              "required": true,
+              "description": "Student email address"
+            },
+            {
+              "name": "password",
+              "type": "string",
+              "required": true,
+              "description": "Student account password"
+            },
+            {
+              "name": "gender",
+              "type": "enum",
+              "required": true,
+              "description": "Student gender (male, female)"
+            },
+            {
+              "name": "speciality_id",
+              "type": "integer",
+              "required": true,
+              "description": "ID of the student's speciality"
+            },
+            {
+              "name": "group_code",
+              "type": "string",
+              "required": true,
+              "description": "Group code for the student"
+            }
+          ],
+          "request": {
+            "number": "S001",
+            "fname": "Fatima",
+            "lname": "Ahmed",
+            "email": "fatima@example.com",
+            "password": "password123",
+            "gender": "female",
+            "speciality_id": 1,
+            "group_code": "G1"
+          },
+          "response": {
+            "id": 1,
+            "number": "S001",
+            "fname": "Fatima",
+            "lname": "Ahmed",
+            "email": "fatima@example.com",
+            "gender": "female",
+            "speciality_id": 1,
+            "group_code": "G1"
+          }
         },
         {
           "method": "PUT",
           "rout": "/students/edit/{number}",
           "description": "Update student",
-          "detail": "",
-          "auth": true
+          "detail": "Modify an existing student's information.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "number",
+              "type": "string",
+              "required": true,
+              "description": "Student registration number (path parameter)"
+            },
+            {
+              "name": "fname",
+              "type": "string",
+              "required": false,
+              "description": "Student first name"
+            },
+            {
+              "name": "lname",
+              "type": "string",
+              "required": false,
+              "description": "Student last name"
+            },
+            {
+              "name": "email",
+              "type": "string",
+              "required": false,
+              "description": "Student email address"
+            },
+            {
+              "name": "gender",
+              "type": "enum",
+              "required": false,
+              "description": "Student gender (male, female)"
+            },
+            {
+              "name": "speciality_id",
+              "type": "integer",
+              "required": false,
+              "description": "ID of the student's speciality"
+            },
+            {
+              "name": "group_code",
+              "type": "string",
+              "required": false,
+              "description": "Group code for the student"
+            }
+          ],
+          "request": {
+            "fname": "Fatima",
+            "lname": "Ahmed",
+            "email": "fatima.new@example.com",
+            "gender": "female",
+            "speciality_id": 2,
+            "group_code": "G2"
+          },
+          "response": {
+            "message": "Student updated successfully",
+            "data": {
+              "id": 1,
+              "number": "S001",
+              "fname": "Fatima",
+              "lname": "Ahmed",
+              "email": "fatima.new@example.com",
+              "gender": "female",
+              "speciality_id": 2,
+              "group_code": "G2"
+            }
+          }
         },
         {
           "method": "DELETE",
           "rout": "/students/delete/{number}",
           "description": "Delete student",
-          "detail": "",
-          "auth": true
+          "detail": "Remove a student record from the system.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "number",
+              "type": "string",
+              "required": true,
+              "description": "Student registration number"
+            }
+          ],
+          "request": null,
+          "response": {
+            "message": "Student deleted successfully"
+          }
         }
       ]
     },
@@ -232,43 +939,372 @@
           "method": "GET",
           "rout": "/modules/all",
           "description": "List all modules",
-          "detail": "",
-          "auth": true
+          "detail": "Retrieve list of all modules with teachers assigned.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "page",
+              "type": "integer",
+              "required": false,
+              "description": "Page number for pagination (default: 1)"
+            },
+            {
+              "name": "per_page",
+              "type": "integer",
+              "required": false,
+              "description": "Records per page (default: 15)"
+            }
+          ],
+          "request": null,
+          "response": {
+            "total": 20,
+            "modules": [
+              {
+                "code": "L1ANS1",
+                "name": "Analyses 1",
+                "short_name": "ANS1",
+                "type": "fundamental",
+                "factor": 2,
+                "credits": 6,
+                "teachers": [
+                  {
+                    "number": "T001",
+                    "fname": "Ahmed",
+                    "lname": "Benamor",
+                    "image": "path/to/image.jpg"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "GET",
+          "rout": "/modules/stats",
+          "description": "Get module statistics (total, by type)",
+          "detail": "Fetch summary statistics for all modules grouped by type.",
+          "auth": true,
+          "parameters": [],
+          "request": null,
+          "response": {
+            "total": 20,
+            "fundamental": 8,
+            "methodological": 10,
+            "transversal": 2
+          }
         },
         {
           "method": "POST",
           "rout": "/modules/bulk",
           "description": "Bulk import modules",
-          "detail": "",
-          "auth": true
+          "detail": "Import multiple modules at once.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "modules",
+              "type": "array",
+              "required": true,
+              "description": "Array of module objects to import"
+            },
+            {
+              "name": "modules[].code",
+              "type": "string",
+              "required": true,
+              "description": "Module code (unique identifier)"
+            },
+            {
+              "name": "modules[].name",
+              "type": "string",
+              "required": true,
+              "description": "Module full name"
+            },
+            {
+              "name": "modules[].short_name",
+              "type": "string",
+              "required": true,
+              "description": "Module abbreviated name"
+            },
+            {
+              "name": "modules[].type",
+              "type": "enum",
+              "required": true,
+              "description": "Module type (fundamental, methodological, transversal)"
+            },
+            {
+              "name": "modules[].factor",
+              "type": "float",
+              "required": true,
+              "description": "Module factor/coefficient"
+            },
+            {
+              "name": "modules[].credits",
+              "type": "integer",
+              "required": true,
+              "description": "Module credits"
+            }
+          ],
+          "request": {
+            "modules": [
+              {
+                "code": "L1ANS1",
+                "name": "Analyses 1",
+                "short_name": "ANS1",
+                "type": "fundamental",
+                "factor": 2,
+                "credits": 6
+              }
+            ]
+          },
+          "response": {
+            "message": "Modules imported successfully",
+            "count": 1
+          }
         },
         {
           "method": "POST",
           "rout": "/modules/add",
           "description": "Add module",
-          "detail": "",
-          "auth": true
+          "detail": "Create a new module.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Module code (unique identifier)"
+            },
+            {
+              "name": "name",
+              "type": "string",
+              "required": true,
+              "description": "Module full name"
+            },
+            {
+              "name": "short_name",
+              "type": "string",
+              "required": true,
+              "description": "Module abbreviated name"
+            },
+            {
+              "name": "type",
+              "type": "enum",
+              "required": true,
+              "description": "Module type (fundamental, methodological, transversal)"
+            },
+            {
+              "name": "factor",
+              "type": "float",
+              "required": true,
+              "description": "Module factor/coefficient"
+            },
+            {
+              "name": "credits",
+              "type": "integer",
+              "required": true,
+              "description": "Module credits"
+            }
+          ],
+          "request": {
+            "code": "L1ANS1",
+            "name": "Analyses 1",
+            "short_name": "ANS1",
+            "type": "fundamental",
+            "factor": 2,
+            "credits": 6
+          },
+          "response": {
+            "code": "L1ANS1",
+            "name": "Analyses 1",
+            "short_name": "ANS1",
+            "type": "fundamental",
+            "factor": 2,
+            "credits": 6
+          }
         },
         {
           "method": "GET",
           "rout": "/modules/{code}",
           "description": "Get module details",
-          "detail": "",
-          "auth": true
+          "detail": "Fetch specific module with assigned teachers.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Module code"
+            }
+          ],
+          "request": null,
+          "response": {
+            "code": "L1ANS1",
+            "name": "Analyses 1",
+            "short_name": "ANS1",
+            "type": "fundamental",
+            "factor": 2,
+            "credits": 6,
+            "teachers": []
+          }
         },
         {
           "method": "PUT",
           "rout": "/modules/edit/{code}",
           "description": "Update module",
-          "detail": "",
-          "auth": true
+          "detail": "Modify module information.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Module code (path parameter)"
+            },
+            {
+              "name": "name",
+              "type": "string",
+              "required": false,
+              "description": "Module full name"
+            },
+            {
+              "name": "short_name",
+              "type": "string",
+              "required": false,
+              "description": "Module abbreviated name"
+            },
+            {
+              "name": "factor",
+              "type": "float",
+              "required": false,
+              "description": "Module factor/coefficient"
+            },
+            {
+              "name": "credits",
+              "type": "integer",
+              "required": false,
+              "description": "Module credits"
+            }
+          ],
+          "request": {
+            "name": "Analyses 1 (Updated)",
+            "short_name": "ANS1",
+            "factor": 3,
+            "credits": 7
+          },
+          "response": {
+            "message": "Module updated successfully",
+            "data": {
+              "code": "L1ANS1",
+              "name": "Analyses 1 (Updated)",
+              "short_name": "ANS1",
+              "type": "fundamental",
+              "factor": 3,
+              "credits": 7
+            }
+          }
         },
         {
           "method": "DELETE",
           "rout": "/modules/delete/{code}",
           "description": "Delete module",
-          "detail": "",
-          "auth": true
+          "detail": "Remove a module from the system.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Module code"
+            }
+          ],
+          "request": null,
+          "response": {
+            "message": "Module deleted successfully"
+          }
+        },
+        {
+          "method": "POST",
+          "rout": "/modules/{code}/assign",
+          "description": "Assign teacher to module",
+          "detail": "Add a teacher to teach this module.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Module code (path parameter)"
+            },
+            {
+              "name": "teacher_number",
+              "type": "string",
+              "required": true,
+              "description": "Teacher registration number"
+            }
+          ],
+          "request": {
+            "teacher_number": "T001"
+          },
+          "response": {
+            "message": "Teacher assigned successfully"
+          }
+        },
+        {
+          "method": "PUT",
+          "rout": "/modules/{code}/assign/{teacher_number}",
+          "description": "Update teacher assignment",
+          "detail": "Modify existing teacher assignment details.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Module code (path parameter)"
+            },
+            {
+              "name": "teacher_number",
+              "type": "string",
+              "required": true,
+              "description": "Teacher registration number (path parameter)"
+            },
+            {
+              "name": "speciality_id",
+              "type": "integer",
+              "required": false,
+              "description": "Speciality ID for the assignment"
+            }
+          ],
+          "request": {
+            "speciality_id": 1
+          },
+          "response": {
+            "message": "Assignment updated successfully"
+          }
+        },
+        {
+          "method": "DELETE",
+          "rout": "/modules/{code}/assign/{teacher_number}",
+          "description": "Unassign teacher from module",
+          "detail": "Remove teacher from this module.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Module code (path parameter)"
+            },
+            {
+              "name": "teacher_number",
+              "type": "string",
+              "required": true,
+              "description": "Teacher registration number (path parameter)"
+            }
+          ],
+          "request": null,
+          "response": {
+            "message": "Teacher unassigned successfully"
+          }
         }
       ]
     },
@@ -281,43 +1317,127 @@
           "method": "GET",
           "rout": "/rooms/all",
           "description": "List all rooms",
-          "detail": "",
-          "auth": true
+          "detail": "Retrieve list of all rooms with pagination.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "page",
+              "type": "integer",
+              "required": false,
+              "description": "Page number for pagination (default: 1)"
+            },
+            {
+              "name": "per_page",
+              "type": "integer",
+              "required": false,
+              "description": "Records per page (default: 15)"
+            }
+          ]
         },
         {
           "method": "POST",
           "rout": "/rooms/bulk",
           "description": "Bulk import rooms",
-          "detail": "",
-          "auth": true
+          "detail": "Import multiple rooms at once.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "rooms",
+              "type": "array",
+              "required": true,
+              "description": "Array of room objects to import"
+            },
+            {
+              "name": "rooms[].number",
+              "type": "string",
+              "required": true,
+              "description": "Room number/identifier"
+            },
+            {
+              "name": "rooms[].capacity",
+              "type": "integer",
+              "required": true,
+              "description": "Room capacity (number of seats)"
+            }
+          ]
         },
         {
           "method": "POST",
           "rout": "/rooms/add",
           "description": "Add room",
-          "detail": "",
-          "auth": true
+          "detail": "Create a new room.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "number",
+              "type": "string",
+              "required": true,
+              "description": "Room number/identifier"
+            },
+            {
+              "name": "capacity",
+              "type": "integer",
+              "required": true,
+              "description": "Room capacity (number of seats)"
+            }
+          ]
         },
         {
           "method": "GET",
           "rout": "/rooms/{id}",
           "description": "Get room details",
-          "detail": "",
-          "auth": true
+          "detail": "Fetch specific room by ID.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "id",
+              "type": "integer",
+              "required": true,
+              "description": "Room ID"
+            }
+          ]
         },
         {
           "method": "PUT",
           "rout": "/rooms/edit/{id}",
           "description": "Update room",
-          "detail": "",
-          "auth": true
+          "detail": "Modify room information.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "id",
+              "type": "integer",
+              "required": true,
+              "description": "Room ID (path parameter)"
+            },
+            {
+              "name": "number",
+              "type": "string",
+              "required": false,
+              "description": "Room number/identifier"
+            },
+            {
+              "name": "capacity",
+              "type": "integer",
+              "required": false,
+              "description": "Room capacity (number of seats)"
+            }
+          ]
         },
         {
           "method": "DELETE",
           "rout": "/rooms/delete/{id}",
           "description": "Delete room",
-          "detail": "",
-          "auth": true
+          "detail": "Remove a room from the system.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "id",
+              "type": "integer",
+              "required": true,
+              "description": "Room ID"
+            }
+          ]
         }
       ]
     },
@@ -330,64 +1450,486 @@
           "method": "GET",
           "rout": "/groups/all",
           "description": "List all groups",
-          "detail": "",
-          "auth": true
+          "detail": "Retrieve list of all student groups with pagination.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "page",
+              "type": "integer",
+              "required": false,
+              "description": "Page number for pagination (default: 1)"
+            },
+            {
+              "name": "per_page",
+              "type": "integer",
+              "required": false,
+              "description": "Records per page (default: 15)"
+            }
+          ]
         },
         {
           "method": "POST",
           "rout": "/groups/bulk",
           "description": "Bulk import groups",
-          "detail": "",
-          "auth": true
+          "detail": "Import multiple groups at once.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "groups",
+              "type": "array",
+              "required": true,
+              "description": "Array of group objects to import"
+            },
+            {
+              "name": "groups[].code",
+              "type": "string",
+              "required": true,
+              "description": "Group code (unique identifier)"
+            },
+            {
+              "name": "groups[].speciality_id",
+              "type": "integer",
+              "required": true,
+              "description": "Speciality ID for the group"
+            }
+          ]
         },
         {
           "method": "POST",
           "rout": "/groups/add",
           "description": "Create group",
-          "detail": "",
-          "auth": true
+          "detail": "Create a new student group.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Group code (unique identifier)"
+            },
+            {
+              "name": "speciality_id",
+              "type": "integer",
+              "required": true,
+              "description": "Speciality ID for the group"
+            }
+          ]
         },
         {
           "method": "GET",
           "rout": "/groups/{code}",
           "description": "Get group details",
-          "detail": "",
-          "auth": true
+          "detail": "Fetch specific group with members and delegate info.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Group code"
+            }
+          ]
         },
         {
           "method": "PUT",
           "rout": "/groups/edit/{code}",
           "description": "Update group",
-          "detail": "",
-          "auth": true
+          "detail": "Modify group information.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Group code (path parameter)"
+            },
+            {
+              "name": "speciality_id",
+              "type": "integer",
+              "required": false,
+              "description": "Speciality ID for the group"
+            }
+          ]
         },
         {
           "method": "DELETE",
           "rout": "/groups/delete/{code}",
           "description": "Delete group",
-          "detail": "",
-          "auth": true
+          "detail": "Remove a group from the system.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Group code"
+            }
+          ]
         },
         {
           "method": "POST",
           "rout": "/groups/{code}/delegate/set",
           "description": "Set group delegate",
-          "detail": "",
-          "auth": true
+          "detail": "Assign a student as group delegate.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Group code (path parameter)"
+            },
+            {
+              "name": "student_number",
+              "type": "string",
+              "required": true,
+              "description": "Student registration number"
+            }
+          ]
         },
         {
           "method": "PUT",
           "rout": "/groups/{code}/delegate/edit",
           "description": "Change group delegate",
-          "detail": "",
-          "auth": true
+          "detail": "Change the current group delegate to another student.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Group code (path parameter)"
+            },
+            {
+              "name": "student_number",
+              "type": "string",
+              "required": true,
+              "description": "New delegate student registration number"
+            }
+          ]
         },
         {
           "method": "DELETE",
           "rout": "/groups/{code}/delegate/remove",
           "description": "Remove group delegate",
-          "detail": "",
-          "auth": true
+          "detail": "Remove the current delegate from a group.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Group code"
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Exams",
+      "description": "Exam management",
+      "endpoints": [
+        {
+          "method": "GET",
+          "rout": "/exams/all",
+          "description": "List all exams",
+          "detail": "Retrieve list of all exams with filters and pagination.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "page",
+              "type": "integer",
+              "required": false,
+              "description": "Page number for pagination (default: 1)"
+            },
+            {
+              "name": "per_page",
+              "type": "integer",
+              "required": false,
+              "description": "Records per page (default: 15)"
+            }
+          ],
+          "request": null,
+          "response": {
+            "total": 10,
+            "exams": [
+              {
+                "id": 1,
+                "code": "EX001",
+                "module_code": "L1ANS1",
+                "date": "2024-12-15",
+                "time": "09:00",
+                "room_id": 1,
+                "duration": 120
+              }
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "rout": "/exams/bulk",
+          "description": "Bulk import exams",
+          "detail": "Import multiple exams at once.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "exams",
+              "type": "array",
+              "required": true,
+              "description": "Array of exam objects to import"
+            },
+            {
+              "name": "exams[].code",
+              "type": "string",
+              "required": true,
+              "description": "Exam code (unique identifier)"
+            },
+            {
+              "name": "exams[].module_code",
+              "type": "string",
+              "required": true,
+              "description": "Module code for the exam"
+            },
+            {
+              "name": "exams[].date",
+              "type": "date",
+              "required": true,
+              "description": "Exam date (format: YYYY-MM-DD)"
+            },
+            {
+              "name": "exams[].time",
+              "type": "time",
+              "required": true,
+              "description": "Exam start time (format: HH:MM)"
+            },
+            {
+              "name": "exams[].room_id",
+              "type": "integer",
+              "required": true,
+              "description": "Room ID where exam will be held"
+            },
+            {
+              "name": "exams[].duration",
+              "type": "integer",
+              "required": true,
+              "description": "Exam duration in minutes"
+            }
+          ],
+          "request": {
+            "exams": [
+              {
+                "code": "EX001",
+                "module_code": "L1ANS1",
+                "date": "2024-12-15",
+                "time": "09:00",
+                "room_id": 1,
+                "duration": 120
+              }
+            ]
+          },
+          "response": {
+            "message": "Exams imported successfully",
+            "count": 1
+          }
+        },
+        {
+          "method": "POST",
+          "rout": "/exams/add",
+          "description": "Add exam",
+          "detail": "Create a new exam.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "code",
+              "type": "string",
+              "required": true,
+              "description": "Exam code (unique identifier)"
+            },
+            {
+              "name": "module_code",
+              "type": "string",
+              "required": true,
+              "description": "Module code for the exam"
+            },
+            {
+              "name": "date",
+              "type": "date",
+              "required": true,
+              "description": "Exam date (format: YYYY-MM-DD)"
+            },
+            {
+              "name": "time",
+              "type": "time",
+              "required": true,
+              "description": "Exam start time (format: HH:MM)"
+            },
+            {
+              "name": "room_id",
+              "type": "integer",
+              "required": true,
+              "description": "Room ID where exam will be held"
+            },
+            {
+              "name": "duration",
+              "type": "integer",
+              "required": true,
+              "description": "Exam duration in minutes"
+            }
+          ],
+          "request": {
+            "code": "EX001",
+            "module_code": "L1ANS1",
+            "date": "2024-12-15",
+            "time": "09:00",
+            "room_id": 1,
+            "duration": 120
+          },
+          "response": {
+            "id": 1,
+            "code": "EX001",
+            "module_code": "L1ANS1",
+            "date": "2024-12-15",
+            "time": "09:00",
+            "room_id": 1,
+            "duration": 120
+          }
+        },
+        {
+          "method": "GET",
+          "rout": "/exams/{id}",
+          "description": "Get exam details",
+          "detail": "Fetch specific exam details.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "id",
+              "type": "integer",
+              "required": true,
+              "description": "Exam ID"
+            }
+          ],
+          "request": null,
+          "response": {
+            "id": 1,
+            "code": "EX001",
+            "module_code": "L1ANS1",
+            "date": "2024-12-15",
+            "time": "09:00",
+            "room_id": 1,
+            "duration": 120
+          }
+        },
+        {
+          "method": "PUT",
+          "rout": "/exams/edit/{id}",
+          "description": "Update exam",
+          "detail": "Modify exam information.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "id",
+              "type": "integer",
+              "required": true,
+              "description": "Exam ID (path parameter)"
+            },
+            {
+              "name": "date",
+              "type": "date",
+              "required": false,
+              "description": "Exam date (format: YYYY-MM-DD)"
+            },
+            {
+              "name": "time",
+              "type": "time",
+              "required": false,
+              "description": "Exam start time (format: HH:MM)"
+            },
+            {
+              "name": "room_id",
+              "type": "integer",
+              "required": false,
+              "description": "Room ID where exam will be held"
+            },
+            {
+              "name": "duration",
+              "type": "integer",
+              "required": false,
+              "description": "Exam duration in minutes"
+            }
+          ],
+          "request": {
+            "date": "2024-12-16",
+            "time": "10:00",
+            "duration": 150
+          },
+          "response": {
+            "message": "Exam updated successfully",
+            "data": {
+              "id": 1,
+              "code": "EX001",
+              "module_code": "L1ANS1",
+              "date": "2024-12-16",
+              "time": "10:00",
+              "duration": 150
+            }
+          }
+        },
+        {
+          "method": "DELETE",
+          "rout": "/exams/delete/{id}",
+          "description": "Delete exam",
+          "detail": "Remove an exam from the system.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "id",
+              "type": "integer",
+              "required": true,
+              "description": "Exam ID"
+            }
+          ],
+          "request": null,
+          "response": {
+            "message": "Exam deleted successfully"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Images",
+      "description": "Image upload and serving",
+      "endpoints": [
+        {
+          "method": "POST",
+          "rout": "/images/upload",
+          "description": "Upload image",
+          "detail": "Upload an image file to the server.",
+          "auth": true,
+          "parameters": [
+            {
+              "name": "image",
+              "type": "file",
+              "required": true,
+              "description": "Image file (JPEG, PNG, GIF, WebP)"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "rout": "/images/{path}",
+          "description": "Serve uploaded image",
+          "detail": "Retrieve and serve an uploaded image file by path.",
+          "auth": false,
+          "parameters": [
+            {
+              "name": "path",
+              "type": "string",
+              "required": true,
+              "description": "Image file path (e.g., users/profile.jpg)"
+            }
+          ]
         }
       ]
     }

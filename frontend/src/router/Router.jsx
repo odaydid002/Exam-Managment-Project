@@ -2,6 +2,8 @@ import React from 'react'
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
+import { NotifyProvider } from "../components/loaders/NotificationContext";
+
 import Home from '../views/Home'
 import Login from '../views/Login'
 
@@ -88,7 +90,9 @@ const router = createBrowserRouter([
 
 const Router = () => {
   return (
-    <RouterProvider router={router} />
+    <NotifyProvider>
+      <RouterProvider router={router} />
+    </NotifyProvider>
   )
 }
 

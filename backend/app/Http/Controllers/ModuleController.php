@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Module;
+use App\Models\TeacherModule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -11,9 +12,20 @@ class ModuleController extends Controller
 {
     public function index(Request $request)
     {
-        $modules = Module::orderBy('name')->get();
+        $modules = Module::with('teacherModules.teacher.user')->orderBy('name')->get();
 
         $data = $modules->map(function ($m) {
+            $teachers = collect($m->teacherModules)->flatMap(function ($tm) {
+                if (!$tm->teacher) return [];
+                $user = $tm->teacher->user;
+                return [[
+                    'number' => $tm->teacher->number,
+                    'image' => $user->image ?? null,
+                    'fname' => $user->fname ?? null,
+                    'lname' => $user->lname ?? null,
+                ]];
+            })->unique('number')->values()->toArray();
+
             return [
                 'code' => $m->code,
                 'name' => $m->name,
@@ -21,6 +33,7 @@ class ModuleController extends Controller
                 'type' => $m->type,
                 'factor' => $m->factor,
                 'credits' => $m->credits,
+                'teachers' => $teachers,
             ];
         })->toArray();
 
@@ -29,8 +42,19 @@ class ModuleController extends Controller
 
     public function show($code)
     {
-        $m = Module::find($code);
+        $m = Module::with('teacherModules.teacher.user')->find($code);
         if (!$m) return response()->json(['message' => 'Module not found'], 404);
+
+        $teachers = collect($m->teacherModules)->flatMap(function ($tm) {
+            if (!$tm->teacher) return [];
+            $user = $tm->teacher->user;
+            return [[
+                'number' => $tm->teacher->number,
+                'image' => $user->image ?? null,
+                'fname' => $user->fname ?? null,
+                'lname' => $user->lname ?? null,
+            ]];
+        })->unique('number')->values()->toArray();
 
         return response()->json([
             'code' => $m->code,
@@ -39,6 +63,7 @@ class ModuleController extends Controller
             'type' => $m->type,
             'factor' => $m->factor,
             'credits' => $m->credits,
+            'teachers' => $teachers,
         ]);
     }
 
@@ -181,6 +206,91 @@ class ModuleController extends Controller
             'created' => $created,
             'errors' => $errors,
         ]);
+    }
+
+    public function assignTeacher(Request $request, $code)
+    {
+        if (!auth()->user() || !auth()->user()->hasRole(['admin', 'employee'])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $v = Validator::make($request->all(), [
+            'teacher_number' => 'required|string|exists:teachers,number',
+            'speciality_id' => 'nullable|exists:specialities,id',
+        ]);
+
+        if ($v->fails()) {
+            return response()->json(['message' => 'Validation error', 'errors' => $v->errors()], 422);
+        }
+
+        $module = Module::find($code);
+        if (!$module) return response()->json(['message' => 'Module not found'], 404);
+
+        $teacherNumber = $request->input('teacher_number');
+
+        if (TeacherModule::where('teacher_number', $teacherNumber)->where('module_code', $code)->exists()) {
+            return response()->json(['message' => 'Teacher already assigned to this module'], 409);
+        }
+
+        try {
+            $tm = TeacherModule::create([
+                'teacher_number' => $teacherNumber,
+                'module_code' => $code,
+                'speciality_id' => $request->input('speciality_id') ?? null,
+            ]);
+
+            return response()->json(['message' => 'Teacher assigned to module', 'assignment' => $tm], 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to assign teacher', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // Unassign a teacher from a module
+    public function unassignTeacher($code, $teacherNumber)
+    {
+        if (!auth()->user() || !auth()->user()->hasRole(['admin', 'employee'])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $assignment = TeacherModule::where('module_code', $code)->where('teacher_number', $teacherNumber)->first();
+        if (!$assignment) return response()->json(['message' => 'Assignment not found'], 404);
+
+        try {
+            $assignment->delete();
+            return response()->json(['message' => 'Teacher unassigned from module']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to unassign', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // Update an existing assignment (e.g., change speciality)
+    public function updateAssignment(Request $request, $code, $teacherNumber)
+    {
+        if (!auth()->user() || !auth()->user()->hasRole(['admin', 'employee'])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $v = Validator::make($request->all(), [
+            'speciality_id' => 'nullable|exists:specialities,id',
+        ]);
+
+        if ($v->fails()) {
+            return response()->json(['message' => 'Validation error', 'errors' => $v->errors()], 422);
+        }
+
+        $assignment = TeacherModule::where('module_code', $code)->where('teacher_number', $teacherNumber)->first();
+        if (!$assignment) return response()->json(['message' => 'Assignment not found'], 404);
+
+        if ($request->has('speciality_id')) {
+            $assignment->speciality_id = $request->input('speciality_id');
+        }
+
+        try {
+            $assignment->save();
+            return response()->json(['message' => 'Assignment updated', 'assignment' => $assignment]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to update', 'error' => $e->getMessage()], 500);
+        }
     }
 
     // Return statistics about modules: total and counts by factor categories

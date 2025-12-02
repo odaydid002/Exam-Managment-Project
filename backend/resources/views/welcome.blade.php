@@ -32,46 +32,6 @@
         <p class="head-description">Complete reference for all available API endpoints</p>
     </div>
    <div class="main-container" id="mainContainer">
-    <!--
-    <div class="api">
-        <div class="api-head">
-            <h3 class="target">Auth</h3>
-            <p class="api-description">Authentification related APIs</p>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="chevron">
-                <path d="M297.4 169.4C309.9 156.9 330.2 156.9 342.7 169.4L534.7 361.4C547.2 373.9 547.2 394.2 534.7 406.7C522.2 419.2 501.9 419.2 489.4 406.7L320 237.3L150.6 406.6C138.1 419.1 117.8 419.1 105.3 406.6C92.8 394.1 92.8 373.8 105.3 361.3L297.3 169.3z"/>
-            </svg>
-        </div>
-        <div class="endpoints">
-            <div class="endpoint">
-                <div class="endpoint-head">
-                    <div class="flex-row">
-                        <div class="methode m-post">
-                            <p>POST</p>
-                        </div>
-                        <p class="route">/auth/signup</p>
-                    </div>
-                    <p class="endpoint-title">Register new user</p>
-                    <div class="flex-row">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="lock">
-                            <path d="M256 160L256 224L384 224L384 160C384 124.7 355.3 96 320 96C284.7 96 256 124.7 256 160zM192 224L192 160C192 89.3 249.3 32 320 32C390.7 32 448 89.3 448 160L448 224C483.3 224 512 252.7 512 288L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512L128 288C128 252.7 156.7 224 192 224z"/>
-                        </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="chevron">
-                            <path d="M297.4 169.4C309.9 156.9 330.2 156.9 342.7 169.4L534.7 361.4C547.2 373.9 547.2 394.2 534.7 406.7C522.2 419.2 501.9 419.2 489.4 406.7L320 237.3L150.6 406.6C138.1 419.1 117.8 419.1 105.3 406.6C92.8 394.1 92.8 373.8 105.3 361.3L297.3 169.3z"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="endpoint-body">
-                    <h3 class="endpoint-detail">Endpoint details</h3>
-                    <p class="detailed-text">Generate new access token using refresh token</p>
-                    <div class="flex-row">
-                        <p class="detailed-text">Method: <span class="text">GET</span></p>
-                        <p class="detailed-text center">Authentification: <span class="text">Required</span></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    -->
    </div>
    <script src="/js/app.js"></script>
 </body>

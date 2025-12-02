@@ -66,6 +66,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Modules
     Route::get('/modules/all', [ModuleController::class, 'index']);
     Route::get('/modules/stats', [ModuleController::class, 'stats']);
+    Route::post('/modules/{code}/assign', [ModuleController::class, 'assignTeacher']);
+    Route::put('/modules/{code}/assign/{teacher_number}', [ModuleController::class, 'updateAssignment']);
+    Route::delete('/modules/{code}/assign/{teacher_number}', [ModuleController::class, 'unassignTeacher']);
     Route::post('/modules/bulk', [ModuleController::class, 'bulkStore']);
     Route::post('/modules/add', [ModuleController::class, 'store']);
     Route::get('/modules/{code}', [ModuleController::class, 'show']);

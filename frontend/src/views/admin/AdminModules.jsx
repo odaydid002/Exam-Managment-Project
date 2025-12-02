@@ -4,17 +4,25 @@ import styles from './admin.module.css'
 
 import Text from '../../components/text/Text';
 import PrimaryButton from '../../components/buttons/PrimaryButton';
+import SecondaryButton from '../../components/buttons/SecondaryButton';
 import Float from '../../components/containers/Float';
 import FloatButton from '../../components/buttons/FloatButton';
 import IconButton from '../../components/buttons/IconButton';
 import formatNumber from '../../hooks/formatNumber';
 import StaticsCard from '../../components/containers/StaticsCard';
-import { ListTable } from '../../components/tables/ListTable';
 import Button from '../../components/buttons/Button';
 import Profile from '../../components/containers/profile';
+import ConfirmDialog from '../../components/containers/ConfirmDialog';
+
+import { useAnimateNumber } from "../../hooks/useAnimateNumber";
+import { ListTable } from '../../components/tables/ListTable';
+import { Modules } from '../../API'
+import { useNotify } from '../../components/loaders/NotificationContext';
+import { useGSAP } from '@gsap/react';
 
 import gsap from 'gsap';
-import { useGSAP } from '@gsap/react';
+import Popup from '../../components/containers/Popup';
+import TextInput from '../../components/input/TextInput';
 gsap.registerPlugin(useGSAP);
 
 
@@ -22,6 +30,19 @@ const AdminModules = () => {
   document.title = "Unitime - Modules";
   const [staticsLoading, setStaticsLoading] = useState(false);
   const [tableLoading, setTableLoading] = useState(false);
+  const [addModal, setAddModal] = useState(false);
+  const [editingModule, setEditingModule] = useState(null)
+  const [modulesList, setModulesList] = useState({ total: 0, modules: [] })
+  const [stats, setStats] = useState({ total: 0, fundamental: 0, methodological: 0, transversal: 0 })
+  const [dialogLoading, setDialogLoading] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: 'normal', title: '', message: '', action: null, actionData: null })
+  const [formData, setFormData] = useState({ code: '', name: '', short_name: '', type: '', factor: '', credits: '' })
+  const { notify } = useNotify()
+  
+  const animatedTotal = useAnimateNumber(0, stats.total, 1000)
+  const animatedFundamental = useAnimateNumber(0, stats.fundamental, 1000)
+  const animatedMethodological = useAnimateNumber(0, stats.methodological, 1000)
+  const animatedTransversal = useAnimateNumber(0, stats.transversal, 1000)
 
   const testList = {
     total: 20,
@@ -256,6 +277,33 @@ const AdminModules = () => {
   useEffect(() => {
     const HH = layoutPath.current.offsetHeight + layoutHead.current.offsetHeight
     layoutBody.current.style.maxHeight = `calc(50vh - ${HH}px - 2.5em)`
+  
+    let mounted = true
+    const load = async () => {
+      try {
+        setTableLoading(true)
+        setStaticsLoading(true)
+        
+        const resp = await Modules.getAll()
+        const data = resp ?? {}
+        const items = Array.isArray(data) ? data : (data.modules || data.items || [])
+        if (mounted) setModulesList({ total: data.total || items.length, modules: items })
+        
+        const statsResp = await Modules.stats()
+        if (mounted) setStats(statsResp)
+      } catch (err) {
+        console.error('Failed to load modules', err)
+        notify('error', 'Failed to load modules')
+      } finally {
+        if (mounted) {
+          setTableLoading(false)
+          setStaticsLoading(false)
+        }
+      }
+    }
+
+    load()
+    return () => { mounted = false }
   }, []);
 
   useGSAP(() => {
@@ -267,11 +315,123 @@ const AdminModules = () => {
     })
   });
 
+  const submitAddModule = async () => {
+    setDialogLoading(true)
+    try {
+      const payload = {
+        code: formData.code,
+        name: formData.name,
+        short_name: formData.short_name,
+        type: formData.type,
+        factor: formData.factor,
+        credits: formData.credits,
+      }
+      await Modules.add(payload)
+      notify('success', 'Module added')
+      const r = await Modules.getAll()
+      const items = r.modules || r
+      setModulesList({ total: r.total || items.length, modules: items })
+      const statsResp = await Modules.stats()
+      setStats(statsResp)
+      setAddModal(false)
+      setEditingModule(null)
+      setFormData({ code: '', name: '', short_name: '', type: '', factor: '', credits: '' })
+    } catch (err) {
+      console.error(err)
+      notify('error', 'Failed to add module')
+    } finally {
+      setDialogLoading(false)
+    }
+  }
+
+  const submitEditModule = async () => {
+    setDialogLoading(true)
+    try {
+      const code = editingModule ? (editingModule.code || formData.code) : formData.code
+      const payload = {
+        name: formData.name,
+        short_name: formData.short_name,
+        type: formData.type,
+        factor: formData.factor,
+        credits: formData.credits,
+      }
+      await Modules.update(code, payload)
+      notify('success', 'Module updated')
+      const r = await Modules.getAll()
+      const items = r.modules || r
+      setModulesList({ total: r.total || items.length, modules: items })
+      const statsResp = await Modules.stats()
+      setStats(statsResp)
+      setAddModal(false)
+      setEditingModule(null)
+      setFormData({ code: '', name: '', short_name: '', type: '', factor: '', credits: '' })
+    } catch (err) {
+      console.error(err)
+      notify('error', 'Failed to update module')
+    } finally {
+      setDialogLoading(false)
+    }
+  }
+
   return (
     <div className={`${styles.modulesLayout} full scrollbar`}>
       <Float bottom='6em' right="1em" css='h4pc'>
-        <FloatButton icon="fa-solid fa-plus" onClick={()=>{}}/>
+        <FloatButton icon="fa-solid fa-plus" onClick={()=>{ setEditingModule(null); setFormData({ code: '', name: '', short_name: '', type: '', factor: '', credits: '' }); setAddModal(true) }} />
       </Float>
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        type={confirmDialog.type}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        isloading={dialogLoading}
+        confirmText={confirmDialog.type === 'danger' ? 'Delete' : 'Confirm'}
+        onConfirm={async () => {
+          setDialogLoading(true)
+          try {
+            if (confirmDialog.action === 'delete' && confirmDialog.actionData) {
+              await Modules.remove(confirmDialog.actionData.code)
+              notify('success', 'Module deleted')
+              // reload
+              const r = await Modules.getAll()
+              const items = r.modules || r
+              setModulesList({ total: r.total || items.length, modules: items })
+              const statsResp = await Modules.stats()
+              setStats(statsResp)
+            } else if (confirmDialog.action === 'add') {
+              await submitAddModule()
+            } else if (confirmDialog.action === 'edit') {
+              await submitEditModule()
+            }
+          } catch (err) { console.error(err); notify('error', 'Action failed') } finally { setDialogLoading(false); setConfirmDialog({ ...confirmDialog, isOpen: false }) }
+        }}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+      />
+      <Popup isOpen={addModal} blur={2} bg='rgba(0,0,0,0.3)' onClose={()=>setAddModal(false)}>
+          <div className={`${styles.dashBGC}`} style={{ maxWidth: '700px', padding: '2em' }}>
+            <div className="flex row a-center j-spacebet">
+              <Text text='Add New Module' size='var(--text-l)' color='var(--text)' align='left' />
+              <IconButton icon='fa-solid fa-xmark' onClick={()=>setAddModal(false)} />
+            </div>
+            <div className="flex column gap mrv">
+              <div className="flex row a-center gap">
+                <TextInput width='70%' label='Module Name' placeholder='Enter module name' value={formData.name} onchange={(e)=>setFormData(prev=>({ ...prev, name: e.target.value }))} />
+                <TextInput width='30%' label='Module Shortcut' placeholder='Ex: ASD' value={formData.short_name} onchange={(e)=>setFormData(prev=>({ ...prev, short_name: e.target.value }))} />
+              </div>
+              <div className="flex row a-center gap">
+                <TextInput width='40%' label='Module Code' placeholder='Ex: L1ANS1' value={formData.code} onchange={(e)=>setFormData(prev=>({ ...prev, code: e.target.value }))} />
+                <TextInput width='60%' label='Module Type' placeholder='Enter module type' value={formData.type} onchange={(e)=>setFormData(prev=>({ ...prev, type: e.target.value }))} dataList={["Fundamental", "Methodological", "Transversal"]}/>
+              </div>
+              <div className="flex row a-center gap">
+                <TextInput type='number' label='Module Factor' placeholder='Enter module factor' value={formData.factor} onchange={(e)=>setFormData(prev=>({ ...prev, factor: e.target.value }))} />
+                <TextInput type='number' label='Module Credit' placeholder='Enter module credit' value={formData.credits} onchange={(e)=>setFormData(prev=>({ ...prev, credits: e.target.value }))} />
+              </div>
+            </div>
+            <div className="flex row a-center gap pdt">
+              <SecondaryButton text='Cancel' onClick={()=>setAddModal(false)}/>
+              <PrimaryButton isLoading={dialogLoading} text={editingModule ? 'Update Module' : 'Add Module'} onClick={async ()=>{ setConfirmDialog({ isOpen: true, type: editingModule ? 'normal' : 'normal', title: editingModule ? 'Update Module' : 'Add Module', message: editingModule ? `Update module ${formData.name}?` : `Add module ${formData.name}?`, action: editingModule ? 'edit' : 'add', actionData: null }) }} />
+            </div>
+          </div>
+      </Popup>
       <div ref={layoutPath} className={`${styles.modulesHeader}`}>
         <div className={`${styles.modulesPath} flex a-center h4p`}>
             <Text css='h4p' align='left' text='Main /' color='var(--text-low)' size='var(--text-m)' />
@@ -280,26 +440,26 @@ const AdminModules = () => {
       </div>
       <div ref={layoutHead} className={`${styles.modulesStatics} flex row gap wrap j-center`}>
         <div className={`gsap-y ${styles.modulesStatic} ${styles.dashBGC} grow-1 ${staticsLoading && "shimmer"}`}>
-          {!staticsLoading && <StaticsCard title='Total Modules' value={formatNumber(0)} icon="fa-solid fa-book-bookmark" color='#2B8CDF'/>}
+          {!staticsLoading && <StaticsCard title='Total Modules' value={formatNumber(animatedTotal)} icon="fa-solid fa-book-bookmark" color='#2B8CDF'/>}
 
         </div>
         <div className={`gsap-y ${styles.modulesStatic} ${styles.dashBGC} grow-1 ${staticsLoading && "shimmer"}`}>
-          {!staticsLoading && <StaticsCard title='Fundamental' value={formatNumber(0)} icon="fa-solid fa-book-open" color='#F1504A'/>}
+          {!staticsLoading && <StaticsCard title='Fundamental' value={formatNumber(animatedFundamental)} icon="fa-solid fa-book-open" color='#F1504A'/>}
 
         </div>
         <div className={`gsap-y ${styles.modulesStatic} ${styles.dashBGC} grow-1 ${staticsLoading && "shimmer"}`}>
-          {!staticsLoading && <StaticsCard title='Methodological' value={formatNumber(0)} icon="fa-solid fa-person-chalkboard" color='#9A8CE5'/>}
+          {!staticsLoading && <StaticsCard title='Methodological' value={formatNumber(animatedMethodological)} icon="fa-solid fa-person-chalkboard" color='#9A8CE5'/>}
 
         </div>
         <div className={`gsap-y ${styles.modulesStatic} ${styles.dashBGC} grow-1 ${staticsLoading && "shimmer"}`}>
-          {!staticsLoading && <StaticsCard title='Transversal' value={formatNumber(0)} icon="fa-solid fa-flask-vial" color='#4FB6A3'/>}
+          {!staticsLoading && <StaticsCard title='Transversal' value={formatNumber(animatedTransversal)} icon="fa-solid fa-flask-vial" color='#4FB6A3'/>}
 
         </div>
       </div>
       <div ref={layoutBody} className={`gsap-y ${styles.modulesContent} flex column`}>
         <div className="flex row a-center">
           <Text align='left' text='Modules List' size='var(--text-l)' />
-          <PrimaryButton text='Add Module' icon='fa-solid fa-plus' onClick={()=>{}} mrg='0 0 0 auto' css='h4p'/>
+          <PrimaryButton text='Add Module' icon='fa-solid fa-plus' onClick={()=>setAddModal(true)} mrg='0 0 0 auto' css='h4p'/>
         </div>
         <div className={`${styles.modulesTable} full ${styles.dashBGC} ${tableLoading && "shimmer"}`}>
           {!tableLoading &&
@@ -308,7 +468,7 @@ const AdminModules = () => {
             rowTitles={["Code", "Name", "Shortcut", "Teacher", "Type", "Factor", "Credit", "Action"]}
             rowTemplate="0.2fr 0.6fr 0.3fr 0.5fr 0.3fr repeat(3, 0.2fr)"
 
-            dataList={{ total: testList.total, items: testList.modules }}
+            dataList={{ total: modulesList.total || testList.total, items: modulesList.modules.length ? modulesList.modules : testList.modules }}
 
             filterFunction={(s, text) =>
                 `${s.fname} ${s.lname}`.toLowerCase().includes(text.toLowerCase()) ||
@@ -323,33 +483,33 @@ const AdminModules = () => {
             }}
 
             exportConfig={{
-                title: "Modules List",
-                fileName: "Modules_list"+new Date(),
-                headers: ["#", "Code", "Name", "Shortcut", "Type", "Factor", "Credit"],
-                mapRow: (s, i) => [
-                    i + 1,
-                    s.code,
-                    s.name,
-                    s.shortcut,
-                    s.type,
-                    s.factor,
-                    s.credit
-                ]
+              title: "Modules List",
+              fileName: "Modules_list"+new Date(),
+              headers: ["#", "Code", "Name", "Shortcut", "Type", "Factor", "Credit"],
+              mapRow: (s, i) => [
+                i + 1,
+                s.code,
+                s.name,
+                s.shortcut || s.short_name,
+                s.type,
+                s.factor,
+                s.credits || s.credit
+              ]
             }}
 
             rowRenderer={(module) => (
                 <>
                     <Text align='left' text={module.code} size='var(--text-m)'/>
                     <Text align='left' text={module.name} size='var(--text-m)'/>
-                    <Text align='left' text={module.shortcut} size='var(--text-m)'/>
+                    <Text align='left' text={module.shortcut || module.short_name} size='var(--text-m)'/>
                     <div className="flex row a-center gap">
-                      {module.teachers.length == 0 && <Button text='Attach Teacher' icon='fa-solid fa-plus' />}
-                      {module.teachers.length == 1 && 
+                      {(!module.teachers || module.teachers.length == 0) && <Button text='Attach Teacher' icon='fa-solid fa-plus' />}
+                      {(module.teachers && module.teachers.length == 1) && 
                       <div className="flex row a-center gap">
                         <Profile img={module.teachers[0].image} width="35px" border="2px solid var(--bg)"/>
                         <Text align='left' text={`${module.teachers[0].fname} ${module.teachers[0].lname}`} size='var(--text-m)'/>
                       </div>}
-                      {module.teachers.length > 1 && 
+                      {(module.teachers && module.teachers.length > 1) && 
                         <div className="flex row a-center gap pos-rel">
                           {module.teachers.map((teacher, index) => {
                             if (index > 3) return null;
@@ -375,10 +535,14 @@ const AdminModules = () => {
                     </div>
                     <Text align='left' text={module.type} size='var(--text-m)'/>
                     <Text align='left' text={module.factor} size='var(--text-m)'/>
-                    <Text align='left' text={module.credit} size='var(--text-m)'/>
+                    <Text align='left' text={module.credits || module.credit} size='var(--text-m)'/>
                     <div className="flex row center gap">
-                        <IconButton icon="fa-regular fa-pen-to-square" />
-                        <IconButton icon="fa-regular fa-trash-can" />
+                        <IconButton icon="fa-regular fa-pen-to-square" onClick={() => {
+                          setEditingModule(module)
+                          setFormData({ code: module.code || '', name: module.name || '', short_name: module.shortcut || module.short_name || '', type: module.type || '', factor: module.factor || '', credits: module.credits || module.credit || '' })
+                          setAddModal(true)
+                        }} />
+                        <IconButton icon="fa-regular fa-trash-can" onClick={() => setConfirmDialog({ isOpen: true, type: 'danger', title: 'Delete Module', message: `Delete ${module.name}?`, action: 'delete', actionData: module })} />
                     </div>
                 </>
             )}

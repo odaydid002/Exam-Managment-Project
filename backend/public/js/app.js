@@ -94,8 +94,40 @@ fetch(data)
                             <p class="detailed-text">Method: <span class="text">${endpoint.method.toUpperCase()}</span></p>
                             <p class="detailed-text center">Authentification: <span class="text">${endpoint.auth?"Required":"Not Required"}</span></p>
                         </div>
+                        ${endpoint.parameters && endpoint.parameters.length > 0 ? `
+                            <h4 class="endpoint-detail" style="margin-top: 1em;">Parameters</h4>
+                            <table class="params-table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${endpoint.parameters.map(param => `
+                                        <tr>
+                                            <td><code>${param.name}</code></td>
+                                            <td><code>${param.type}</code></td>
+                                            <td>${param.required ? '<span class="badge required">Yes</span>' : '<span class="badge optional">No</span>'}</td>
+                                            <td>${param.description}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        ` : ''}
+                        ${endpoint.request ? `
+                            <h4 class="endpoint-detail" style="margin-top: 1em;">Request Example</h4>
+                            <pre class="code-block"><code>${JSON.stringify(endpoint.request, null, 2)}</code></pre>
+                        ` : ''}
+                        ${endpoint.response ? `
+                            <h4 class="endpoint-detail" style="margin-top: 1em;">Response Example</h4>
+                            <pre class="code-block"><code>${JSON.stringify(endpoint.response, null, 2)}</code></pre>
+                        ` : ''}
                     </div>
                 `;
+
                 endpointsContainer.appendChild(endpointContainer);
             })
             apiContainer.appendChild(endpointsContainer);
