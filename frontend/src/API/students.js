@@ -1,7 +1,7 @@
 import api from './app'
 
-const getAll = async () => {
-  const res = await api.get('/students/all')
+const getAll = async (params) => {
+  const res = await api.get('/students/all', { params })
   return res.data
 }
 

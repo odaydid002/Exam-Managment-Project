@@ -11,14 +11,44 @@ use Illuminate\Support\Facades\DB;
 
 class GroupeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $groups = Groupe::orderBy('name')->get();
+        if (!auth()->user()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $q = Groupe::with('section')->withCount('students')->orderBy('name');
+
+        // filters: speciality (id or name via students), section_id, members_min, members_max
+        if ($request->filled('section_id')) {
+            $q->where('section_id', $request->input('section_id'));
+        }
+
+        if ($request->filled('speciality_id')) {
+            $q->whereHas('students', function ($sq) use ($request) {
+                $sq->where('speciality_id', $request->input('speciality_id'));
+            });
+        } elseif ($request->filled('speciality')) {
+            $q->whereHas('students.speciality', function ($ssq) use ($request) {
+                $ssq->where('name', 'like', '%' . $request->input('speciality') . '%');
+            });
+        }
+
+        if ($request->filled('members_min')) {
+            $q->having('students_count', '>=', intval($request->input('members_min')));
+        }
+        if ($request->filled('members_max')) {
+            $q->having('students_count', '<=', intval($request->input('members_max')));
+        }
+
+        $groups = $q->get();
+
         $data = $groups->map(function ($g) {
             return [
                 'code' => $g->code,
                 'name' => $g->name,
                 'section_id' => $g->section_id,
+                'members_count' => $g->students_count ?? 0,
             ];
         })->toArray();
 

@@ -1,7 +1,7 @@
 import api from './app'
 
-const getAll = async () => {
-  const res = await api.get('/exams/all')
+const getAll = async (params) => {
+  const res = await api.get('/exams/all', { params })
   return res.data
 }
 

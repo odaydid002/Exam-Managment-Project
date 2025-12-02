@@ -16,13 +16,15 @@ import ConfirmDialog from '../../components/containers/ConfirmDialog';
 
 import { useAnimateNumber } from "../../hooks/useAnimateNumber";
 import { ListTable } from '../../components/tables/ListTable';
-import { Modules } from '../../API'
+import { Modules, Specialities, Teachers } from '../../API'
 import { useNotify } from '../../components/loaders/NotificationContext';
 import { useGSAP } from '@gsap/react';
 
 import gsap from 'gsap';
 import Popup from '../../components/containers/Popup';
 import TextInput from '../../components/input/TextInput';
+import SelectInputImage from '../../components/input/SelectInputImage';
+import SelectInput from '../../components/input/SelectInput';
 gsap.registerPlugin(useGSAP);
 
 
@@ -31,14 +33,21 @@ const AdminModules = () => {
   const [staticsLoading, setStaticsLoading] = useState(false);
   const [tableLoading, setTableLoading] = useState(false);
   const [addModal, setAddModal] = useState(false);
+  const [attachTeacherModal, setAttachTeacherModal] = useState(false);
+  const [attachingModule, setAttachingModule] = useState(null)
   const [editingModule, setEditingModule] = useState(null)
   const [modulesList, setModulesList] = useState({ total: 0, modules: [] })
   const [stats, setStats] = useState({ total: 0, fundamental: 0, methodological: 0, transversal: 0 })
   const [dialogLoading, setDialogLoading] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: 'normal', title: '', message: '', action: null, actionData: null })
   const [formData, setFormData] = useState({ code: '', name: '', short_name: '', type: '', factor: '', credits: '' })
+  const [specialitiesList, setSpecialitiesList] = useState([])
+  const [teachersList, setTeachersList] = useState([])
+  const [selectedSpeciality, setSelectedSpeciality] = useState(null)
+  const [selectedTeacher, setSelectedTeacher] = useState(null)
+  const [attachedTeachers, setAttachedTeachers] = useState([])
+  const [attachTeacherLoading, setAttachTeacherLoading] = useState(false)
   const { notify } = useNotify()
-  
   const animatedTotal = useAnimateNumber(0, stats.total, 1000)
   const animatedFundamental = useAnimateNumber(0, stats.fundamental, 1000)
   const animatedMethodological = useAnimateNumber(0, stats.methodological, 1000)
@@ -274,36 +283,37 @@ const AdminModules = () => {
   const layoutPath = useRef(null);
   const layoutHead = useRef(null);
   const layoutBody = useRef(null);
+  const isMountedRef = useRef(true);
+
+  const loadModules = async () => {
+    try {
+      setTableLoading(true)
+      setStaticsLoading(true)
+
+      const resp = await Modules.getAll()
+      const data = resp ?? {}
+      const items = Array.isArray(data) ? data : (data.modules || data.items || [])
+      if (isMountedRef.current) setModulesList({ total: data.total || items.length, modules: items })
+
+      const statsResp = await Modules.stats()
+      if (isMountedRef.current) setStats(statsResp)
+    } catch (err) {
+      console.error('Failed to load modules', err)
+      notify('error', 'Failed to load modules')
+    } finally {
+      if (isMountedRef.current) {
+        setTableLoading(false)
+        setStaticsLoading(false)
+      }
+    }
+  }
   useEffect(() => {
     const HH = layoutPath.current.offsetHeight + layoutHead.current.offsetHeight
     layoutBody.current.style.maxHeight = `calc(50vh - ${HH}px - 2.5em)`
-  
-    let mounted = true
-    const load = async () => {
-      try {
-        setTableLoading(true)
-        setStaticsLoading(true)
-        
-        const resp = await Modules.getAll()
-        const data = resp ?? {}
-        const items = Array.isArray(data) ? data : (data.modules || data.items || [])
-        if (mounted) setModulesList({ total: data.total || items.length, modules: items })
-        
-        const statsResp = await Modules.stats()
-        if (mounted) setStats(statsResp)
-      } catch (err) {
-        console.error('Failed to load modules', err)
-        notify('error', 'Failed to load modules')
-      } finally {
-        if (mounted) {
-          setTableLoading(false)
-          setStaticsLoading(false)
-        }
-      }
-    }
 
-    load()
-    return () => { mounted = false }
+    isMountedRef.current = true
+    loadModules()
+    return () => { isMountedRef.current = false }
   }, []);
 
   useGSAP(() => {
@@ -373,6 +383,106 @@ const AdminModules = () => {
     }
   }
 
+  const handleAttachTeacher = (moduleCode) =>{
+    setAttachingModule(moduleCode)
+    setAttachTeacherModal(true)
+    loadAttachTeacherData(moduleCode)
+  }
+
+  const loadAttachTeacherData = async (moduleCode) => {
+    setAttachTeacherLoading(true)
+    try {
+      const specResp = await Specialities.getAll()
+      const specs = Array.isArray(specResp) ? specResp : (specResp.specialities || specResp.items || [])
+      setSpecialitiesList(specs)
+
+      const moduleResp = await Modules.get(moduleCode)
+      const teachers = moduleResp.teachers || []
+      setAttachedTeachers(teachers)
+    } catch (err) {
+      console.error('Failed to load attach teacher data', err)
+      notify('error', 'Failed to load data')
+    } finally {
+      setAttachTeacherLoading(false)
+    }
+  }
+
+  const loadTeachersBySpeciality = async (specialityId) => {
+    try {
+      const teachersResp = await Teachers.getAll()
+      const allTeachers = Array.isArray(teachersResp) ? teachersResp : (teachersResp.teachers || teachersResp.items || [])
+      
+      const attachedNumbers = attachedTeachers.map(t => t.number)
+      const filtered = allTeachers.filter(t => 
+        t.speciality_id === specialityId && !attachedNumbers.includes(t.number)
+      )
+      
+      setTeachersList(filtered)
+      setSelectedTeacher(null)
+    } catch (err) {
+      console.error('Failed to load teachers', err)
+      notify('error', 'Failed to load teachers')
+    }
+  }
+
+  const handleSpecialityChange = (specialityId) => {
+    setSelectedSpeciality(specialityId)
+    if (specialityId) {
+      loadTeachersBySpeciality(specialityId)
+    } else {
+      setTeachersList([])
+    }
+  }
+
+  const handleAddTeacherToModule = async () => {
+    if (!selectedTeacher) {
+      notify('error', 'Please select a teacher')
+      return
+    }
+
+    setAttachTeacherLoading(true)
+    try {
+      await Modules.assignTeacher(attachingModule, { teacher_number: selectedTeacher.number, speciality_id: selectedSpeciality })
+      notify('success', 'Teacher assigned successfully')
+      
+      const moduleResp = await Modules.get(attachingModule)
+      const teachers = moduleResp.teachers || []
+      setAttachedTeachers(teachers)
+      
+      if (selectedSpeciality) {
+        await loadTeachersBySpeciality(selectedSpeciality)
+      }
+      
+      setSelectedTeacher(null)
+    } catch (err) {
+      console.error('Failed to assign teacher', err)
+      notify('error', 'Failed to assign teacher')
+    } finally {
+      setAttachTeacherLoading(false)
+    }
+  }
+
+  const handleRemoveTeacherFromModule = async (teacherNumber) => {
+    setAttachTeacherLoading(true)
+    try {
+      await Modules.unassignTeacher(attachingModule, teacherNumber)
+      notify('success', 'Teacher removed successfully')
+      
+      const moduleResp = await Modules.get(attachingModule)
+      const teachers = moduleResp.teachers || []
+      setAttachedTeachers(teachers)
+      
+      if (selectedSpeciality) {
+        await loadTeachersBySpeciality(selectedSpeciality)
+      }
+    } catch (err) {
+      console.error('Failed to remove teacher', err)
+      notify('error', 'Failed to remove teacher')
+    } finally {
+      setAttachTeacherLoading(false)
+    }
+  }
+
   return (
     <div className={`${styles.modulesLayout} full scrollbar`}>
       <Float bottom='6em' right="1em" css='h4pc'>
@@ -406,7 +516,7 @@ const AdminModules = () => {
         }}
         onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
       />
-      <Popup isOpen={addModal} blur={2} bg='rgba(0,0,0,0.3)' onClose={()=>setAddModal(false)}>
+      <Popup isOpen={addModal} blur={2} bg='rgba(0,0,0,0.2)' onClose={()=>setAddModal(false)}>
           <div className={`${styles.dashBGC}`} style={{ maxWidth: '700px', padding: '2em' }}>
             <div className="flex row a-center j-spacebet">
               <Text text='Add New Module' size='var(--text-l)' color='var(--text)' align='left' />
@@ -431,6 +541,120 @@ const AdminModules = () => {
               <PrimaryButton isLoading={dialogLoading} text={editingModule ? 'Update Module' : 'Add Module'} onClick={async ()=>{ setConfirmDialog({ isOpen: true, type: editingModule ? 'normal' : 'normal', title: editingModule ? 'Update Module' : 'Add Module', message: editingModule ? `Update module ${formData.name}?` : `Add module ${formData.name}?`, action: editingModule ? 'edit' : 'add', actionData: null }) }} />
             </div>
           </div>
+      </Popup>
+      <Popup isOpen={attachTeacherModal} blur={2} bg='rgba(0,0,0,0.2)' onClose={async ()=>{ setAttachTeacherModal(false); setSelectedSpeciality(null); setSelectedTeacher(null); await loadModules(); }}>
+        <div className={`${styles.dashBGC}`} style={{ minWidth: '500px', padding: '2em' }}>
+            <div className="flex row a-center j-spacebet">
+            <Text text='Attach Teachers to Module' size='var(--text-l)' color='var(--text)' align='left' />
+            <IconButton icon='fa-solid fa-xmark' onClick={async ()=>{ setAttachTeacherModal(false); setSelectedSpeciality(null); setSelectedTeacher(null); await loadModules(); }} />
+          </div>
+          
+          {attachTeacherLoading && !specialitiesList.length ? (
+            <div style={{ textAlign: 'center', padding: '2em', marginTop: '1.5em' }}>
+              <Text text='Loading teachers data...' align='center' color='var(--text-low)' />
+            </div>
+          ) : (
+            <div className="flex column gap mrv" style={{ marginTop: '1.5em' }}>
+              <div className="flex row a-center gap">
+
+                <SelectInput 
+                bg='var(--bg)'
+                  label='Select Speciality'
+                  placeholder='Choose a speciality'
+                  options={specialitiesList.length > 0 ? specialitiesList.map(s => ({ value: s.id, text: s.name })) : [{value: '', text: 'Loading specialities...'}]}
+                  onChange={(val) => {
+                    setSelectedSpeciality(val || null)
+                    if (val) {
+                      loadTeachersBySpeciality(val)
+                    } else {
+                      setTeachersList([])
+                      setSelectedTeacher(null)
+                    }
+                  }}
+                />
+
+                {selectedSpeciality && teachersList.length > 0 && (
+                  <div>
+                    <Text text='Available Teachers' size='var(--text-m)' align='left' css='mgs' />
+                    <SelectInputImage
+                      bg='var(--bg)'
+                      options={teachersList.map(teacher => ({
+                        value: teacher.number,
+                        text: `${teacher.fname} ${teacher.lname}`,
+                        img: teacher.image
+                      }))}
+                      onChange={(index) => {
+                        setSelectedTeacher(teachersList[index])
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {selectedSpeciality && teachersList.length === 0 && (
+                <div style={{ padding: '1.5em', textAlign: 'center', backgroundColor: 'var(--bg)', borderRadius: '0.5em', border: '1px solid var(--border-low)' }}>
+                  <Text text='No available teachers for this speciality' size='0.9em' color='var(--text-low)' align='center' />
+                </div>
+              )}
+
+              {selectedSpeciality && selectedTeacher && (
+                <div className="flex row a-center gap pdt">
+                  <SecondaryButton text='Cancel' onClick={()=>{setSelectedTeacher(null); setTeachersList([])}}/>
+                  <PrimaryButton 
+                    text='Add Selected Teacher' 
+                    onClick={handleAddTeacherToModule}
+                    isLoading={attachTeacherLoading}
+                  />
+                </div>
+              )}
+
+              {attachedTeachers.length > 0 && (
+                <div style={{ marginTop: '1.5em', paddingTop: '1.5em', borderTop: '1px solid var(--border-low)' }}>
+                  <div className="flex row a-center j-spacebet mgs">
+                    <Text text={`Attached Teachers (${attachedTeachers.length})`} size='var(--text-m)' align='left' />
+                  </div>
+                  <div className='mrt flex column gap scrollbar pdh overflow-y-a' style={{ maxHeight: "200px" }}>
+                    {attachedTeachers.map((teacher) => (
+                      <div 
+                        key={teacher.number}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.75em',
+                          backgroundColor: 'var(--bg)',
+                          borderRadius: '0.5em',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75em', flex: 1}}>
+                          <Profile img={teacher.image} width="30px" />
+                          <div style={{ flex: 1 }}>
+                            <Text text={`${teacher.fname} ${teacher.lname}`} size='var(--text-m)' align='left' />
+                            <Text text={teacher.number} size='var(--text-s)' color='var(--text-low)' align='left' />
+                          </div>
+                        </div>
+                        <IconButton 
+                          icon='fa-regular fa-trash-can' 
+                          onClick={() => handleRemoveTeacherFromModule(teacher.number)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {attachedTeachers.length === 0 && selectedSpeciality && (
+                <div style={{ padding: '1em', textAlign: 'center', backgroundColor: 'var(--bg)', borderRadius: '0.5em', border: '1px solid var(--border-low)' }}>
+                  <Text text='No teachers attached yet' size='0.9em' color='var(--text-low)' align='center' />
+                </div>
+              )}
+            </div>
+          )}
+          
+          <div className="flex row a-center gap pdt" style={{ marginTop: '1.5em', paddingTop: '1.5em', borderTop: '1px solid var(--border-low)' }}>
+            <SecondaryButton text='Close' onClick={async ()=>{ setAttachTeacherModal(false); setSelectedSpeciality(null); setSelectedTeacher(null); await loadModules(); }} />
+          </div>
+        </div>
       </Popup>
       <div ref={layoutPath} className={`${styles.modulesHeader}`}>
         <div className={`${styles.modulesPath} flex a-center h4p`}>
@@ -502,8 +726,8 @@ const AdminModules = () => {
                     <Text align='left' text={module.code} size='var(--text-m)'/>
                     <Text align='left' text={module.name} size='var(--text-m)'/>
                     <Text align='left' text={module.shortcut || module.short_name} size='var(--text-m)'/>
-                    <div className="flex row a-center gap">
-                      {(!module.teachers || module.teachers.length == 0) && <Button text='Attach Teacher' icon='fa-solid fa-plus' />}
+                    <div className="flex row a-center gap" onClick={() => {handleAttachTeacher(module.code)}}>
+                      {(!module.teachers || module.teachers.length == 0) && <Button text='Attach Teacher' onClick={() => {handleAttachTeacher(module.code)}} icon='fa-solid fa-plus' />}
                       {(module.teachers && module.teachers.length == 1) && 
                       <div className="flex row a-center gap">
                         <Profile img={module.teachers[0].image} width="35px" border="2px solid var(--bg)"/>

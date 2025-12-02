@@ -20,7 +20,32 @@ class StudentController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $students = Student::with(['user', 'group', 'speciality'])->orderBy('number', 'desc')->get();
+        $q = Student::with(['user', 'group', 'speciality.department'])->orderBy('number', 'desc');
+
+        // filters: department (id or name), level, speciality_id or speciality
+        if ($request->filled('level')) {
+            $q->where('level', $request->input('level'));
+        }
+
+        if ($request->filled('speciality_id')) {
+            $q->where('speciality_id', $request->input('speciality_id'));
+        } elseif ($request->filled('speciality')) {
+            $q->whereHas('speciality', function ($sq) use ($request) {
+                $sq->where('name', 'like', '%' . $request->input('speciality') . '%');
+            });
+        }
+
+        if ($request->filled('department_id')) {
+            $q->whereHas('speciality.department', function ($dq) use ($request) {
+                $dq->where('id', $request->input('department_id'));
+            });
+        } elseif ($request->filled('department')) {
+            $q->whereHas('speciality.department', function ($dq) use ($request) {
+                $dq->where('name', 'like', '%' . $request->input('department') . '%');
+            });
+        }
+
+        $students = $q->get();
 
         $data = $students->map(function ($s) {
             $user = $s->user;
@@ -131,7 +156,7 @@ class StudentController extends Controller
 
         foreach ($items as $index => $item) {
             $v = Validator::make($item, [
-                'number' => 'required|string|max:40|unique:students,number',
+                'number' => 'required|int|unique:students,number',
                 'fname' => 'required|string|max:50',
                 'lname' => 'required|string|max:50',
                 'email' => 'required|email|unique:users,email',

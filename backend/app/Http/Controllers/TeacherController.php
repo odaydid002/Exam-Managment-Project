@@ -92,7 +92,31 @@ class TeacherController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $teachers = Teacher::with(['user', 'speciality.department'])->orderBy('number', 'desc')->get();
+        $q = Teacher::with(['user', 'speciality.department'])->orderBy('number', 'desc');
+
+        // filters: position, speciality_id (or speciality name), department_id (or department name)
+        if ($request->filled('position')) {
+            $q->where('position', 'like', '%' . $request->input('position') . '%');
+        }
+        if ($request->filled('speciality_id')) {
+            $q->where('speciality_id', $request->input('speciality_id'));
+        } elseif ($request->filled('speciality')) {
+            $q->whereHas('speciality', function ($sq) use ($request) {
+                $sq->where('name', 'like', '%' . $request->input('speciality') . '%');
+            });
+        }
+
+        if ($request->filled('department_id')) {
+            $q->whereHas('speciality.department', function ($dq) use ($request) {
+                $dq->where('id', $request->input('department_id'));
+            });
+        } elseif ($request->filled('department')) {
+            $q->whereHas('speciality.department', function ($dq) use ($request) {
+                $dq->where('name', 'like', '%' . $request->input('department') . '%');
+            });
+        }
+
+        $teachers = $q->get();
 
         $data = $teachers->map(function ($t) {
             $user = $t->user;
@@ -104,6 +128,7 @@ class TeacherController extends Controller
                 'lname' => $user->lname ?? null,
                 'adj' => $t->adj ?? null,
                 'number' => (string) $t->number,
+                'speciality_id' => $t->speciality_id,
                 'departement' => $department,
                 'position' => $t->position ?? null,
                 'speciality' => $speciality->name ?? null,
@@ -205,6 +230,7 @@ class TeacherController extends Controller
                         'lname' => $user->lname,
                         'adj' => $teacher->adj,
                         'number' => (string) $teacher->number,
+                        'speciality_id' => $teacher->speciality_id,
                         'departement' => $dept,
                         'position' => $teacher->position,
                         'speciality' => $spec->name ?? null,
@@ -320,6 +346,7 @@ class TeacherController extends Controller
                 'lname' => $user->lname ?? null,
                 'adj' => $teacher->adj ?? null,
                 'number' => (string) $teacher->number,
+                'speciality_id' => $teacher->speciality_id,
                 'departement' => $department,
                 'position' => $teacher->position ?? null,
                 'speciality' => $speciality->name ?? null,
@@ -349,6 +376,7 @@ class TeacherController extends Controller
             'lname' => $user->lname ?? null,
             'adj' => $teacher->adj ?? null,
             'number' => (string) $teacher->number,
+            'speciality_id' => $teacher->speciality_id,
             'departement' => $department,
             'position' => $teacher->position ?? null,
             'speciality' => $speciality->name ?? null,

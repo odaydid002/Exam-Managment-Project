@@ -12,7 +12,32 @@ class ModuleController extends Controller
 {
     public function index(Request $request)
     {
-        $modules = Module::with('teacherModules.teacher.user')->orderBy('name')->get();
+        $q = Module::with('teacherModules.teacher.user')->orderBy('name');
+
+        // filters: type, factor (exact or min/max), credits (exact or min/max)
+        if ($request->filled('type')) {
+            $q->where('type', $request->input('type'));
+        }
+        if ($request->filled('factor')) {
+            $q->where('factor', $request->input('factor'));
+        }
+        if ($request->filled('factor_min')) {
+            $q->where('factor', '>=', $request->input('factor_min'));
+        }
+        if ($request->filled('factor_max')) {
+            $q->where('factor', '<=', $request->input('factor_max'));
+        }
+        if ($request->filled('credits')) {
+            $q->where('credits', $request->input('credits'));
+        }
+        if ($request->filled('credits_min')) {
+            $q->where('credits', '>=', $request->input('credits_min'));
+        }
+        if ($request->filled('credits_max')) {
+            $q->where('credits', '<=', $request->input('credits_max'));
+        }
+
+        $modules = $q->get();
 
         $data = $modules->map(function ($m) {
             $teachers = collect($m->teacherModules)->flatMap(function ($tm) {
@@ -215,7 +240,8 @@ class ModuleController extends Controller
         }
 
         $v = Validator::make($request->all(), [
-            'teacher_number' => 'required|string|exists:teachers,number',
+            // accept numeric or string values for teacher_number (frontend may send as number)
+            'teacher_number' => 'required|exists:teachers,number',
             'speciality_id' => 'nullable|exists:specialities,id',
         ]);
 
@@ -226,21 +252,33 @@ class ModuleController extends Controller
         $module = Module::find($code);
         if (!$module) return response()->json(['message' => 'Module not found'], 404);
 
-        $teacherNumber = $request->input('teacher_number');
+        // Normalize teacher number to string to handle numeric input from frontend
+        $teacherNumberRaw = $request->input('teacher_number');
+        $teacherNumber = (string) $teacherNumberRaw;
 
-        if (TeacherModule::where('teacher_number', $teacherNumber)->where('module_code', $code)->exists()) {
+        // Ensure the teacher exists first
+        $teacher = \App\Models\Teacher::where('number', $teacherNumber)->first();
+        if (!$teacher) {
+            return response()->json(['message' => 'Teacher not found'], 404);
+        }
+        // Use string teacher number for lookup/creation. If DB columns are numeric,
+        // the database will implicitly cast the string numeric value.
+        $teacherKey = $teacherNumber;
+
+        if (TeacherModule::where('teacher_number', $teacherKey)->where('module_code', $code)->exists()) {
             return response()->json(['message' => 'Teacher already assigned to this module'], 409);
         }
-
         try {
             $tm = TeacherModule::create([
-                'teacher_number' => $teacherNumber,
+                'teacher_number' => $teacherKey,
                 'module_code' => $code,
                 'speciality_id' => $request->input('speciality_id') ?? null,
             ]);
 
             return response()->json(['message' => 'Teacher assigned to module', 'assignment' => $tm], 201);
         } catch (\Exception $e) {
+            // Log the actual exception message for easier debugging
+            \Log::error('Failed to assign teacher to module', ['error' => $e->getMessage(), 'code' => $code, 'teacher' => $teacherNumber]);
             return response()->json(['message' => 'Failed to assign teacher', 'error' => $e->getMessage()], 500);
         }
     }
@@ -252,7 +290,8 @@ class ModuleController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $assignment = TeacherModule::where('module_code', $code)->where('teacher_number', $teacherNumber)->first();
+        $tn = (string) $teacherNumber;
+        $assignment = TeacherModule::where('module_code', $code)->where('teacher_number', $tn)->first();
         if (!$assignment) return response()->json(['message' => 'Assignment not found'], 404);
 
         try {
@@ -278,7 +317,8 @@ class ModuleController extends Controller
             return response()->json(['message' => 'Validation error', 'errors' => $v->errors()], 422);
         }
 
-        $assignment = TeacherModule::where('module_code', $code)->where('teacher_number', $teacherNumber)->first();
+        $tn = (string) $teacherNumber;
+        $assignment = TeacherModule::where('module_code', $code)->where('teacher_number', $tn)->first();
         if (!$assignment) return response()->json(['message' => 'Assignment not found'], 404);
 
         if ($request->has('speciality_id')) {

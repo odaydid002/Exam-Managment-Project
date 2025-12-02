@@ -25,6 +25,7 @@ const SelectInputImage = ({
   w = "max-content", 
   options = [{value:"", text:"", img: ""}],
   indexed = false,
+  bg = '',
   onChange = () => {}
 }) => {
     const varStyles = {
@@ -62,6 +63,7 @@ const SelectInputImage = ({
     <div
       ref={containerRef}
       style={varStyles}
+      style={{backgroundColor: "var(--trans-grey)"}}
       className={`${styles.container} ${styles.selectContainer} ${open ? styles.open : ""} flex a-center pos-rel`}
       selected-value = {selectedVal || 0}
       selected-index = {selected}
@@ -77,7 +79,7 @@ const SelectInputImage = ({
         <i className="fa-solid fa-sort text-low text-m"></i>
       </div>
 
-      <ul ref={listRef} className={`flex column ${styles.selectList} pos-abs`}>
+      <ul ref={listRef} className={`flex column ${styles.selectList} pos-abs`} style={{backgroundColor: bg}}>
         {options.map((option, index) => (
           <li
             key={index}
