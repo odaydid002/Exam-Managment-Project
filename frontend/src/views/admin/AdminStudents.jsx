@@ -439,7 +439,7 @@ const AdminStudents = () => {
               <Text align='left' css='ellipsis' text={student.level} size='var(--text-m)'/>
               <Text align='left' css='ellipsis' text={student.speciality} size='var(--text-m)'/>
               {student.group_code?
-              <Text align='left' css='ellipsis' text={student.group} size='var(--text-m)'/>:
+              <Text align='left' css='ellipsis' text={student.group_name} size='var(--text-m)'/>:
               <Button mrg='0 0 0 0.25em' text="Assign Group" icon='fa-solid fa-plus'/>}
               <Text align='left' css='ellipsis' text={student.email} size='var(--text-m)'/>
 

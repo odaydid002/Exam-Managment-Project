@@ -3,6 +3,7 @@ import "./Calendar.css";
 import Text from "../text/Text";
 import IconButton from "../buttons/IconButton";
 import Eclipse from "../shapes/Eclipse";
+import ConfirmDialog from "../containers/ConfirmDialog";
 
 export default function CalendarView({
     startDate,
@@ -10,7 +11,10 @@ export default function CalendarView({
     startHour = 8,
     endHour = 17,
     eventsList = [],
-    onConflict = () => {}
+    onConflict = () => {},
+    onEventClick = () => {},
+    onEventDelete = () => {},
+    onEventSurveillance = () => {}
 }) {
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -43,6 +47,8 @@ export default function CalendarView({
     const totalPages = Math.ceil(allDays.length / pageSize);
 
     const [currentPage, setCurrentPage] = useState(1);
+    const [hoveredEvent, setHoveredEvent] = useState(null);
+    const [deleteConfirmation, setDeleteConfirmation] = useState({ show: false, event: null });
 
     const pageDays = allDays.slice(
         (currentPage - 1) * pageSize,
@@ -157,12 +163,17 @@ export default function CalendarView({
                                                 <div
                                                     key={i}
                                                     className="event-box flex column clickable-2"
+                                                    onClick={() => onEventClick(ev)}
+                                                    onMouseEnter={() => setHoveredEvent(`${ev.id}-${i}`)}
+                                                    onMouseLeave={() => setHoveredEvent(null)}
                                                     style={{
                                                         height: `${(ev.endHour - ev.startHour) * HOUR_HEIGHT + 10}px`,
                                                         top: `${i * 20}px`,
                                                         zIndex: zIndex,
                                                         border: borderStyle,
-                                                        boxSizing: 'border-box'
+                                                        boxSizing: 'border-box',
+                                                        cursor: 'pointer',
+                                                        position: 'relative'
                                                     }}
                                                 >
                                                     {conflictCount > 1 && (
@@ -191,6 +202,47 @@ export default function CalendarView({
                                                     <Text color="white" text={`${ev.type} - ${ev.module}`} align="center" mrg="auto 0" size="var(--text-m)" w="bold"/>
                                                     <Text color="white" text={ev.level} align="left" size="var(--text-s)"/>
                                                     <Text color="white" text={ev.speciality} align="left" size="var(--text-s)"/>
+                                                    
+                                                    {hoveredEvent === `${ev.id}-${i}` && (
+                                                        <div style={{
+                                                            display: 'flex',
+                                                            gap: '0.5em',
+                                                            marginTop: 'auto',
+                                                            paddingTop: '0.5em',
+                                                            animation: 'fadeIn 0.2s ease-in'
+                                                        }}>
+                                                            <IconButton
+                                                                icon="fa-solid fa-trash"
+                                                                color="white"
+                                                                size="var(--text-m)"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    setDeleteConfirmation({ show: true, event: ev })
+                                                                }}
+                                                                title="Delete exam"
+                                                            />
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    onEventSurveillance(ev)
+                                                                }}
+                                                                style={{
+                                                                    background: 'rgba(100, 150, 255, 0.8)',
+                                                                    border: 'none',
+                                                                    color: 'white',
+                                                                    padding: '0.3em 0.6em',
+                                                                    borderRadius: '0.3em',
+                                                                    cursor: 'pointer',
+                                                                    fontSize: '0.75em',
+                                                                    flex: 1
+                                                                }}
+                                                                title="Assign proctors"
+                                                            >
+                                                                <i className="fa-solid fa-users"></i>
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    
                                                     <Eclipse css="pos-abs" top="60%" left="30%" color="var(--trans-grey)"/>
                                                     <Eclipse css="pos-abs" top="-10%" left="-30%" w="6em" color="var(--trans-grey)"/>
                                                 </div>
@@ -204,6 +256,22 @@ export default function CalendarView({
                     </div>
                 ))}
             </div>
+
+            <ConfirmDialog
+                isOpen={deleteConfirmation.show}
+                title="Delete Exam"
+                message={`Are you sure you want to delete ${deleteConfirmation.event?.module || 'this exam'}?`}
+                confirmText="Delete"
+                cancelText="Cancel"
+                isDangerous={true}
+                onConfirm={() => {
+                    if (deleteConfirmation.event) {
+                        onEventDelete(deleteConfirmation.event)
+                    }
+                    setDeleteConfirmation({ show: false, event: null })
+                }}
+                onCancel={() => setDeleteConfirmation({ show: false, event: null })}
+            />
         </div>
     );
 }

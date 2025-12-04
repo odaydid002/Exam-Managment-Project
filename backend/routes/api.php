@@ -11,6 +11,7 @@ use App\Http\Controllers\GroupeController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ExamenController;
 use App\Http\Controllers\SectionController;
+use App\Http\Controllers\SurveillanceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -114,4 +115,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/exams/{id}', [ExamenController::class, 'show']);
     Route::put('/exams/edit/{id}', [ExamenController::class, 'update']);
     Route::delete('/exams/delete/{id}', [ExamenController::class, 'destroy']);
+
+    // Surveillance
+    Route::get('/surveillance/exam/{examId}', [SurveillanceController::class, 'getByExam']);
+    Route::post('/surveillance/assign', [SurveillanceController::class, 'assign']);
+    Route::delete('/surveillance/{examId}/{teacherNumber}', [SurveillanceController::class, 'unassign']);
 });

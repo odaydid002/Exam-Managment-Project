@@ -87,4 +87,5 @@
     padding: 1em;
     font-size: 0.75rem;
     overflow: hidden;
+    max-width: 95%;
 }

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "strip-comments": "node ./scripts/remove_comments.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

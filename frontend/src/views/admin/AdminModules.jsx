@@ -12,6 +12,10 @@ import formatNumber from '../../hooks/formatNumber';
 import StaticsCard from '../../components/containers/StaticsCard';
 import Button from '../../components/buttons/Button';
 import Profile from '../../components/containers/profile';
+import Popup from '../../components/containers/Popup';
+import TextInput from '../../components/input/TextInput';
+import SelectInputImage from '../../components/input/SelectInputImage';
+import SelectInput from '../../components/input/SelectInput';
 import ConfirmDialog from '../../components/containers/ConfirmDialog';
 
 import { useAnimateNumber } from "../../hooks/useAnimateNumber";
@@ -21,10 +25,6 @@ import { useNotify } from '../../components/loaders/NotificationContext';
 import { useGSAP } from '@gsap/react';
 
 import gsap from 'gsap';
-import Popup from '../../components/containers/Popup';
-import TextInput from '../../components/input/TextInput';
-import SelectInputImage from '../../components/input/SelectInputImage';
-import SelectInput from '../../components/input/SelectInput';
 gsap.registerPlugin(useGSAP);
 
 

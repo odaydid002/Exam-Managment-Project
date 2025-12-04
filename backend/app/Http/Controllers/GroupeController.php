@@ -249,59 +249,64 @@ class GroupeController extends Controller
         }
 
         $v = Validator::make($request->all(), [
-            'student_number' => 'required|exists:students,number',
+            'student_numbers' => 'required|array|min:1',
+            'student_numbers.*' => 'required|exists:students,number',
         ]);
 
         if ($v->fails()) {
             return response()->json(['message' => 'Validation error', 'errors' => $v->errors()], 422);
         }
 
-        $student = Student::find($request->student_number);
-        if (!$student) return response()->json(['message' => 'Student not found'], 404);
-
-        if ($student->group_code !== $code) {
-            return response()->json(['message' => 'Student does not belong to this group'], 422);
-        }
-
-        $existing = GroupDelegate::where('student_number', $student->number)->first();
-        if ($existing && $existing->group_code !== $code) {
-            return response()->json(['message' => 'Student is already delegate of another group'], 422);
-        }
+        $group = Groupe::find($code);
+        if (!$group) return response()->json(['message' => 'Group not found'], 404);
 
         try {
-            DB::transaction(function () use ($code, $student) {
+            DB::transaction(function () use ($code, $request) {
                 GroupDelegate::where('group_code', $code)->delete();
 
-                GroupDelegate::create([
-                    'group_code' => $code,
-                    'student_number' => $student->number,
-                    'assigned_at' => now(),
-                ]);
+                foreach ($request->student_numbers as $studentNumber) {
+                    $student = Student::find($studentNumber);
+                    if (!$student) continue;
+                    if ($student->group_code !== $code) continue; 
+
+                    $existing = GroupDelegate::where('student_number', $student->number)->first();
+                    if ($existing && $existing->group_code !== $code) {
+                        continue;
+                    }
+
+                    GroupDelegate::create([
+                        'group_code' => $code,
+                        'student_number' => $student->number,
+                        'assigned_at' => now(),
+                    ]);
+                }
             });
 
-            $delegate = GroupDelegate::where('group_code', $code)->first();
-            return response()->json(['message' => 'Delegate assigned', 'delegate' => $delegate]);
+            $delegates = GroupDelegate::where('group_code', $code)->get();
+            return response()->json(['message' => 'Delegates assigned', 'delegates' => $delegates]);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to assign delegate', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to assign delegates', 'error' => $e->getMessage()], 500);
         }
     }
 
-    public function removeDelegate($code)
+    public function removeDelegate(Request $request, $code)
     {
         if (!auth()->user() || !auth()->user()->hasRole(['admin', 'employee'])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
-
-        $delegate = GroupDelegate::where('group_code', $code)->first();
-        if (!$delegate) return response()->json(['message' => 'No delegate for this group'], 404);
+        $studentNumber = $request->input('student_number', null);
 
         try {
-            DB::transaction(function () use ($delegate) {
-                $delegate->delete();
+            DB::transaction(function () use ($code, $studentNumber) {
+                if ($studentNumber) {
+                    GroupDelegate::where('group_code', $code)->where('student_number', $studentNumber)->delete();
+                } else {
+                    GroupDelegate::where('group_code', $code)->delete();
+                }
             });
-            return response()->json(['message' => 'Delegate removed']);
+            return response()->json(['message' => 'Delegate(s) removed']);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to remove delegate', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to remove delegate(s)', 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -372,7 +377,6 @@ class GroupeController extends Controller
                 $student->save();
             });
 
-            // refresh counts
             $members = $group->students()->count();
 
             return response()->json([

@@ -9,6 +9,7 @@ import * as Modules from './modules'
 import * as Rooms from './rooms'
 import * as Groups from './groups'
 import * as Exams from './exams'
+import * as Surveillance from './surveillance'
 
 export {
   Auth,
@@ -22,4 +23,5 @@ export {
   Rooms,
   Groups,
   Exams,
+  Surveillance,
 }
