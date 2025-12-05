@@ -252,6 +252,36 @@ return new class extends Migration
 
             $table->timestampsTz();
         });
+
+
+
+        Schema::create('exam_reports', function (Blueprint $table) {
+        $table->id();
+
+        $table->unsignedBigInteger('user_id');   // enseignant
+        $table->unsignedBigInteger('exam_id');      // planning exam
+
+        $table->enum('type', [
+            'changement_date',
+            'conflit_horaire',
+            'absence_salle',
+            'absence_surveillants',
+            'erreur_liste_etudiants',
+            'duree_incorrecte',
+            'chevauchement_examens',
+            'module_incorrect',
+            'probleme_administratif',
+            'autre'
+        ]);
+
+        $table->text('description')->nullable();
+        $table->string('status')->default('en_attente'); // en_attente / traite / rejete
+
+        $table->timestamps();
+
+        $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+        $table->foreign('exam_id')->references('id')->on('exams')->onDelete('cascade');
+    });
     }
 
     public function down(): void
@@ -273,5 +303,6 @@ return new class extends Migration
         Schema::dropIfExists('academic_years');
         Schema::dropIfExists('settings');
         Schema::dropIfExists('users');
+        Schema::dropIfExists('exam_reports');
     }
 };
