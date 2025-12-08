@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import styles from './inputs.module.css'
+import Text from '../text/Text';
 
 const SelectInput = ({ 
   mrg = "0", w = "fit-content", 
@@ -85,7 +86,14 @@ const SelectInput = ({
 
   return (
     <div style={{margin: mrg}}>
-      {label && <p style={{marginBottom: '0.5em', fontSize: 'var(--text-s)', color: 'var(--text-low)'}}>{label}</p>}
+      {label && <p style={{ margin: "0.5em 0" }}>{
+        <Text 
+            text={label} 
+            color='var(--text-low)'
+            size='var(--text-m)' 
+            opacity='0.8' 
+            align='left'
+        />}</p>}
       <div
         ref={containerRef}
         style={{...varStyles, width: w}}

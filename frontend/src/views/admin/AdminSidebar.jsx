@@ -25,9 +25,6 @@ const AdminSidebar = () => {
         <NavElementButton onClick={()=>{}} title="" icon="fa-solid fa-bell" mrt="0" hover/>
         <NavElement path="settings/" title="" icon="fa-solid fa-gear" mrt="0" hover/>
         <NavElementButton onClick={()=>{logout(); navigate('/login')}} title="" icon="fa-solid fa-arrow-right-from-bracket" mrt="0" hover/>
-        <NavElement path="profile/" mrt="0">
-          <Profile width="35px" nav={true} classes="clickable"/>
-        </NavElement>
     </ExpendContainer>
   )
 }

@@ -11,12 +11,16 @@ const TextInput = ({
     round = "5px",
     icon = null,
     label = null,
+    readOnly = null,
+    val = null,
     type = "text",
     align = "left",
     border = "none",
     placeholder = "",
     onchange = (e) => {e},
     oninput = (e) => {e},
+    editable = false,
+    onEdit = () => {},
     dataList = [],
     disabled = false,
     css = "",
@@ -50,7 +54,8 @@ const TextInput = ({
                     <input 
                         {...rest}
                         disabled={disabled}
-                        readOnly={disabled}
+                        readOnly={readOnly}
+                        value={val}
                         id="text-input"
                         list={dataListId}
                         ref={inp}
@@ -67,7 +72,12 @@ const TextInput = ({
                             backgroundColor: "transparent",
                             color: color
                         }}
-                    />
+                        />
+                        {editable && 
+                        <i 
+                            className="fa-solid fa-pen-to-square text-m c-text clickable"
+                            onClick={() => {onEdit}}
+                        ></i> }
                 </div>
             </div>
             {dataList.length > 0 && (

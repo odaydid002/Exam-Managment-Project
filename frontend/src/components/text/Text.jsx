@@ -8,10 +8,12 @@ const Text = (
         color = "var(--text)",
         align = "center",
         mrg = "0",
-        pd = "0",
+        high = false,
+        pd = high? "0.25em 0.625em": "0",
         w = "400",
         lh = "unset",
         opacity = "1",
+        ...rest
     }
 ) => {
     const varStyles = {
@@ -22,10 +24,12 @@ const Text = (
         padding: pd,
         fontWeight: w,
         lineHight: lh,
-        opacity: opacity
+        opacity: opacity,
+        borderRadius: "5px",
+        backgroundColor: high && "var(--color-main-low)",
     }
     return (
-        <h1 className={`${css}`} style={varStyles}>{text}</h1>
+        <h1 {...rest} className={`${css}`} style={varStyles}>{text}</h1>
     )
 }
 
