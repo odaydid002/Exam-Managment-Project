@@ -12,6 +12,7 @@ use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ExamenController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SurveillanceController;
+use App\Http\Controllers\ExamReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -83,7 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/modules/{code}', [ModuleController::class, 'show']);
     Route::put('/modules/edit/{code}', [ModuleController::class, 'update']);
     Route::delete('/modules/delete/{code}', [ModuleController::class, 'destroy']);
-    
+
     // Rooms
     Route::get('/rooms/all', [RoomController::class, 'index']);
     Route::post('/rooms/bulk', [RoomController::class, 'bulkStore']);
@@ -104,10 +105,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/groups/{code}/delegate/set', [GroupeController::class, 'setDelegate']);
         Route::put('/groups/{code}/delegate/edit', [GroupeController::class, 'changeDelegate']);
         Route::delete('/groups/{code}/delegate/remove', [GroupeController::class, 'removeDelegate']);
-        
+
     // Image upload (authenticated)
     Route::post('/images/upload', [ImageController::class, 'upload']);
-    
+
     // Exams
     Route::get('/exams/all', [ExamenController::class, 'index']);
     Route::post('/exams/bulk', [ExamenController::class, 'bulkStore']);
@@ -120,4 +121,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/surveillance/exam/{examId}', [SurveillanceController::class, 'getByExam']);
     Route::post('/surveillance/assign', [SurveillanceController::class, 'assign']);
     Route::delete('/surveillance/{examId}/{teacherNumber}', [SurveillanceController::class, 'unassign']);
+
+
+    Route::apiResource('exam-reports', ExamReportController::class);
 });
