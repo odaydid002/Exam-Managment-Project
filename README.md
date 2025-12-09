@@ -3,9 +3,9 @@
 A full-stack Laravel + React application for managing exams, students, teachers, and scheduling.
 
 🔗 Figma Design:
-```sh
-https://www.figma.com/design/7GtBgiKFH4qe1hxJSpFcDE/Exam-managment?node-id=0-1&t=ZZ91tbIZZVWm5JRt-1
-```
+
+👉https://www.figma.com/design/7GtBgiKFH4qe1hxJSpFcDE/Exam-managment?node-id=0-1&t=ZZ91tbIZZVWm5JRt-1
+
 
 🚀 Features
 
@@ -29,10 +29,11 @@ Database	MySQL
 Design	Figma
 📥 Setup Guide
 1️⃣ Clone the Repository
+```sh
 Set-ExecutionPolicy -Scope CurrentUser Unrestricted
 git clone https://github.com/odaydid002/Exam-Managment-Project.git
 cd Exam-Managment-Project
-
+```
 ⚙️ Backend Setup (Laravel)
 
 ```sh
