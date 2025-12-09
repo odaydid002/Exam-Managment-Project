@@ -3,7 +3,9 @@
 A full-stack Laravel + React application for managing exams, students, teachers, and scheduling.
 
 🔗 Figma Design:
-👉 https://www.figma.com/design/7GtBgiKFH4qe1hxJSpFcDE/Exam-managment?node-id=0-1&t=ZZ91tbIZZVWm5JRt-1
+```sh
+https://www.figma.com/design/7GtBgiKFH4qe1hxJSpFcDE/Exam-managment?node-id=0-1&t=ZZ91tbIZZVWm5JRt-1
+```
 
 🚀 Features
 
@@ -37,47 +39,53 @@ cd Exam-Managment-Project
 cd backend
 composer install
 ```
-
 ```sh
 cp .env.example .env
 php artisan key:generate
 ```
-
+```sh
 php artisan migrate:fresh
 php artisan db:seed --class=InitialSeeder
-
+```
 🎨 Frontend Setup (React + Vite)
+```sh
 cd ../frontend
 npm install
 npm run build
-
+```
 🔄 Updating the Project
 Pull latest changes
+```sh
 git pull
-
+```
 Update Frontend
+```sh
 cd frontend
 npm install
 npm run build
 cd ..
-
+```
 Update Backend
+```sh
 cd backend
 composer install
+composer update
 php artisan migrate:fresh
 php artisan db:seed --class=InitialSeeder
 php artisan optimize:clear
 php artisan optimize
-
+```
 ▶️ Running the Project
 Run Frontend (Vite)
+```sh
 cd frontend
 npm run dev
-
+```
 Run Backend (Laravel)
+```sh
 cd backend
 php artisan serve
-
+```
 🤝 Contributing
 
 Pull requests are welcome.
