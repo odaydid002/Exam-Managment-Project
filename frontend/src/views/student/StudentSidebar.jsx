@@ -5,11 +5,15 @@ import ExpendContainer from '../../components/containers/ExpendContainer'
 import NavElement from '../../components/navigators/NavElement'
 import NavElementButton from '../../components/navigators/NavElementButton'
 import NavSeparator from '../../components/navigators/NavSeparator'
+import { logout } from '../../API/auth'
+import { useNavigate } from 'react-router-dom'
+
 
 const StudentSidebar = () => {
+  const navigate = useNavigate()
   return (
-    <ExpendContainer w="var(--sidebar-width)" xw="var(--sidebar-expand)" h="calc(100vh - 2em)"  minHeight="600px" classes="pdv flex column bgc rounded-l ease-in-out mrg h4p">
-        <NavElement path="/" mrt="0">
+    <ExpendContainer w="var(--sidebar-width)" xw="var(--sidebar-expand)" h="calc(100vh - 2em)"  minHeight="600px" classes="pdb flex column bgc rounded-l ease-in-out mrg h4p">
+        <NavElement path="/" mrt="0.5em">
           <Logo w={35} h={35}/>
         </NavElement>
         <NavElement path="home/" title="Home" icon="fa-solid fa-house" hover/>
@@ -18,10 +22,8 @@ const StudentSidebar = () => {
         <NavElement path="modules/" title="Modules" icon="fa-solid fa-book" mrt="0" hover/>
         <NavSeparator title="System"/>
         <NavElementButton onClick={()=>{}} title="" icon="fa-solid fa-bell" mrt="0" hover/>
-        <NavElement path="settings/" title="Settings" icon="fa-solid fa-gear" mrt="0" hover/>
-        <NavElement path="profile/" mrt="0">
-          <Profile width="35px" nav={true} classes="clickable"/>
-        </NavElement>
+        <NavElement path="settings/" title="" icon="fa-solid fa-gear" mrt="0" hover/>
+        <NavElementButton onClick={()=>{logout(); navigate('/login')}} title="" icon="fa-solid fa-arrow-right-from-bracket" mrt="0" hover/>
     </ExpendContainer>
   )
 }

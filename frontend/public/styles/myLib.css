@@ -218,8 +218,18 @@
 .self-a-center{
     align-self: center;
 }
+.self-j-center{
+    justify-self: center;
+}
+.self-center{
+    align-self: center;
+    justify-self: center;
+}
 .hidden{
     visibility: hidden;
+}
+.gap-half{
+    gap: 0.5em;
 }
 .gap{
     gap: 1em;

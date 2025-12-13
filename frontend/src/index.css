@@ -16,6 +16,7 @@
   --ease-duration: 0.6s;
   --sidebar-width: 4em;
   --sidebar-expand: 12em;
+  --container-pd: 1em;
 }
 
 * {
@@ -72,6 +73,17 @@
 	animation: shimmer 1.5s infinite linear;
 }
 
+.shimmer-second {
+	background: linear-gradient(
+		-60deg,
+		var(--color-second2) 30%,
+		color-mix(in srgb, var(--color-second2) 15%, rgba(255, 255, 255, 0.2)) 50%,
+		var(--color-second2) 70%
+	);
+	background-size: 400%;
+	animation: shimmer 1.5s infinite linear;
+}
+
 .delay-1{
   animation-delay: 0.2s !important;
 }
@@ -115,6 +127,12 @@ input:-webkit-autofill:active{
     text-overflow: ellipsis;
     white-space: nowrap;
     display: block;
+}
+
+.BGC{
+  background-color: var(--bgc);
+  border-radius: 0.625em;
+  z-index: 1;
 }
 
 /*  Media */

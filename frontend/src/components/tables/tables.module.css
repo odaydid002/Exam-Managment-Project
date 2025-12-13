@@ -7,11 +7,17 @@
 }
 
 .tableListHead,
-.listTableRow{
+.listTableRow,
+.listTableRowView{
     display: grid;
     grid-template-rows: 1fr;
     grid-column-gap: 0px;
     grid-row-gap: 0px;
+}
+.listTableRowView{
+    padding: 0.625em 1em;
+    border-bottom: 2px solid var(--border-low);
+    cursor: default;
 }
 
 .listTableRow{
@@ -20,6 +26,7 @@
     border-bottom: 2px solid var(--border-low);
 }
 
+.listTableRowView:hover,
 .listTableRow:hover{
     background-color: var(--border-low);
 }

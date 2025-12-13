@@ -21,7 +21,6 @@ class Teacher extends Model
         'position',
     ];
 
-    // `number` is provided manually and is not an auto-incrementing integer
     public $incrementing = false;
     protected $keyType = 'string';
 

@@ -4,7 +4,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import StudentSidebar from './StudentSidebar';
 import StudentAppbar from './StudentAppbar';
 
-import styles from './student.module.css';
+import './student.css';
 import { authCheck } from '../../API/auth'
 
 const StudentLayout = () => {
@@ -40,12 +40,12 @@ const StudentLayout = () => {
   if (!verified) return null
 
   return (
-    <section className='flex full-view column4p overflow-h'>
-        <div className="h100">
+    <section className={`flex full-view column4p overflow-h section`}>
+        <div className={`navigator z-top`}>
           <StudentSidebar />
           <StudentAppbar />
         </div>
-        <div className={`${styles.mainDoc} full vh100`}>
+        <div className={`full content`}>
           <Outlet />
         </div>
     </section>

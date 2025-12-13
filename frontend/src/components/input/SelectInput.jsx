@@ -14,11 +14,16 @@ const SelectInput = ({
   value = null
 }) => {
     const varStyles = {
-        margin: mrg,
-        width: w,
-        cursor: "default",
-        backgroundColor: 'var(--trans-grey)'
+      margin: mrg,
+      cursor: "default",
+      backgroundColor: bg || 'var(--trans-grey)'
     };
+
+    // Only set a fixed inline width when the caller provided an explicit width
+    // other values like 'fit-content' or 'auto' will be measured and applied
+    if (w && w !== 'fit-content' && w !== 'auto') {
+      varStyles.width = w;
+    }
 
     const [selected, setSelected] = useState(0);
     const [selectedVal, setselectedVal] = useState(null);
@@ -58,11 +63,13 @@ const SelectInput = ({
             if (sw > max) max = sw
           }
 
-          const EXTRA = 72
+          const EXTRA = 75
           const finalWidth = Math.ceil(max + EXTRA)
-          containerEl.style.width = finalWidth + 'px'
+          if (!varStyles.width) {
+            containerEl.style.width = finalWidth + 'px'
+          }
         } catch (err) {
-          containerRef.current.style.width = 'auto'
+          if (containerRef.current) containerRef.current.style.width = 'auto'
         }
       }
 
@@ -96,7 +103,7 @@ const SelectInput = ({
         />}</p>}
       <div
         ref={containerRef}
-        style={{...varStyles, width: w}}
+        style={varStyles}
         className={`${styles.container} ${styles.selectContainer} ${open ? styles.open : ""} flex a-center pos-rel`}
         selected-value = {selectedVal || 0}
         selected-index = {selected}
@@ -109,7 +116,7 @@ const SelectInput = ({
             fontSize:"var(--text-m)",
             color: "var(--text-low)"
           }}></i>}
-          <p className="text-m text-low">{options.length > 0 && selected < options.length ? options[selected].text : placeholder}</p>
+          <p className="ellipsis text-m text-low">{options.length > 0 && selected < options.length ? options[selected].text : placeholder}</p>
           <i className="fa-solid fa-sort" style={{
             fontSize:"var(--text-m)",
             color: "var(--text-low)"
@@ -130,7 +137,7 @@ const SelectInput = ({
               }}
             >
               <div className="flex row a-center j-spacebet">
-                  <p className="text-m text-low">{indexed?index+1+" - ":""} {option.text}</p>
+                  <p className="ellipsis text-m text-low">{indexed?index+1+" - ":""} {option.text}</p>
                   <i className={`fa-solid fa-check ${styles.check} ${selected == index?styles.checked:""}`}></i>
               </div>
             </li>

@@ -11,13 +11,11 @@ import StudentLayout from '../views/student/StudentLayout'
 import StudentHome from '../views/student/StudentHome'
 import StudentSchedule from '../views/student/StudentSchedule'
 import StudentModules from '../views/student/StudentModules'
-import StudentProfile from '../views/student/StudentProfile'
 import StudentSettings from '../views/student/StudentSettings'
 
 import TeacherLayout from '../views/teacher/TeacherLayout'
 import TeacherHome from '../views/teacher/TeacherHome'
 import TeacherModules from '../views/teacher/TeacherModules'
-import TeacherProfile from '../views/teacher/TeacherProfile'
 import TeacherSchedule from '../views/teacher/TeacherSchedule'
 import TeacherSettings from '../views/teacher/TeacherSettings'
 
@@ -51,7 +49,6 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <StudentHome /> },
       { path: "home", element: <StudentHome /> },
-      { path: "profile", element: <StudentProfile /> },
       { path: "schedule", element: <StudentSchedule /> },
       { path: "modules", element: <StudentModules /> },
       { path: "settings", element: <StudentSettings /> },
@@ -64,7 +61,6 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <TeacherHome /> },
       { path: "home", element: <TeacherHome /> },
-      { path: "profile", element: <TeacherProfile /> },
       { path: "schedule", element: <TeacherSchedule /> },
       { path: "modules", element: <TeacherModules /> },
       { path: "settings", element: <TeacherSettings /> },

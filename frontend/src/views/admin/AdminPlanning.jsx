@@ -373,6 +373,7 @@ const AdminPlanning = () => {
                   label='Start Hour'
                   type='number'
                   step='0.5'
+                  placeholder='Ex: 8.5'
                   width='50%'
                   value={examFormData.start_hour}
                   onchange={(e) => setExamFormData(prev => ({ ...prev, start_hour: e.target.value }))}
@@ -380,6 +381,7 @@ const AdminPlanning = () => {
                 <TextInput
                   label='End Hour'
                   type='number'
+                  placeholder='Ex: 11'
                   step='0.5'
                   width='50%'
                   value={examFormData.end_hour}
@@ -398,8 +400,8 @@ const AdminPlanning = () => {
                         <div className='flex row a-center gap'>
                           <Profile img={teacher.image} width='32px' />
                           <div>
-                            <Text text={`${teacher.fname} ${teacher.lname}`} size='var(--text-m)' />
-                            <Text text={teacher.number} size='var(--text-s)' color='var(--text-low)' />
+                            <Text align='left' text={`${teacher.fname} ${teacher.lname}`} size='var(--text-m)' />
+                            <Text align='left' text={teacher.number} size='var(--text-s)' color='var(--text-low)' />
                           </div>
                         </div>
                         <IconButton icon='fa-solid fa-trash' color='var(--text-low)' size='var(--text-m)' onClick={async () => {

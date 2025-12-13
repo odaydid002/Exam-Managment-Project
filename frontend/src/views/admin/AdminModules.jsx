@@ -330,10 +330,10 @@ const AdminModules = () => {
             </div>
           ) : (
             <div className="flex column gap mrv" style={{ marginTop: '1.5em' }}>
-              <div className="flex row a-center gap">
+              <div className="flex row a-end gap">
 
                 <SelectInput 
-                bg='var(--bg)'
+                  bg='var(--bg)'
                   label='Select Speciality'
                   placeholder='Choose a speciality'
                   options={specialitiesList.length > 0 ? specialitiesList.map(s => ({ value: s.id, text: s.name })) : [{value: '', text: 'Loading specialities...'}]}

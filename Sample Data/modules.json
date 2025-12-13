@@ -1,0 +1,84 @@
+{
+  "modules": [
+    {
+      "code": "CS101",
+      "name": "Introduction to Computer Science",
+      "short_name": "IntroCS",
+      "type": "core",
+      "factor": 3,
+      "credits": 4
+    },
+    {
+      "code": "CS102",
+      "name": "Data Structures",
+      "short_name": "DS",
+      "type": "core",
+      "factor": 3,
+      "credits": 4
+    },
+    {
+      "code": "CS103",
+      "name": "Algorithms",
+      "short_name": "Algo",
+      "type": "core",
+      "factor": 3,
+      "credits": 4
+    },
+    {
+      "code": "CS104",
+      "name": "Computer Architecture",
+      "short_name": "CA",
+      "type": "core",
+      "factor": 2,
+      "credits": 3
+    },
+    {
+      "code": "CS105",
+      "name": "Operating Systems",
+      "short_name": "OS",
+      "type": "core",
+      "factor": 3,
+      "credits": 4
+    },
+    {
+      "code": "CS106",
+      "name": "Database Systems",
+      "short_name": "DB",
+      "type": "core",
+      "factor": 2,
+      "credits": 3
+    },
+    {
+      "code": "CS107",
+      "name": "Web Development",
+      "short_name": "WebDev",
+      "type": "elective",
+      "factor": 1,
+      "credits": 2
+    },
+    {
+      "code": "CS108",
+      "name": "Software Engineering",
+      "short_name": "SE",
+      "type": "core",
+      "factor": 2,
+      "credits": 3
+    },
+    {
+      "code": "CS109",
+      "name": "Computer Networks",
+      "short_name": "Net",
+      "type": "core",
+      "factor": 3,
+      "credits": 4
+    },
+    {
+      "code": "CS110",
+      "name": "Artificial Intelligence",
+      "short_name": "AI",
+      "type": "elective",
+      "factor": 1,
+      "credits": 2
+    }
+  ]
+}

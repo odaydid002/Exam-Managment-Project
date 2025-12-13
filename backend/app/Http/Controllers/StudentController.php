@@ -92,7 +92,6 @@ class StudentController extends Controller
             'phone' => 'nullable|string|max:20|unique:users,phone',
             'birth_date' => 'nullable|date',
             'gender' => 'nullable|string|max:10',
-
             'image' => 'nullable|string|max:255',
             'group_code' => 'nullable|exists:groups,code',
             'speciality_id' => 'nullable|exists:specialities,id',
@@ -368,5 +367,75 @@ class StudentController extends Controller
             'email' => $user->email ?? null,
             'image' => $user->image ?? null,
         ]);
+    }
+
+    /**
+     * Return exams for a student identified by their student number or user id.
+     */
+    public function exams($identifier)
+    {
+        if (!auth()->user()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $student = Student::with(['group'])->where('number', $identifier)->first();
+        if (!$student) {
+            $user = \App\Models\User::find($identifier);
+            if ($user && $user->student) {
+                $student = $user->student->load('group');
+            }
+        }
+
+        if (!$student) {
+            return response()->json(['message' => 'Student not found'], 404);
+        }
+
+        $groupCode = $student->group_code;
+        if (!$groupCode) {
+            return response()->json(['total' => 0, 'exams' => []]);
+        }
+
+        $exams = \App\Models\Examen::with(['module', 'salle', 'surveillances.teacher.user'])
+            ->where('group_code', $groupCode)
+            ->orderBy('date')
+            ->get();
+
+        $data = $exams->map(function ($e) {
+            $survs = $e->surveillances->map(function ($s) {
+                $teacher = $s->teacher;
+                $user = $teacher ? $teacher->user : null;
+                $name = $user ? trim(($user->fname ?? '') . ' ' . ($user->lname ?? '')) : null;
+                $pronoun = null;
+                if ($teacher && !empty($teacher->adj)) {
+                    $pronoun = $teacher->adj;
+                } else {
+                    $gender = $user->gender ?? null;
+                    if ($gender) {
+                        $g = strtolower($gender);
+                        if (in_array($g, ['f', 'female', 'woman', 'feminine'])) $pronoun = 'Ms';
+                        elseif (in_array($g, ['m', 'male', 'man', 'masculine'])) $pronoun = 'Mr';
+                    }
+                }
+                return [
+                    'name' => $name,
+                    'pronoun' => $pronoun,
+                    'image' => $user ? ($user->image ?? null) : null,
+                ];
+            })->toArray();
+
+            return [
+                'module_name' => $e->module ? $e->module->name : null,
+                'module_credit' => $e->module ? $e->module->credits : null,
+                'module_factor' => $e->module ? $e->module->factor : null,
+                'exam_type' => $e->exam_type,
+                'date' => $e->date ? $e->date->toDateString() : null,
+                'startHour' => $e->start_hour,
+                'endHour' => $e->end_hour,
+                'room' => $e->salle ? $e->salle->name : null,
+                'surveillances' => $survs,
+            ];
+        })->toArray();
+
+        return response()->json($data);
     }
 }
