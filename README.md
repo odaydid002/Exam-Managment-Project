@@ -1,48 +1,24 @@
 📘 Exam Management System
 
-<<<<<<< HEAD
-
-
 A full-stack Laravel + React application for managing exams, students, teachers, and scheduling.
-
-
 
 🔗 Figma Design:
 
-
-
 👉https://www.figma.com/design/7GtBgiKFH4qe1hxJSpFcDE/Exam-managment?node-id=0-1\&t=ZZ91tbIZZVWm5JRt-1
-
-
-
-
 
 🚀 Features
 
-
-
 🎓 Student \& teacher management
-
-
 
 📝 Exam creation \& scheduling
 
-
-
 📊 Dashboard \& analytics
-
-
 
 🧮 Automated demo database seeding
 
-
-
 ⚡ Laravel REST API
 
-
-
 🎨 Modern UI built with React + Vite
-
 
 
 🛠️ Tech Stack
