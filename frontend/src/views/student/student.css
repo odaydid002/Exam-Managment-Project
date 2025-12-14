@@ -53,6 +53,28 @@
     align-items: center;
 }
 
+/* -------------///-------------- */
+
+/* -----------Schedule----------- */
+
+.scheduleBody{
+    display: grid;
+    grid-template-columns: 0.26fr 1fr;
+    grid-template-rows: 1fr;
+    grid-column-gap: var(--pd);
+    grid-row-gap: 0px;
+}
+
+.scheduleSide{
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.5fr 0.5fr;
+    grid-column-gap: 0px;
+    grid-row-gap: var(--pd);
+}
+
+/* --------------///------------- */
+
 @media (max-width: 1100px) {
     .homeLayout{
         grid-template-columns: 1fr 300px;
@@ -62,7 +84,6 @@
     }
 }
 
-/* --------------------------- */
 
 @media (max-width: 767px) {
     .navigator{

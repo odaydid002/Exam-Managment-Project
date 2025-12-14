@@ -13,7 +13,6 @@ import Text from '../../components/text/Text';
 import Notification from '../../components/svg/Notification';
 import Eclipse from '../../components/shapes/Eclipse';
 import Exam from '../../components/containers/Exam';
-import { ListTable } from '../../components/tables/ListTable';
 import ListTableClient from '../../components/tables/ListTableClient';
 import Copy from '../../components/buttons/Copy';
 
@@ -168,7 +167,6 @@ const StudentHome = () => {
   }, [profile]);
 
   return (
-    <>
         <div className={`homeLayout full scrollbar overflow-y-a`}>
           <div className="homeBody">
             <div className={`overflow-h homeProfile gsap-y ${infoLoading && "shimmer-second"}`} style={{padding: "2em", backgroundColor:"var(--color-second2)", borderRadius: "20px"}}>
@@ -325,7 +323,6 @@ const StudentHome = () => {
             </div>
           </div>
         </div>
-    </>
   )
 }
 

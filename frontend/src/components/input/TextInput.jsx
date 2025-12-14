@@ -11,8 +11,9 @@ const TextInput = ({
     round = "5px",
     icon = null,
     label = null,
-    readOnly = null,
-    val = null,
+    readOnly = false,
+    val = undefined,
+    value = undefined,
     type = "text",
     align = "left",
     border = "none",
@@ -55,8 +56,8 @@ const TextInput = ({
                         {...rest}
                         disabled={disabled}
                         readOnly={readOnly}
-                        value={val}
-                        id="text-input"
+                        value={(val ?? value ?? "")}
+                        id={dataListId}
                         list={dataListId}
                         ref={inp}
                         className='full'
@@ -76,7 +77,7 @@ const TextInput = ({
                         {editable && 
                         <i 
                             className="fa-solid fa-pen-to-square text-m c-text clickable"
-                            onClick={() => {onEdit}}
+                            onClick={() => {onEdit()}}
                         ></i> }
                 </div>
             </div>

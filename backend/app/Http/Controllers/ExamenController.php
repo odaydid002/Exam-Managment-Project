@@ -19,7 +19,7 @@ class ExamenController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $exams = Examen::with(['module', 'groupe', 'salle'])->orderBy('date', 'desc')->get();
+        $exams = Examen::with(['module', 'groupe.section', 'salle'])->orderBy('date', 'desc')->get();
 
         $data = $exams->map(function ($e) {
             return [
@@ -27,6 +27,8 @@ class ExamenController extends Controller
                 'module_code' => $e->module_code,
                 'module_name' => $e->module->name ?? null,
                 'group_code' => $e->group_code,
+                'group_name' => $e->groupe ? $e->groupe->name : null,
+                'section' => ($e->groupe && $e->groupe->section) ? $e->groupe->section->name : null,
                 'room_id' => $e->room_id,
                 'room_name' => $e->salle->name ?? null,
                 'exam_type' => $e->exam_type,
@@ -46,7 +48,7 @@ class ExamenController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $e = Examen::with(['module', 'groupe', 'salle'])->find($id);
+        $e = Examen::with(['module', 'groupe.section', 'salle'])->find($id);
         if (!$e) return response()->json(['message' => 'Exam not found'], 404);
 
         return response()->json([
@@ -54,6 +56,8 @@ class ExamenController extends Controller
             'module_code' => $e->module_code,
             'module_name' => $e->module->name ?? null,
             'group_code' => $e->group_code,
+            'group_name' => $e->groupe ? $e->groupe->name : null,
+            'section' => ($e->groupe && $e->groupe->section) ? $e->groupe->section->name : null,
             'room_id' => $e->room_id,
             'room_name' => $e->salle->name ?? null,
             'exam_type' => $e->exam_type,

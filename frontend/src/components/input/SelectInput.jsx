@@ -11,7 +11,8 @@ const SelectInput = ({
   indexed = false,
   icon = null,
   bg = 'var(--trans-grey)',
-  value = null
+  value = null,
+  initial = null
 }) => {
     const varStyles = {
       margin: mrg,
@@ -33,14 +34,27 @@ const SelectInput = ({
     const listRef = useRef(null);
 
     useEffect(() => {
-      if (value !== null && options.length > 0) {
+      if (!options || options.length === 0) return;
+
+      // Controlled `value` takes precedence
+      if (value !== null && value !== undefined) {
         const foundIndex = options.findIndex(opt => opt.value === value || opt.value === String(value))
+        if (foundIndex !== -1) {
+          setSelected(foundIndex)
+          setselectedVal(options[foundIndex].value)
+          return;
+        }
+      }
+
+      // Otherwise, if an `initial` is provided, use it (only when no controlled value)
+      if ((value === null || value === undefined) && initial !== null && initial !== undefined) {
+        const foundIndex = options.findIndex(opt => opt.value === initial || String(opt.value) === String(initial) || String(opt.text).toLowerCase() === String(initial).toLowerCase())
         if (foundIndex !== -1) {
           setSelected(foundIndex)
           setselectedVal(options[foundIndex].value)
         }
       }
-    }, [value, options])
+    }, [value, options, initial])
 
     useEffect(() => {
       if (!listRef.current || !containerRef.current) return;
@@ -93,14 +107,14 @@ const SelectInput = ({
 
   return (
     <div style={{margin: mrg}}>
-      {label && <p style={{ margin: "0.5em 0" }}>{
+      {label && <div style={{ margin: "0.5em 0" }}>{
         <Text 
             text={label} 
             color='var(--text-low)'
             size='var(--text-m)' 
             opacity='0.8' 
             align='left'
-        />}</p>}
+        />}</div>}
       <div
         ref={containerRef}
         style={varStyles}

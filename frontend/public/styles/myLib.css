@@ -610,6 +610,7 @@
 
 .scrollbar::-webkit-scrollbar {
     width: 4px;
+    height: 4px;
     background-color: var(--trans-grey);
     border-radius: 5px;
 }

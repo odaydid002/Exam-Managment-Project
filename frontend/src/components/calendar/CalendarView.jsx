@@ -15,6 +15,7 @@ export default function CalendarView({
     onEventClick = () => {},
     onEventDelete = () => {},
     onEventSurveillance = () => {}
+    , readOnly = false
 }) {
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -203,7 +204,7 @@ export default function CalendarView({
                                                     <Text color="white" text={ev.level} align="left" size="var(--text-s)"/>
                                                     <Text color="white" text={ev.speciality} align="left" size="var(--text-s)"/>
                                                     
-                                                    {hoveredEvent === `${ev.id}-${i}` && (
+                                                    {hoveredEvent === `${ev.id}-${i}` && !readOnly && (
                                                         <div style={{
                                                             display: 'flex',
                                                             gap: '0.5em',
