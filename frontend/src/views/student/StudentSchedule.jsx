@@ -254,7 +254,7 @@ const StudentSchedule = () => {
         <div className="flex row a-center gap" style={{ paddingRight: "1em" }}>
           <SelectInput
             bg='var(--bg)'
-            icon="fa-solid fa-book-bookmark"
+            icon="fa-solid fa-book-bookmark "
             options={specialitiesOptions}
             value={filterSpeciality}
             initial={profile ? (profile.speciality_id ?? profile.speciality ?? profile.department ?? null) : null}
