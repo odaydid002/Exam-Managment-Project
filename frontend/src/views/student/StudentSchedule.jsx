@@ -14,6 +14,7 @@ import TextInput from '../../components/input/TextInput';
 import Checkbox from '../../components/input/Checkbox';
 import CalendarView from '../../components/calendar/CalendarView';
 import { Specialities, Groups, Rooms } from '../../API'
+import { getAll as getExams } from '../../API/exams'
 import { get as getStudent } from '../../API/students';
 
 const StudentSchedule = () => {
@@ -21,42 +22,58 @@ const StudentSchedule = () => {
   document.title = "Unitime - Schedule";
 
   const [filtersLoading, setFiltersLoading] = useState(false);
-  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarLoading, setCalendarLoading] = useState(true);
   const [filterStartdate, setFilterStartdate] = useState("");
   const [filterEnddate, setFilterEnddate] = useState("");
-  const [filterRoom, setFilterRoom] = useState("");
-  const [filterLevel, setFilterLevel] = useState("");
-  const [filterExamType, setFilterExamType] = useState("");
-  const [filterSpeciality, setFilterSpeciality] = useState("");
-  const [filterGroup, setFilterGroup] = useState("");
+  const [filterRoom, setFilterRoom] = useState("*");
+  const [filterLevel, setFilterLevel] = useState("*");
+  const [filterExamType, setFilterExamType] = useState("*");
+  const [filterSpeciality, setFilterSpeciality] = useState("*");
+  const [filterGroup, setFilterGroup] = useState("*");
   const [profile, setProfile] = useState(null);
 
-  const [specialitiesOptions, setSpecialitiesOptions] = useState([{ value: '*', text: 'All' }]);
-  const [groupsOptions, setGroupsOptions] = useState([{ value: '*', text: 'All' }]);
-  const [roomsOptions, setRoomsOptions] = useState([{ value: '*', text: 'All' }]);
+  const [specialitiesOptions, setSpecialitiesOptions] = useState([{ value: '*', text: 'All Specialities' }]);
+  const [groupsOptions, setGroupsOptions] = useState([{ value: '*', text: 'All Groups' }]);
+  const [roomsOptions, setRoomsOptions] = useState([{ value: '*', text: 'All Rooms' }]);
 
   const levelOptions = [
-    { value: '*', text: 'All Levels'},
-    { value: 'L1', text: 'Licence 1'},
-    { value: 'L2', text: 'Licence 2'},
-    { value: 'L3', text: 'Licence 3'},
-    { value: 'M1', text: 'Master 1'},
-    { value: 'M2', text: 'Master 2'},
-    { value: 'Eng1', text: 'Engineer 1'},
-    { value: 'Eng2', text: 'Engineer 2'},
-    { value: 'Eng3', text: 'Engineer 3'},
-    { value: 'Eng4', text: 'Engineer 4'},
-    { value: 'Eng5', text: 'Engineer 5'},
+    { value: '*', text: 'All Levels' },
+    { value: 'L1', text: 'Licence 1' },
+    { value: 'L2', text: 'Licence 2' },
+    { value: 'L3', text: 'Licence 3' },
+    { value: 'M1', text: 'Master 1' },
+    { value: 'M2', text: 'Master 2' },
+    { value: 'Eng1', text: 'Engineer 1' },
+    { value: 'Eng2', text: 'Engineer 2' },
+    { value: 'Eng3', text: 'Engineer 3' },
+    { value: 'Eng4', text: 'Engineer 4' },
+    { value: 'Eng5', text: 'Engineer 5' },
   ]
+
+  const normalizeLevelValue = (val) => {
+    if (!val && val !== 0) return '';
+    const s = String(val).toLowerCase();
+    const num = (s.match(/\d+/) || [])[0];
+    if (s.includes('master') || s.startsWith('m')) {
+      return num ? `M${num}` : 'M1';
+    }
+    if (s.includes('licence') || s.startsWith('l')) {
+      return num ? `L${num}` : 'L1';
+    }
+    if (s.includes('engineer') || s.includes('eng')) {
+      return num ? `Eng${num}` : 'Eng1';
+    }
+    return String(val);
+  }
 
   const { notify } = useNotify();
 
-  const examsList = [
-    { id: 1, day: '2026-01-01', startHour: 9, endHour: 11, room: 'L001', type: 'Final', module: 'Arduino', level: 'M1', speciality: 'Software Engineer', section: "A1", group_name: "G1" },
-    { id: 2, day: '2026-01-02', startHour: 13, endHour: 15, room: 'S202', type: 'Catch-Up', module: 'Physics 201', level: 'M1', speciality: 'Physics', section: "A1", group_name: "G2" },
-    { id: 3, day: '2026-01-03', startHour: 10, endHour: 12, room: 'N101', type: 'Final', module: 'Chemistry 101', level: 'M1', speciality: 'Chemistry', section: "A1", group_name: "G3" },
-    { id: 4, day: '2026-01-04', startHour: 8, endHour: 10, room: 'S003', type: 'Practical', module: 'Biology Lab', level: 'M1', speciality: 'Biology', section: "A1", group_name: "G4" }
-  ];
+  const [examsRaw, setExamsRaw] = useState([]);
+  const [examsLoading, setExamsLoading] = useState(false);
+  const [specialitiesLoaded, setSpecialitiesLoaded] = useState(false);
+  const [roomsLoaded, setRoomsLoaded] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [examsLoaded, setExamsLoaded] = useState(false);
 
   const filterEvents = (list, filters) => {
     return list.filter(e => {
@@ -72,18 +89,41 @@ const StudentSchedule = () => {
       }
 
       if (filters.room && filters.room !== "" && filters.room !== "*") {
-        if (e.room !== filters.room) return false;
+        const evRoom = String(e.room ?? e.room_name ?? e.room_id ?? e.raw?.room_id ?? "");
+        const fRoom = String(filters.room);
+        if (evRoom !== fRoom && String(e.room_id ?? e.room ?? '') !== fRoom) return false;
       }
       if (filters.level && filters.level !== "" && filters.level !== "*") {
-        if (e.level !== filters.level) return false;
+        const fLevelNorm = normalizeLevelValue(filters.level).toLowerCase();
+        const evLevelRaw = (e.level ?? e.level_name ?? e.raw?.level ?? e.group_code ?? e.group_name ?? e.module ?? "");
+        const evLevelNorm = normalizeLevelValue(evLevelRaw).toLowerCase();
+        if (!evLevelNorm) return false;
+        if (!(evLevelNorm === fLevelNorm || evLevelNorm.includes(fLevelNorm) || fLevelNorm.includes(evLevelNorm))) return false;
       }
       if (filters.speciality && filters.speciality !== "" && filters.speciality !== "*") {
-        if (e.speciality !== filters.speciality) return false;
+        const specFilter = String(filters.speciality);
+        if (String(e.speciality) === specFilter) {
+          //ok
+        } else {
+          const opt = (specialitiesOptions || []).find(o => String(o.value) === specFilter || String(o.value) === String(specFilter));
+          if (opt) {
+            const optText = String(opt.text || "");
+            if (String(e.speciality) === optText) {
+              //ok
+            } else if (!String(e.speciality).toLowerCase().includes(optText.toLowerCase()) && !optText.toLowerCase().includes(String(e.speciality).toLowerCase())) {
+              return false;
+            }
+          } else {
+            if (!String(e.speciality).toLowerCase().includes(specFilter.toLowerCase()) && !specFilter.toLowerCase().includes(String(e.speciality).toLowerCase())) return false;
+          }
+        }
       }
       if (filters.group && filters.group !== "" && filters.group !== "*") {
-        if (e.group && e.group !== filters.group) return false;
+        const evGroup = String(e.group_code ?? e.group_name ?? e.group ?? e.raw?.group_code ?? "");
+        const fGroup = String(filters.group);
+        if (!(evGroup === fGroup || evGroup.includes(fGroup) || fGroup.includes(evGroup))) return false;
       }
-      if (filters.examType && filters.examType !== "") {
+      if (filters.examType && filters.examType !== "" && filters.examType !== "*") {
         if (e.type !== filters.examType) return false;
       }
       return true;
@@ -132,9 +172,12 @@ const StudentSchedule = () => {
         const items = Array.isArray(resp) ? resp : (resp.specialities || [])
         const opts = [{ value: '*', text: 'All Specialities' }, ...items.map(s => ({ value: s.id ?? s.code ?? s.name, text: s.name ?? s.title }))]
         setSpecialitiesOptions(opts)
+        setSpecialitiesLoaded(true);
+        console.debug('loaded specialities options', opts)
       } catch (err) {
         console.error('Failed to load specialities', err)
         notify && notify('error', 'Failed to load specialities')
+        setSpecialitiesLoaded(true);
       }
     }
 
@@ -144,9 +187,12 @@ const StudentSchedule = () => {
         const items = Array.isArray(resp) ? resp : (resp.rooms || [])
         const opts = [{ value: '*', text: 'All Rooms' }, ...items.map(r => ({ value: r.id ?? r.name ?? r.code, text: r.name ?? r.code }))]
         setRoomsOptions(opts)
+        setRoomsLoaded(true);
+        console.debug('loaded rooms options', opts)
       } catch (err) {
         console.error('Failed to load rooms', err)
         notify && notify('error', 'Failed to load rooms')
+        setRoomsLoaded(true);
       }
     }
 
@@ -161,7 +207,7 @@ const StudentSchedule = () => {
         const user = auth?.user || auth || null;
         let prof = null;
         if (user) {
-          const identifier = user.id || user.student_id || user.student_number || user.number || user.uuid;
+          const identifier = user.id;
           if (identifier) {
             try {
               prof = await getStudent(identifier);
@@ -173,7 +219,9 @@ const StudentSchedule = () => {
         if (!prof) {
           try {
             const res = await fetch('/api/student/profile');
-            if (res.ok) prof = await res.json();
+            if (res.ok) {
+              prof = await res.json();
+            }
           } catch { }
         }
 
@@ -181,17 +229,69 @@ const StudentSchedule = () => {
         if (!mounted) return;
 
         setProfile(prof);
+        setProfileLoaded(true);
+        console.debug('loaded profile', prof)
 
-        const specialityVal = prof.speciality_id ?? prof.speciality ?? prof.department ?? '';
-        const groupVal = prof.group_code ?? prof.group_name ?? prof.group ?? '';
+        const specialityVal = prof.speciality ?? prof.department ?? prof.department_id ?? '';
+        const groupVal = prof.group_code ?? prof.group ?? prof.group_name ?? prof.groupe_name ?? '';
         const levelVal = prof.level ?? prof.study_level ?? '';
 
-        if (specialityVal) {
-          setFilterSpeciality(specialityVal);
-          loadGroupsFor(specialityVal);
-        }
+        if (specialityVal) setFilterSpeciality(specialityVal);
         if (groupVal) setFilterGroup(groupVal);
-        if (levelVal) setFilterLevel(levelVal);
+        if (levelVal) setFilterLevel(normalizeLevelValue(levelVal));
+        try {
+          setExamsLoading(true);
+          const resp = await getExams();
+          const items = Array.isArray(resp) ? resp : (resp.exams || resp.data || []);
+
+          const normalized = (items || []).map(ex => ({
+            id: ex.id,
+            module: ex.module_name ?? ex.module ?? ex.module_code ?? "",
+            module_code: ex.module_code ?? "",
+            group_code: ex.group_code ?? ex.group ?? "",
+            group_name: ex.group_name ?? ex.group ?? ex.group_code ?? "",
+            section: ex.section ?? ex.section_name ?? "",
+            speciality: ex.speciality ?? ex.speciality_name ?? ex.department ?? "",
+            room: ex.room_name ?? ex.room ?? ex.room_id ?? "",
+            room_id: ex.room_id ?? null,
+            type: ex.exam_type ?? ex.type ?? "",
+            date: ex.date ?? ex.day ?? "",
+            day: (ex.date ?? ex.day ?? "").toString().split(' ')[0],
+            startHour: ex.start_hour ?? ex.startHour ?? ex.start ?? null,
+            endHour: ex.end_hour ?? ex.endHour ?? ex.end ?? null,
+            level: ex.level ?? "",
+            raw: ex
+          }));
+
+          const matchesProfile = (exam, prof) => {
+            if (!prof) return false;
+            const profSpec = String(prof.speciality ?? prof.department ?? "").toLowerCase();
+            const profLevel = String(prof.level ?? prof.study_level ?? "").toLowerCase();
+            const profGroup = String(prof.group_code ?? prof.group_name ?? prof.group ?? "").toLowerCase();
+
+            const exSpec = String(exam.speciality ?? "").toLowerCase();
+            const exLevel = String(exam.level ?? "").toLowerCase();
+            const exGroup = String(exam.group_code ?? exam.group_name ?? "").toLowerCase();
+
+            const specMatches = !profSpec ? true : (exSpec === profSpec || exSpec.includes(profSpec) || profSpec.includes(exSpec));
+
+            const levelMatches = !profLevel ? true : (!exLevel ? true : (exLevel === profLevel || exLevel.includes(profLevel) || profLevel.includes(exLevel)));
+            const groupMatches = !profGroup ? true : (exGroup === profGroup || exGroup.includes(profGroup) || profGroup.includes(exGroup));
+
+            return specMatches && levelMatches && groupMatches;
+          }
+
+          const filtered = normalized.filter(ex => matchesProfile(ex, prof));
+          if (mounted) setExamsRaw(filtered);
+          if (mounted) setExamsLoaded(true);
+          console.debug('loaded exams (filtered)', filtered)
+        } catch (err) {
+          console.error('Failed to load exams', err);
+          if (mounted) setExamsRaw([]);
+        } finally {
+          if (mounted) setExamsLoading(false);
+          if (mounted && !examsLoaded) setExamsLoaded(true);
+        }
       } catch (err) {
         console.error('Failed to load student profile', err);
         notify && notify('error', 'Failed to load student profile');
@@ -202,13 +302,19 @@ const StudentSchedule = () => {
     return () => { mounted = false }
   }, [])
 
+
+  useEffect(() => {
+    const allLoaded = specialitiesLoaded && roomsLoaded && profileLoaded && examsLoaded;
+    setCalendarLoading(!allLoaded);
+  }, [specialitiesLoaded, roomsLoaded, profileLoaded, examsLoaded]);
+
   useEffect(() => {
     if (!profile || !specialitiesOptions || specialitiesOptions.length <= 1) return;
-    const desired = profile.speciality_id ?? profile.speciality ?? profile.department ?? null;
+    const desired = profile.speciality ?? profile.department ?? profile.department_id ?? null;
     if (!desired) return;
 
     const already = specialitiesOptions.some(o => String(o.value) === String(filterSpeciality) || String(o.text) === String(filterSpeciality));
-    if (filterSpeciality && already) return;
+    if (filterSpeciality && filterSpeciality !== '*' && already) return;
 
     const findMatch = (val) => specialitiesOptions.find(o => String(o.value) === String(val) || String(o.text).toLowerCase() === String(val).toLowerCase() || String(o.text).toLowerCase().includes(String(val).toLowerCase()));
 
@@ -216,17 +322,18 @@ const StudentSchedule = () => {
     if (!match && profile.speciality) match = findMatch(profile.speciality);
     if (match) {
       setFilterSpeciality(match.value);
-      loadGroupsFor(match.value);
+
+      try { loadGroupsFor(match.value) } catch (e) { /* ignore */ }
     }
   }, [specialitiesOptions, profile]);
 
   useEffect(() => {
     if (!profile || !groupsOptions || groupsOptions.length <= 1) return;
-    const desired = profile.group_code ?? profile.group ?? profile.group_name ?? null;
+    const desired = profile.group_code ?? profile.group ?? profile.group_name ?? profile.groupe_name ?? null;
     if (!desired) return;
 
     const already = groupsOptions.some(o => String(o.value) === String(filterGroup) || String(o.text) === String(filterGroup));
-    if (filterGroup && already) return;
+    if (filterGroup && filterGroup !== '*' && already) return;
 
     const findMatch = (val) => groupsOptions.find(o => String(o.value) === String(val) || String(o.text).toLowerCase() === String(val).toLowerCase() || String(o.text).toLowerCase().includes(String(val).toLowerCase()));
     let match = findMatch(desired);
@@ -236,16 +343,23 @@ const StudentSchedule = () => {
 
   useEffect(() => {
     if (!profile || !levelOptions || levelOptions.length <= 1) return;
-    const desired = profile.level ?? profile.study_level ?? null;
+    const desired = normalizeLevelValue(profile.level ?? profile.study_level ?? null) || null;
     if (!desired) return;
 
     const already = levelOptions.some(o => String(o.value) === String(filterLevel) || String(o.text) === String(filterLevel));
-    if (filterLevel && already) return;
+    if (filterLevel && filterLevel !== '*' && already) return;
 
     const findMatch = (val) => levelOptions.find(o => String(o.value) === String(val) || String(o.text).toLowerCase() === String(val).toLowerCase() || String(o.text).toLowerCase().includes(String(val).toLowerCase()));
     const match = findMatch(desired);
     if (match) setFilterLevel(match.value);
   }, [profile]);
+
+
+  useEffect(() => {
+    if (filterSpeciality && filterSpeciality !== '*') {
+      loadGroupsFor(filterSpeciality);
+    }
+  }, [filterSpeciality]);
 
   return (
     <div className={`full flex column scrollbar overflow-y-a gap`} style={{ padding: "1em 1em 1em 0" }}>
@@ -257,27 +371,25 @@ const StudentSchedule = () => {
             icon="fa-solid fa-book-bookmark "
             options={specialitiesOptions}
             value={filterSpeciality}
-            initial={profile ? (profile.speciality_id ?? profile.speciality ?? profile.department ?? null) : null}
             onChange={(v) => { setFilterSpeciality(v); loadGroupsFor(v); }}
           />
           <SelectInput
             bg='var(--bg)'
             icon="fa-solid fa-graduation-cap"
             options={[
-              { value: '*', text: 'All Levels'},
-              { value: 'L1', text: 'Licence 1'},
-              { value: 'L2', text: 'Licence 2'},
-              { value: 'L3', text: 'Licence 3'},
-              { value: 'M1', text: 'Master 1'},
-              { value: 'M2', text: 'Master 2'},
-              { value: 'Eng1', text: 'Engineer 1'},
-              { value: 'Eng2', text: 'Engineer 2'},
-              { value: 'Eng3', text: 'Engineer 3'},
-              { value: 'Eng4', text: 'Engineer 4'},
-              { value: 'Eng5', text: 'Engineer 5'},
+              { value: '*', text: 'All Levels' },
+              { value: 'L1', text: 'Licence 1' },
+              { value: 'L2', text: 'Licence 2' },
+              { value: 'L3', text: 'Licence 3' },
+              { value: 'M1', text: 'Master 1' },
+              { value: 'M2', text: 'Master 2' },
+              { value: 'Eng1', text: 'Engineer 1' },
+              { value: 'Eng2', text: 'Engineer 2' },
+              { value: 'Eng3', text: 'Engineer 3' },
+              { value: 'Eng4', text: 'Engineer 4' },
+              { value: 'Eng5', text: 'Engineer 5' },
             ]}
             value={filterLevel}
-            initial={profile ? (profile.level ?? profile.study_level ?? null) : null}
             onChange={(v) => setFilterLevel(v)}
           />
           <SelectInput
@@ -285,7 +397,6 @@ const StudentSchedule = () => {
             icon="fa-solid fa-clipboard-list"
             options={groupsOptions}
             value={filterGroup}
-            initial={profile ? (profile.group_code ?? profile.group ?? profile.group_name ?? null) : null}
             onChange={(v) => setFilterGroup(v)}
           />
           <IconButton color='var(logo)' icon='fa-solid fa-download' onClick={() => { }} />
@@ -296,7 +407,7 @@ const StudentSchedule = () => {
         <div className="scheduleSide">
           <div className={`scheduleSearch BGC gsap-y pd ${filtersLoading && "shimmer"}`}>{!filtersLoading && <>
             <TextInput width='calc(100%-2em)' type='search' icon="fa-solid fa-magnifying-glass" placeholder='Search...' label="Search" />
-            <SelectInput bg='var(--bg)' label='Room' options={roomsOptions} onChange={(v) => setFilterRoom(v)} value={filterRoom} />
+            <SelectInput bg='var(--bg)' label='Room' options={roomsOptions} value={filterRoom} onChange={(v) => setFilterRoom(v)} />
             <Text text='Exam Type' size='var(--text-m)' align='left' opacity='0.6' mrg='1em 0 0 0' />
             <div className="flex row wrap gap a-center pdv">
               <Checkbox label="Final Exam" />
@@ -322,7 +433,7 @@ const StudentSchedule = () => {
             startHour={8}
             endHour={17}
             eventsList={
-              filterEvents(examsList, {
+              filterEvents(examsRaw, {
                 startDate: filterStartdate,
                 endDate: filterEnddate,
                 room: filterRoom,

@@ -19,9 +19,26 @@ class ExamenController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $exams = Examen::with(['module', 'groupe.section', 'salle'])->orderBy('date', 'desc')->get();
+        $exams = Examen::with(['module', 'groupe.section.speciality', 'groupe.students.speciality', 'salle'])->orderBy('date', 'desc')->get();
 
         $data = $exams->map(function ($e) {
+            // determine speciality: prefer group's section.speciality, otherwise fallback to first student's speciality
+            $firstStudent = ($e->groupe && $e->groupe->students) ? $e->groupe->students->first() : null;
+            $speciality = null;
+            if ($e->groupe && $e->groupe->section && isset($e->groupe->section->speciality) && $e->groupe->section->speciality) {
+                $speciality = $e->groupe->section->speciality->name;
+            } else {
+                if ($firstStudent && $firstStudent->speciality) $speciality = $firstStudent->speciality->name;
+            }
+
+            // determine level: prefer section.level, otherwise fallback to first student's level
+            $level = null;
+            if ($e->groupe && $e->groupe->section && isset($e->groupe->section->level)) {
+                $level = $e->groupe->section->level;
+            } else {
+                if ($firstStudent && isset($firstStudent->level)) $level = $firstStudent->level;
+            }
+
             return [
                 'id' => $e->id,
                 'module_code' => $e->module_code,
@@ -29,6 +46,8 @@ class ExamenController extends Controller
                 'group_code' => $e->group_code,
                 'group_name' => $e->groupe ? $e->groupe->name : null,
                 'section' => ($e->groupe && $e->groupe->section) ? $e->groupe->section->name : null,
+                'speciality' => $speciality,
+                'level' => $level,
                 'room_id' => $e->room_id,
                 'room_name' => $e->salle->name ?? null,
                 'exam_type' => $e->exam_type,
@@ -48,8 +67,24 @@ class ExamenController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $e = Examen::with(['module', 'groupe.section', 'salle'])->find($id);
+        $e = Examen::with(['module', 'groupe.section.speciality', 'groupe.students.speciality', 'salle'])->find($id);
         if (!$e) return response()->json(['message' => 'Exam not found'], 404);
+        $speciality = null;
+        if ($e->groupe && $e->groupe->section && isset($e->groupe->section->speciality) && $e->groupe->section->speciality) {
+            $speciality = $e->groupe->section->speciality->name;
+        } else {
+            $firstStudent = ($e->groupe && $e->groupe->students) ? $e->groupe->students->first() : null;
+            if ($firstStudent && $firstStudent->speciality) $speciality = $firstStudent->speciality->name;
+        }
+        
+            // determine level: prefer section.level, otherwise fallback to first student's level
+            $level = null;
+            if ($e->groupe && $e->groupe->section && isset($e->groupe->section->level)) {
+                $level = $e->groupe->section->level;
+            } else {
+                $firstStudent = ($e->groupe && $e->groupe->students) ? $e->groupe->students->first() : null;
+                if ($firstStudent && isset($firstStudent->level)) $level = $firstStudent->level;
+            }
 
         return response()->json([
             'id' => $e->id,
@@ -58,7 +93,9 @@ class ExamenController extends Controller
             'group_code' => $e->group_code,
             'group_name' => $e->groupe ? $e->groupe->name : null,
             'section' => ($e->groupe && $e->groupe->section) ? $e->groupe->section->name : null,
-            'room_id' => $e->room_id,
+            'speciality' => $speciality,
+                'room_id' => $e->room_id,
+                'level' => $level,
             'room_name' => $e->salle->name ?? null,
             'exam_type' => $e->exam_type,
             'date' => $e->date ? $e->date->toDateTimeString() : null,

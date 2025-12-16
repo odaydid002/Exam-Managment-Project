@@ -30,4 +30,9 @@ const remove = async (number) => {
   return res.data
 }
 
-export { getAll, get, bulkStore, add, update, remove }
+const getExams = async (identifier, params) => {
+  const res = await api.get(`/students/${identifier}/exams`, { params })
+  return res.data
+}
+
+export { getAll, get, bulkStore, add, update, remove, getExams }

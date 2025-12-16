@@ -11,8 +11,7 @@ const SelectInput = ({
   indexed = false,
   icon = null,
   bg = 'var(--trans-grey)',
-  value = null,
-  initial = null
+  value = null
 }) => {
     const varStyles = {
       margin: mrg,
@@ -42,19 +41,9 @@ const SelectInput = ({
         if (foundIndex !== -1) {
           setSelected(foundIndex)
           setselectedVal(options[foundIndex].value)
-          return;
         }
       }
-
-      // Otherwise, if an `initial` is provided, use it (only when no controlled value)
-      if ((value === null || value === undefined) && initial !== null && initial !== undefined) {
-        const foundIndex = options.findIndex(opt => opt.value === initial || String(opt.value) === String(initial) || String(opt.text).toLowerCase() === String(initial).toLowerCase())
-        if (foundIndex !== -1) {
-          setSelected(foundIndex)
-          setselectedVal(options[foundIndex].value)
-        }
-      }
-    }, [value, options, initial])
+    }, [value, options])
 
     useEffect(() => {
       if (!listRef.current || !containerRef.current) return;
