@@ -7,13 +7,13 @@ import { useNotify } from '../components/loaders/NotificationContext';
 import styles from "./login.module.css"
 
 import FullViewPage from '../components/containers/FullViewPage'
-import SignIn from '../components/forms/SignIn'
+import ResetPassword from '../components/forms/ResetPassword'
 import Eclipse from '../components/shapes/Eclipse'
 import Text from '../components/text/Text'
 
 import image from '../assets/pic.png'
 
-const Login = () => {
+const ForgetPassword = () => {
 
   const navigate = useNavigate();
   useEffect(()=>{
@@ -27,10 +27,10 @@ const Login = () => {
         if (role === 'teacher') navigate('/teacher')
         else if (role === 'student') navigate('/student')
         else if (role === 'employee' || role === 'admin') navigate('/admin')
-        else navigate('/login')
+        else navigate('/restore')
       } catch (err) {
         if (!mounted) return
-        navigate('/login')
+        navigate('/restore')
       }
     }
 
@@ -50,10 +50,10 @@ const Login = () => {
     else navigate('/admin')
   }
 
-  const submit = async (email, password) => {
+  const submit = async (email) => {
     setLoading(true)
     try {
-      const resp = await authLogin({ email, password })
+      const resp = await authLogin({ email })
       let user = resp?.user || resp
       if (!user || !user.role) {
         const checked = await authCheck()
@@ -80,10 +80,10 @@ const Login = () => {
             <Text css={styles.mxw2} text='With Unitime, organizing your studies and tracking modules becomes effortless. Save time, stay focused, and keep your academic life simple' size='0.8rem' color='white' align='left' mrg='1em 0 0 0'/>
           </div>
         </div>    
-        <SignIn onForgetPassword={()=>{navigate('/restore')}} css={`${styles.minW}`} isLoading={loading} onSubmit={submit}/>
+        <ResetPassword css={`${styles.minW}`} isLoading={loading} onSubmit={submit} onRemeber={() => navigate('/login')}/>
       </div>
     </FullViewPage>
   )
 }
 
-export default Login
+export default ForgetPassword

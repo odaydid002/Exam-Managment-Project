@@ -403,7 +403,7 @@ const StudentSchedule = () => {
           <IconButton color='var(logo)' icon='fa-solid fa-print' onClick={() => { }} />
         </div>
       </div>
-      <div className="scheduleBody" style={{ minHeight: "calc(100vh - 3.5em - 2em" }}>
+      <div className="scheduleBody" style={{ minHeight: "calc(100vh - 3.5em - 2em)" }}>
         <div className="scheduleSide">
           <div className={`scheduleSearch BGC gsap-y pd ${filtersLoading && "shimmer"}`}>{!filtersLoading && <>
             <TextInput width='calc(100%-2em)' type='search' icon="fa-solid fa-magnifying-glass" placeholder='Search...' label="Search" />
@@ -428,8 +428,8 @@ const StudentSchedule = () => {
         </div>
         <div className={`scheduleCalendar BGC gsap-y ${calendarLoading && "shimmer"} pd`}>{!calendarLoading && <>
           <CalendarView
-            startDate={filterStartdate || "2026-01-01"}
-            endDate={filterEnddate || "2026-12-31"}
+            startDate={filterStartdate || new Date().getDate}
+            endDate={filterEnddate || new Date(new Date() + 7).getDate}
             startHour={8}
             endHour={17}
             eventsList={

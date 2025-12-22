@@ -29,6 +29,7 @@ const StudentLayout = () => {
         else if (role === 'admin' || role === 'employee') navigate('/admin')
         else navigate('/login')
       } catch (err) {
+        console.error(err)
         if (!mounted) return
         navigate('/login')
       }

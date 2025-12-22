@@ -19,7 +19,6 @@ const StudentSidebar = () => {
         <NavElement path="home/" title="Home" icon="fa-solid fa-house" hover/>
         <NavSeparator title="Main"/>
         <NavElement path="schedule/" title="Schedule" icon="fa-solid fa-calendar" mrt="0" hover/>
-        <NavElement path="modules/" title="Modules" icon="fa-solid fa-book" mrt="0" hover/>
         <NavSeparator title="System"/>
         <NavElementButton onClick={()=>{}} title="" icon="fa-solid fa-bell" mrt="0" hover/>
         <NavElement path="settings/" title="" icon="fa-solid fa-gear" mrt="0" hover/>

@@ -32,6 +32,7 @@ const SelectInputImage = ({
         margin: mrg,
         width: w,
         cursor: "default",
+        backgroundColor: "var(--trans-grey)",
     };
 
     const [selected, setSelected] = useState(0);
@@ -63,7 +64,6 @@ const SelectInputImage = ({
     <div
       ref={containerRef}
       style={varStyles}
-      style={{backgroundColor: "var(--trans-grey)"}}
       className={`${styles.container} ${styles.selectContainer} ${open ? styles.open : ""} flex a-center pos-rel`}
       selected-value = {selectedVal || 0}
       selected-index = {selected}

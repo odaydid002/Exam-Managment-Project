@@ -17,10 +17,17 @@ export default function CalendarView({
     onEventSurveillance = () => {}
     , readOnly = false
 }) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const fixDate = new Date(end);
+    let start = new Date(startDate);
+    let end = new Date(endDate);
 
+    const isValidDate = (d) => d instanceof Date && !isNaN(d.getTime());
+    if (!isValidDate(start)) start = new Date();
+    if (!isValidDate(end)) {
+        end = new Date(start);
+        end.setDate(start.getDate() + 6);
+    }
+
+    const fixDate = new Date(end);
     const diffDays = Math.floor((end - start) / (1000 * 60 * 60 * 24));
     const remainder = diffDays % 7;
     const daysToAdd = remainder === 0 ? 0 : 7 - remainder;
@@ -45,7 +52,7 @@ export default function CalendarView({
 
     const allDays = getDays();
     const pageSize = 7;
-    const totalPages = Math.ceil(allDays.length / pageSize);
+    const totalPages = Math.max(1, Math.ceil(allDays.length / pageSize));
 
     const [currentPage, setCurrentPage] = useState(1);
     const [hoveredEvent, setHoveredEvent] = useState(null);
@@ -56,8 +63,8 @@ export default function CalendarView({
         currentPage * pageSize
     );
 
-    const headerStart = pageDays[0].full;
-    const headerEnd = pageDays[pageDays.length - 1].full;
+    const headerStart = pageDays.length > 0 ? pageDays[0].full : start;
+    const headerEnd = pageDays.length > 0 ? pageDays[pageDays.length - 1].full : end;
 
     const headerText = `${headerStart.toLocaleDateString("en-US", {
         month: "long",

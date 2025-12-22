@@ -10,7 +10,6 @@ import Login from '../views/Login'
 import StudentLayout from '../views/student/StudentLayout'
 import StudentHome from '../views/student/StudentHome'
 import StudentSchedule from '../views/student/StudentSchedule'
-import StudentModules from '../views/student/StudentModules'
 import StudentSettings from '../views/student/StudentSettings'
 
 import TeacherLayout from '../views/teacher/TeacherLayout'
@@ -30,6 +29,7 @@ import AdminSettings from '../views/admin/AdminSettings'
 import AdminGroups from '../views/admin/AdminGroups'
 
 import ErrorPage from '../views/error/ErrorPage'
+import ForgetPassword from '../views/ForgetPassword';
 
 const router = createBrowserRouter([
   {
@@ -43,6 +43,11 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />
   },
   {
+    path: "/restore",
+    element: <ForgetPassword />,
+    errorElement: <ErrorPage />
+  },
+  {
     path: "/student",
     element: <StudentLayout />,
     errorElement: <ErrorPage />,
@@ -50,7 +55,6 @@ const router = createBrowserRouter([
       { index: true, element: <StudentHome /> },
       { path: "home", element: <StudentHome /> },
       { path: "schedule", element: <StudentSchedule /> },
-      { path: "modules", element: <StudentModules /> },
       { path: "settings", element: <StudentSettings /> },
     ],
   },
