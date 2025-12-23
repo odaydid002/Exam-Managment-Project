@@ -13,6 +13,7 @@ use App\Http\Controllers\ExamenController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SurveillanceController;
 use App\Http\Controllers\ExamReportController;
+use App\Http\Controllers\MailerController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // User
     Route::get('/user/{id}/profile', [UserController::class, 'getProfile']);
     Route::put('/user/{id}/profile', [UserController::class, 'updateProfile']);
+    Route::put('/user/{id}/password', [UserController::class, 'updatePassword']);
+    Route::get('/user/{id}/settings', [UserController::class, 'getSettings']);
+    Route::put('/user/{id}/settings', [UserController::class, 'updateSettings']);
+    Route::post('/user/{id}/password/otp/send', [UserController::class, 'sendPasswordOtp']);
+    Route::post('/user/{id}/password/otp/verify', [UserController::class, 'verifyPasswordOtp']);
     Route::delete('/user/{id}/deleteAccount', [UserController::class, 'deleteAccount']);
 
     // Notifications (user-facing)
@@ -123,6 +129,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/surveillance/assign', [SurveillanceController::class, 'assign']);
     Route::delete('/surveillance/{examId}/{teacherNumber}', [SurveillanceController::class, 'unassign']);
 
+    // Mailer
+    Route::post('/email/send', [MailerController::class, 'sendEmail']);
+    Route::post('/email/bulk', [MailerController::class, 'sendBulk']);
+    Route::post('/email/students', [MailerController::class, 'sendToStudents']);
+    Route::post('/email/teachers', [MailerController::class, 'sendToTeachers']);
+    Route::post('/email/employees', [MailerController::class, 'sendToEmployees']);
 
     Route::apiResource('exam-reports', ExamReportController::class);
 });
