@@ -111,6 +111,9 @@
 .c-text{
     color: var(--text);
 }
+.text-c-main{
+    color: var(--color-main);
+}
 .text-low{
     color: var(--text-low);
 }
@@ -260,6 +263,9 @@
     z-index: 999 !important;
     transform: scale(1.02);
 }
+.pointer{
+    cursor: pointer;
+}
 /*--------*/
 
 /* Margin */
@@ -293,6 +299,9 @@
 }
 .mrta{
     margin-top: auto;
+}
+.mrth{
+    margin-top: 0.5em;
 }
 /*--------*/
 

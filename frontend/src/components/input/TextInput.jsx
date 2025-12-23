@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Text from '../text/Text';
 
 const TextInput = ({
@@ -20,6 +20,8 @@ const TextInput = ({
     placeholder = "",
     onchange = (e) => {e},
     oninput = (e) => {e},
+    onChange = undefined,
+    onInput = undefined,
     editable = false,
     onEdit = () => {},
     dataList = [],
@@ -29,6 +31,13 @@ const TextInput = ({
 }) => {
 
     const inp = useRef(null);
+    const isControlled = value !== undefined || val !== undefined;
+    const [internalValue, setInternalValue] = useState(() => (val ?? value ?? ""));
+
+    useEffect(() => {
+        if (value !== undefined) setInternalValue(value);
+        else if (val !== undefined) setInternalValue(val);
+    }, [value, val]);
     const dataListId = "dl-" + Math.random().toString(36).substring(2);
     return (
         <>
@@ -56,15 +65,22 @@ const TextInput = ({
                         {...rest}
                         disabled={disabled}
                         readOnly={readOnly}
-                        value={(val ?? value ?? "")}
+                        value={isControlled ? (value ?? val ?? "") : internalValue}
                         id={dataListId}
                         list={dataListId}
                         ref={inp}
                         className='full'
                         type={type}
                         placeholder={placeholder}
-                        onChange={(e) => {onchange(e)}}
-                        onInput={(e) => {oninput(e)}}
+                        onChange={(e) => {
+                            if (!isControlled) setInternalValue(e.target.value);
+                            try { onChange && onChange(e); } catch (err) {}
+                            try { onchange && onchange(e); } catch (err) {}
+                        }}
+                        onInput={(e) => {
+                            try { onInput && onInput(e); } catch (err) {}
+                            try { oninput && oninput(e); } catch (err) {}
+                        }}
                         onFocus={(e) => e.target.style.outline = "none"}
                         style={{
                             paddingLeft: !icon?"":"1em",
