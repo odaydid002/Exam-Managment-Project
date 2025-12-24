@@ -258,8 +258,8 @@ return new class extends Migration
         Schema::create('exam_reports', function (Blueprint $table) {
         $table->id();
 
-        $table->unsignedBigInteger('user_id');   // enseignant
-        $table->unsignedBigInteger('exam_id');      // planning exam
+        $table->unsignedBigInteger('user_id');   // teacher
+        $table->unsignedBigInteger('exam_id');      // exam reference
 
         $table->enum('type', [
             'changement_date',

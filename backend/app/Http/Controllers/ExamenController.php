@@ -7,6 +7,7 @@ use App\Models\Examen;
 use App\Models\Module;
 use App\Models\Groupe;
 use App\Models\Salle;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -76,7 +77,7 @@ class ExamenController extends Controller
             $firstStudent = ($e->groupe && $e->groupe->students) ? $e->groupe->students->first() : null;
             if ($firstStudent && $firstStudent->speciality) $speciality = $firstStudent->speciality->name;
         }
-        
+
             // determine level: prefer section.level, otherwise fallback to first student's level
             $level = null;
             if ($e->groupe && $e->groupe->section && isset($e->groupe->section->level)) {
@@ -149,6 +150,18 @@ class ExamenController extends Controller
                 ]);
             });
 
+            // Send notification to admins
+            $module = Module::find($request->module_code);
+            $group = Groupe::find($request->group_code);
+            Notification::create([
+                'user_id' => auth()->user()->id,
+                'title' => 'New Exam Created',
+                'message' => 'A new exam has been created: ' . ($module ? $module->name : $request->module_code) . ' for group ' . ($group ? $group->name : $request->group_code),
+                'is_read' => false,
+                'target_type' => 'role',
+                'target_role' => 'admin',
+            ]);
+
             return response()->json(['message' => 'Exam created', 'exam' => $exam], 201);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to create exam', 'error' => $e->getMessage()], 500);
@@ -193,21 +206,198 @@ class ExamenController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $exam) {
+            // Check if exam is being validated
+            $isBeingValidated = $request->has('validated') && $request->validated === true && !$exam->validated;
+
+            // preserve original scheduling fields when request doesn't include new values
+            $originalDate = $exam->date;
+            $originalStart = $exam->start_hour;
+            $originalEnd = $exam->end_hour;
+            $originalRoom = $exam->room_id;
+            $originalExamType = $exam->exam_type;
+
+            DB::transaction(function () use ($request, $exam, $originalDate) {
                 if ($request->filled('module_code')) $exam->module_code = $request->module_code;
                 if ($request->filled('group_code')) $exam->group_code = $request->group_code;
                 if ($request->has('room_id')) $exam->room_id = $request->room_id;
                 if ($request->filled('exam_type')) $exam->exam_type = $request->exam_type;
                 if ($request->filled('date')) $exam->date = $request->date;
+                else $exam->date = $originalDate;
                 if ($request->filled('start_hour')) $exam->start_hour = $request->start_hour;
                 if ($request->filled('end_hour')) $exam->end_hour = $request->end_hour;
                 if ($request->has('validated')) $exam->validated = $request->validated;
                 $exam->save();
             });
 
+            // reload exam to get fresh values after save
+            $exam->refresh();
+
+            // determine if schedule changed (date/start/end/room/exam_type)
+            $origDateStr = $originalDate ? $originalDate->toDateTimeString() : null;
+            $newDateStr = $exam->date ? $exam->date->toDateTimeString() : null;
+            $scheduleChanged = ($origDateStr !== $newDateStr)
+                || ($originalStart != $exam->start_hour)
+                || ($originalEnd != $exam->end_hour)
+                || ($originalRoom != $exam->room_id)
+                || ($originalExamType != $exam->exam_type);
+
+            // Send schedule update notifications if scheduling changed
+            if ($scheduleChanged) {
+                $exam->load('groupe.students.user', 'surveillances.teacher.user', 'module');
+                $moduleName = $exam->module ? $exam->module->name : $exam->module_code;
+
+                if ($exam->groupe && $exam->groupe->students) {
+                    foreach ($exam->groupe->students as $student) {
+                        if ($student->user) {
+                            Notification::create([
+                                'user_id' => $student->user->id,
+                                'title' => 'Exam Schedule Updated',
+                                'message' => 'The schedule for ' . $moduleName . ' has been updated to ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' from ' . $exam->start_hour . ' to ' . $exam->end_hour,
+                                'is_read' => false,
+                                'target_type' => 'user',
+                                'target_user_id' => $student->user->id,
+                            ]);
+                        }
+                    }
+                }
+
+                if ($exam->surveillances) {
+                    foreach ($exam->surveillances as $surveillance) {
+                        if ($surveillance->teacher && $surveillance->teacher->user) {
+                            Notification::create([
+                                'user_id' => $surveillance->teacher->user->id,
+                                'title' => 'Exam Schedule Updated',
+                                'message' => 'The schedule for the ' . $moduleName . ' exam has been updated to ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' from ' . $exam->start_hour . ' to ' . $exam->end_hour,
+                                'is_read' => false,
+                                'target_type' => 'user',
+                                'target_user_id' => $surveillance->teacher->user->id,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            // Send notifications if exam was just validated
+            if ($isBeingValidated) {
+                $exam->load('groupe.students.user', 'surveillances.teacher.user', 'module');
+
+                // Get module name for message
+                $moduleName = $exam->module ? $exam->module->name : $exam->module_code;
+
+                // Notify all students in the group
+                if ($exam->groupe && $exam->groupe->students) {
+                    foreach ($exam->groupe->students as $student) {
+                        if ($student->user) {
+                            Notification::create([
+                                'user_id' => $student->user->id,
+                                'title' => 'New Exam Scheduled',
+                                'message' => 'A new exam has been scheduled for ' . $moduleName . ' on ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' from ' . $exam->start_hour . ' to ' . $exam->end_hour,
+                                'is_read' => false,
+                                'target_type' => 'user',
+                                'target_user_id' => $student->user->id,
+                            ]);
+                        }
+                    }
+                }
+
+                // Notify all assigned surveillance teachers
+                if ($exam->surveillances) {
+                    foreach ($exam->surveillances as $surveillance) {
+                        if ($surveillance->teacher && $surveillance->teacher->user) {
+                            Notification::create([
+                                'user_id' => $surveillance->teacher->user->id,
+                                'title' => 'Exam Assigned for Surveillance',
+                                'message' => 'You have been assigned to supervise the ' . $moduleName . ' exam on ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' from ' . $exam->start_hour . ' to ' . $exam->end_hour,
+                                'is_read' => false,
+                                'target_type' => 'user',
+                                'target_user_id' => $surveillance->teacher->user->id,
+                            ]);
+                        }
+                    }
+                }
+            }
+
             return response()->json(['message' => 'Exam updated', 'exam' => $exam]);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to update exam', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function validateExam(Request $request, $id)
+    {
+        if (!auth()->user()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['message' => 'Only admins can validate exams'], 403);
+        }
+
+        $exam = Examen::find($id);
+        if (!$exam) {
+            return response()->json(['message' => 'Exam not found'], 404);
+        }
+        $existingDate = $exam->date ? $exam->date->toDateTimeString() : null;
+
+        if ($exam->validated) {
+            return response()->json(['message' => 'Exam is already validated'], 400);
+        }
+
+        try {
+            // Mark exam as validated without altering other fields (avoid touching date)
+            // Preserve existing `date` to avoid MySQL TIMESTAMP auto-update side-effects
+            DB::transaction(function () use ($exam, $existingDate) {
+                DB::table('exams')->where('id', $exam->id)->update(['validated' => true, 'date' => $existingDate]);
+            });
+
+            // Reload exam and relationships for notifications
+            $exam = Examen::find($id);
+            $exam->load('groupe.students.user', 'surveillances.teacher.user', 'module');
+
+            // Get module name for message
+            $moduleName = $exam->module ? $exam->module->name : $exam->module_code;
+
+            // Notify all students in the group
+            if ($exam->groupe && $exam->groupe->students) {
+                foreach ($exam->groupe->students as $student) {
+                    if ($student->user) {
+                        Notification::create([
+                            'user_id' => $student->user->id,
+                            'title' => 'New Exam Scheduled',
+                            'message' => 'A new exam has been scheduled for ' . $moduleName . ' on ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' from ' . $exam->start_hour . ' to ' . $exam->end_hour,
+                            'is_read' => false,
+                            'target_type' => 'user',
+                            'target_user_id' => $student->user->id,
+                        ]);
+                    }
+                }
+            }
+
+            // Notify all assigned surveillance teachers
+            if ($exam->surveillances) {
+                foreach ($exam->surveillances as $surveillance) {
+                    if ($surveillance->teacher && $surveillance->teacher->user) {
+                        Notification::create([
+                            'user_id' => $surveillance->teacher->user->id,
+                            'title' => 'Exam Assigned for Surveillance',
+                            'message' => 'You have been assigned to supervise the ' . $moduleName . ' exam on ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' from ' . $exam->start_hour . ' to ' . $exam->end_hour,
+                            'is_read' => false,
+                            'target_type' => 'user',
+                            'target_user_id' => $surveillance->teacher->user->id,
+                        ]);
+                    }
+                }
+            }
+
+            return response()->json([
+                'message' => 'Exam validated successfully',
+                'id' => $exam->id,
+                'module_code' => $exam->module_code,
+                'group_code' => $exam->group_code,
+                'validated' => true,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error validating exam: ' . $e->getMessage()], 500);
         }
     }
 
@@ -221,9 +411,44 @@ class ExamenController extends Controller
         if (!$exam) return response()->json(['message' => 'Exam not found'], 404);
 
         try {
+            // notify students and surveillances about cancellation before deletion
+            $exam->load('groupe.students.user', 'surveillances.teacher.user', 'module');
+            $moduleName = $exam->module ? $exam->module->name : $exam->module_code;
+
+            if ($exam->groupe && $exam->groupe->students) {
+                foreach ($exam->groupe->students as $student) {
+                    if ($student->user) {
+                        Notification::create([
+                            'user_id' => $student->user->id,
+                            'title' => 'Exam Canceled',
+                            'message' => 'The ' . $moduleName . ' exam scheduled on ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' has been canceled.',
+                            'is_read' => false,
+                            'target_type' => 'user',
+                            'target_user_id' => $student->user->id,
+                        ]);
+                    }
+                }
+            }
+
+            if ($exam->surveillances) {
+                foreach ($exam->surveillances as $surveillance) {
+                    if ($surveillance->teacher && $surveillance->teacher->user) {
+                        Notification::create([
+                            'user_id' => $surveillance->teacher->user->id,
+                            'title' => 'Exam Canceled',
+                            'message' => 'The ' . $moduleName . ' exam scheduled on ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' has been canceled.',
+                            'is_read' => false,
+                            'target_type' => 'user',
+                            'target_user_id' => $surveillance->teacher->user->id,
+                        ]);
+                    }
+                }
+            }
+
             DB::transaction(function () use ($exam) {
                 $exam->delete();
             });
+
             return response()->json(['message' => 'Exam deleted']);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to delete exam', 'error' => $e->getMessage()], 500);
@@ -306,6 +531,19 @@ class ExamenController extends Controller
                     'validated' => $item['validated'] ?? false,
                 ]);
                 DB::commit();
+
+                // Send notification to admins
+                $module = Module::find($item['module_code']);
+                $group = Groupe::find($item['group_code']);
+                Notification::create([
+                    'user_id' => auth()->user()->id,
+                    'title' => 'New Exam Created',
+                    'message' => 'A new exam has been created: ' . ($module ? $module->name : $item['module_code']) . ' for group ' . ($group ? $group->name : $item['group_code']),
+                    'is_read' => false,
+                    'target_type' => 'role',
+                    'target_role' => 'admin',
+                ]);
+
                 $created[] = ['index' => $index, 'exam' => $exam];
             } catch (\Exception $e) {
                 DB::rollBack();

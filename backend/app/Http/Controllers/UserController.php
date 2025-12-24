@@ -150,6 +150,41 @@ class UserController extends Controller
         return response()->json(['notifications' => $notifications]);
     }
 
+    public function getNotificationsByUser($userId)
+    {
+        if (!auth()->user()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Check if user is admin or requesting their own notifications
+        if (auth()->user()->id != $userId && auth()->user()->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $user = \App\Models\User::find($userId);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        $notifications = \App\Models\Notification::where(function ($q) use ($user) {
+            $q->where('target_type', 'all')
+              ->orWhere(function ($q2) use ($user) {
+                  $q2->where('target_type', 'role')
+                     ->where('target_role', $user->role);
+              })
+              ->orWhere(function ($q3) use ($user) {
+                  $q3->where('target_type', 'user')
+                     ->where('target_user_id', $user->id);
+              })
+              ->orWhere(function ($q4) use ($user) {
+                  // legacy: notifications with user_id column set to recipient
+                  $q4->where('user_id', $user->id);
+              });
+        })->orderBy('created_at', 'desc')->get();
+
+        return response()->json(['user_id' => $userId, 'notifications' => $notifications]);
+    }
+
     public function markNotificationsRead(Request $request)
     {
         $request->validate([

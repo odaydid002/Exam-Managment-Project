@@ -14,7 +14,6 @@ use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SurveillanceController;
 use App\Http\Controllers\ExamReportController;
 use App\Http\Controllers\MailerController;
-use App\Http\Controllers\PlanningController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Notifications (user-facing)
     Route::get('/notifications', [UserController::class, 'notifications']);
+    Route::get('/users/{userId}/notifications', [UserController::class, 'getNotificationsByUser']);
     Route::post('/notifications/mark-read', [UserController::class, 'markNotificationsRead']);
 
     // Specialities
@@ -123,20 +123,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/exams/add', [ExamenController::class, 'store']);
     Route::get('/exams/{id}', [ExamenController::class, 'show']);
     Route::put('/exams/edit/{id}', [ExamenController::class, 'update']);
+    Route::put('/exams/{id}/validate', [ExamenController::class, 'validateExam']);
     Route::delete('/exams/delete/{id}', [ExamenController::class, 'destroy']);
 
     // Surveillance
     Route::get('/surveillance/exam/{examId}', [SurveillanceController::class, 'getByExam']);
     Route::post('/surveillance/assign', [SurveillanceController::class, 'assign']);
     Route::delete('/surveillance/{examId}/{teacherNumber}', [SurveillanceController::class, 'unassign']);
-
-    // Planning
-    Route::get('/planning/all', [PlanningController::class, 'index']);
-    Route::get('/planning/{id}', [PlanningController::class, 'show']);
-    Route::post('/planning/add', [PlanningController::class, 'store']);
-    Route::put('/planning/edit/{id}', [PlanningController::class, 'update']);
-    Route::delete('/planning/delete/{id}', [PlanningController::class, 'destroy']);
-    Route::put('/planning/{id}/validate', [PlanningController::class, 'validate']);
 
     // Mailer
     Route::post('/email/send', [MailerController::class, 'sendEmail']);
