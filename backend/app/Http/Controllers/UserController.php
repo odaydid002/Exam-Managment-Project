@@ -13,13 +13,57 @@ class UserController extends Controller
 {
     public function getProfile($id)
     {
-        $user = User::findOrFail($id);
+        $user = User::with(['setting', 'student.group.speciality.department', 'teacher.speciality.department'])->findOrFail($id);
 
         if (auth()->id() != $id && !auth()->user()->hasRole(['admin', 'employee'])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        return response()->json(['user' => $user]);
+        $response = [
+            'id' => $user->id,
+            'fname' => $user->fname,
+            'lname' => $user->lname,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'address' => $user->address ?? null,
+            'image' => $user->image ?? null,
+            'role' => $user->role ?? null,
+            'birth_date' => $user->birth_date ? $user->birth_date->toDateString() : null,
+            'gender' => $user->gender ?? null,
+            'settings' => $user->setting ?? null,
+        ];
+
+        if ($user->student) {
+            $s = $user->student;
+            $group = $s->group;
+            $speciality = $s->speciality;
+            $department = $speciality && $speciality->department ? $speciality->department->name : null;
+
+            $response['student'] = [
+                'number' => (string) $s->number,
+                'group_code' => $group->code ?? null,
+                'group_name' => $group->name ?? null,
+                'speciality' => $speciality->name ?? null,
+                'department' => $department,
+                'level' => $s->level ?? null,
+            ];
+        }
+
+        if ($user->teacher) {
+            $t = $user->teacher;
+            $speciality = $t->speciality;
+            $department = $speciality && $speciality->department ? $speciality->department->name : null;
+
+            $response['teacher'] = [
+                'number' => (string) $t->number,
+                'adj' => $t->adj ?? null,
+                'speciality' => $speciality->name ?? null,
+                'department' => $department,
+                'position' => $t->position ?? null,
+            ];
+        }
+
+        return response()->json(['user' => $response]);
     }
 
     public function updateProfile(Request $request, $id)
@@ -35,6 +79,7 @@ class UserController extends Controller
             'lname' => 'sometimes|string|max:20',
             'birth_date' => 'sometimes|date',
             'gender' => 'sometimes|string|max:10',
+            'address' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $id,
             'phone' => 'sometimes|string|max:20|unique:users,phone,' . $id,
             'current_password' => 'required_with:password',
@@ -85,7 +130,22 @@ class UserController extends Controller
     public function notifications()
     {
         $user = auth()->user();
-        $notifications = $user->notifications()->orderBy('created_at', 'desc')->get();
+
+        $notifications = \App\Models\Notification::where(function ($q) use ($user) {
+            $q->where('target_type', 'all')
+              ->orWhere(function ($q2) use ($user) {
+                  $q2->where('target_type', 'role')
+                     ->where('target_role', $user->role);
+              })
+              ->orWhere(function ($q3) use ($user) {
+                  $q3->where('target_type', 'user')
+                     ->where('target_user_id', $user->id);
+              })
+              ->orWhere(function ($q4) use ($user) {
+                  // legacy: notifications with user_id column set to recipient
+                  $q4->where('user_id', $user->id);
+              });
+        })->orderBy('created_at', 'desc')->get();
 
         return response()->json(['notifications' => $notifications]);
     }
@@ -98,11 +158,19 @@ class UserController extends Controller
         ]);
 
         $user = auth()->user();
-        \App\Models\Notification::whereIn('id', $request->notification_ids)
-            ->where('user_id', $user->id)
-            ->update(['is_read' => true]);
 
-        return response()->json(['message' => 'Notifications marked as read']);
+        $ids = $request->notification_ids;
+        $notifications = \App\Models\Notification::whereIn('id', $ids)->get();
+
+        $allowed = $notifications->filter(function ($n) use ($user) {
+            return $n->targetsUser($user) || $n->user_id == $user->id;
+        })->pluck('id')->toArray();
+
+        if (!empty($allowed)) {
+            \App\Models\Notification::whereIn('id', $allowed)->update(['is_read' => true]);
+        }
+
+        return response()->json(['message' => 'Notifications marked as read', 'updated' => count($allowed)]);
     }
 
     /**
@@ -249,9 +317,13 @@ class UserController extends Controller
         if (!$setting) {
             // return sensible defaults
             $setting = [
-                'theme' => 'light',
+                'theme' => 'system',
                 'language' => 'en',
                 'notifications' => true,
+                'exam_reminder' => false,
+                'schedule_updates' => false,
+                'login_alerts' => false,
+                'two_factor_authentication' => false,
                 'main_color' => '#1976d2',
             ];
             return response()->json(['settings' => $setting]);
@@ -276,9 +348,13 @@ class UserController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'theme' => 'sometimes|string|in:light,dark',
+            'theme' => 'sometimes|string|in:light,dark,system',
             'language' => 'sometimes|string|max:10',
             'notifications' => 'sometimes|boolean',
+            'exam_reminder' => 'sometimes|boolean',
+            'schedule_updates' => 'sometimes|boolean',
+            'login_alerts' => 'sometimes|boolean',
+            'two_factor_authentication' => 'sometimes|boolean',
             'main_color' => 'sometimes|string|max:20',
         ]);
 

@@ -10,6 +10,9 @@ import * as Rooms from './rooms'
 import * as Groups from './groups'
 import * as Exams from './exams'
 import * as Surveillance from './surveillance'
+import * as Images from './images'
+import * as Mailer from './mailer'
+import * as ExamReports from './examReports'
 
 export {
   Auth,
@@ -24,4 +27,7 @@ export {
   Groups,
   Exams,
   Surveillance,
+  Images,
+  Mailer,
+  ExamReports,
 }

@@ -25,4 +25,15 @@ const markNotificationsRead = async (payload) => {
   return res.data
 }
 
-export { getProfile, updateProfile, deleteAccount, getNotifications, markNotificationsRead }
+const getSettings = async (id) => {
+  const res = await api.get(`/user/${id}/settings`)
+  return res.data
+}
+
+const updateSettings = async (id, payload) => {
+  const res = await api.put(`/user/${id}/settings`, payload)
+  return res.data
+}
+
+export { getProfile, updateProfile, deleteAccount, getNotifications, markNotificationsRead, getSettings, updateSettings }
+

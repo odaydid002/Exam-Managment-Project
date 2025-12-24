@@ -1,4 +1,5 @@
 import api from './app'
+import {setMainColor, forceDark, forceLight} from '../hooks/apearance';
   
 const authCheck = async () => {
     const res = await api.get('/auth/check')
@@ -28,6 +29,8 @@ const refreshToken = async () => {
 
 
 const logout = () => {
+    window.matchMedia('(prefers-color-scheme: dark)').matches ? forceDark() : forceLight();
+    setMainColor("#F1504A");
     localStorage.removeItem('token')
 }
 

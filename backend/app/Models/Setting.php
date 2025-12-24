@@ -16,11 +16,19 @@ class Setting extends Model
         'theme',
         'language',
         'notifications',
+        'exam_reminder',
+        'schedule_updates',
+        'login_alerts',
+        'two_factor_authentication',
         'main_color',
     ];
 
     protected $casts = [
         'notifications' => 'boolean',
+        'exam_reminder' => 'boolean',
+        'schedule_updates' => 'boolean',
+        'login_alerts' => 'boolean',
+        'two_factor_authentication' => 'boolean',
     ];
 
     public function user()

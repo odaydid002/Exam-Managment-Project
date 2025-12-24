@@ -52,8 +52,8 @@ class StudentController extends Controller
             $group = $s->group;
             $speciality = $s->speciality;
             $department = $speciality && method_exists($speciality, 'department') ? $speciality->department : null;
-
             return [
+                'id' => $user->id ?? null,
                 'fname' => $user->fname ?? null,
                 'lname' => $user->lname ?? null,
                 'number' => (string) $s->number,
@@ -64,7 +64,9 @@ class StudentController extends Controller
                 'level' => $s->level ?? null,
                 'phone' => $user->phone ?? null,
                 'email' => $user->email ?? null,
+                'address' => $user->address ?? null,
                 'image' => $user->image ?? null,
+                'settings' => $user->setting ?? null,
             ];
         })->toArray();
 
@@ -325,6 +327,7 @@ class StudentController extends Controller
             $department = $speciality && method_exists($speciality, 'department') ? $speciality->department : null;
 
             return response()->json([
+                'id' => $user->id ?? null,
                 'fname' => $user->fname ?? null,
                 'lname' => $user->lname ?? null,
                 'number' => (string) $student->number,
@@ -337,7 +340,9 @@ class StudentController extends Controller
                 'level' => $student->level ?? null,
                 'phone' => $user->phone ?? null,
                 'email' => $user->email ?? null,
+                'address' => $user->address ?? null,
                 'image' => $user->image ?? null,
+                'settings' => $user->setting ?? null,
             ]);
         }
 
@@ -402,6 +407,7 @@ class StudentController extends Controller
 
         $exams = \App\Models\Examen::with(['module', 'salle', 'surveillances.teacher.user'])
             ->where('group_code', $groupCode)
+            ->where('validated', true)
             ->orderBy('date')
             ->get();
 

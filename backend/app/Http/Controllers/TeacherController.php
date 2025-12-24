@@ -122,8 +122,8 @@ class TeacherController extends Controller
             $user = $t->user;
             $speciality = $t->speciality;
             $department = $speciality && $speciality->department ? $speciality->department->name : null;
-
             return [
+                'id' => $user->id ?? null,
                 'fname' => $user->fname ?? null,
                 'lname' => $user->lname ?? null,
                 'adj' => $t->adj ?? null,
@@ -134,7 +134,9 @@ class TeacherController extends Controller
                 'speciality' => $speciality->name ?? null,
                 'phone' => $user->phone ?? null,
                 'email' => $user->email ?? null,
+                'address' => $user->address ?? null,
                 'image' => $user->image ?? null,
+                'settings' => $user->setting ?? null,
             ];
         })->toArray();
 
@@ -342,6 +344,7 @@ class TeacherController extends Controller
             $department = $speciality && $speciality->department ? $speciality->department->name : null;
 
             return response()->json([
+                'id' => $user->id ?? null,
                 'fname' => $user->fname ?? null,
                 'lname' => $user->lname ?? null,
                 'adj' => $teacher->adj ?? null,
@@ -352,7 +355,9 @@ class TeacherController extends Controller
                 'speciality' => $speciality->name ?? null,
                 'phone' => $user->phone ?? null,
                 'email' => $user->email ?? null,
+                'address' => $user->address ?? null,
                 'image' => $user->image ?? null,
+                'settings' => $user->setting ?? null,
             ]);
         }
 

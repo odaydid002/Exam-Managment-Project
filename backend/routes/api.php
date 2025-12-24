@@ -14,6 +14,7 @@ use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SurveillanceController;
 use App\Http\Controllers\ExamReportController;
 use App\Http\Controllers\MailerController;
+use App\Http\Controllers\PlanningController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -128,6 +129,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/surveillance/exam/{examId}', [SurveillanceController::class, 'getByExam']);
     Route::post('/surveillance/assign', [SurveillanceController::class, 'assign']);
     Route::delete('/surveillance/{examId}/{teacherNumber}', [SurveillanceController::class, 'unassign']);
+
+    // Planning
+    Route::get('/planning/all', [PlanningController::class, 'index']);
+    Route::get('/planning/{id}', [PlanningController::class, 'show']);
+    Route::post('/planning/add', [PlanningController::class, 'store']);
+    Route::put('/planning/edit/{id}', [PlanningController::class, 'update']);
+    Route::delete('/planning/delete/{id}', [PlanningController::class, 'destroy']);
+    Route::put('/planning/{id}/validate', [PlanningController::class, 'validate']);
 
     // Mailer
     Route::post('/email/send', [MailerController::class, 'sendEmail']);

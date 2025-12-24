@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import Text from '../text/Text';
 
 const TextInput = ({
@@ -38,7 +38,7 @@ const TextInput = ({
         if (value !== undefined) setInternalValue(value);
         else if (val !== undefined) setInternalValue(val);
     }, [value, val]);
-    const dataListId = "dl-" + Math.random().toString(36).substring(2);
+    const dataListId = useMemo(() => "datalist-" + Math.random().toString(36).substring(2), []);
     return (
         <>
             <div className={`${css} flex column`} style={{ width, margin: mrg }}>
@@ -66,7 +66,6 @@ const TextInput = ({
                         disabled={disabled}
                         readOnly={readOnly}
                         value={isControlled ? (value ?? val ?? "") : internalValue}
-                        id={dataListId}
                         list={dataListId}
                         ref={inp}
                         className='full'
@@ -74,11 +73,9 @@ const TextInput = ({
                         placeholder={placeholder}
                         onChange={(e) => {
                             if (!isControlled) setInternalValue(e.target.value);
-                            try { onChange && onChange(e); } catch (err) {}
                             try { onchange && onchange(e); } catch (err) {}
                         }}
                         onInput={(e) => {
-                            try { onInput && onInput(e); } catch (err) {}
                             try { oninput && oninput(e); } catch (err) {}
                         }}
                         onFocus={(e) => e.target.style.outline = "none"}
@@ -97,13 +94,11 @@ const TextInput = ({
                         ></i> }
                 </div>
             </div>
-            {dataList.length > 0 && (
-                <datalist id={dataListId}>
-                    {dataList.map((option, i) => (
-                        <option key={i} value={option} />
-                    ))}
-                </datalist>
-            )}
+            <datalist id={dataListId}>
+                {dataList.map((option, i) => (
+                    <option key={i} value={option} />
+                ))}
+            </datalist>
         </>
     );
 };
