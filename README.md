@@ -35,64 +35,11 @@ git clone https://github.com/odaydid002/Exam-Managment-Project.git
 cd Exam-Managment-Project
 ```
 
-⚙️ Prerequisites: Enable Required PHP Extensions
-
-Before installing dependencies, make sure the required PHP extensions are enabled on your system.
-
-This project requires the following PHP extensions:
-
-zip
-
-sodium
-
-🧩 Step 1: Locate your active php.ini
-
-Open a terminal (CMD / PowerShell) and run:
-
-```sh
-php --ini
-```
-
-🧩 Step 2: Enable zip and sodium extensions
-
-Open php.ini using the command line:
-
-notepad C:\xampp\php\php.ini
-
-
-Search for the following lines and remove the leading semicolon (;):
-
-;extension=zip
-
-;extension=sodium
-
-
-Change them to:
-
-extension=zip
-
-extension=sodium
-
-
-Save the file and close the editor.
-
-🧩 Step 3: Restart Apache
-
-Restart Apache to apply the changes:
-
-Using XAMPP Control Panel
-
-Stop Apache
-
-Start Apache again
-
-
-⚙️ Backend Setup (Laravel) 
+⚙️ Backend Setup (Laravel)
 
 ```sh
 cd backend
 composer install
-composer update
 ```
 
 ```sh
