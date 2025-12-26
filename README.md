@@ -39,7 +39,7 @@ cd Exam-Managment-Project
 
 ```sh
 cd backend
-composer install
+composer install --ignore-platform-req=ext-sodium
 ```
 
 ```sh
