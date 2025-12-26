@@ -30,4 +30,9 @@ const remove = async (id) => {
   return res.data
 }
 
-export { getAll, bulkStore, add, get, update, remove }
+const validateExam = async (id, payload) => {
+  const res = await api.put(`/exams/${id}/validate`, payload)
+  return res.data
+}
+
+export { getAll, bulkStore, add, get, update, remove, validateExam }

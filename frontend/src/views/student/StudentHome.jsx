@@ -6,6 +6,9 @@ import { useNotify } from '../../components/loaders/NotificationContext';
 import { authCheck } from '../../API/auth';
 import { get as getStudent, getExams as getStudentExams } from '../../API/students';
 import { get as getGroup } from '../../API/groups';
+import { getNotificationsByUser, markNotificationsRead } from '../../API/users';
+
+import formatDateTime from '../../hooks/formatDateTime';
 
 import StaticCard2 from '../../components/containers/StaticCard2';
 import Profile from '../../components/containers/profile';
@@ -16,6 +19,8 @@ import Exam from '../../components/containers/Exam';
 import ListTableClient from '../../components/tables/ListTableClient';
 import Copy from '../../components/buttons/Copy';
 import Popup from '../../components/containers/Popup';
+import TextButton from '../../components/buttons/TextButton';
+import Notif from '../../components/containers/Notif';
 
 gsap.registerPlugin(useGSAP);
 
@@ -32,10 +37,11 @@ function floatToTimeString(num) {
 const StudentHome = () => {
 
   const [infoLoading, setInfoLoading] = useState(false)
-  const [notificationsLoading, _setNotificationsLoading] = useState(false)
+  const [notificationsLoading, setNotificationsLoading] = useState(false)
   const [sessionsLoading, _setSessionsLoading] = useState(false)
   const [examsLoading, setExamsLoading] = useState(false)
-  const [notificationsCount, _setNotificationsCount] = useState(0)
+  const [notificationsCount, setNotificationsCount] = useState(0)
+  const [notifications, setNotifications] = useState([])
   const [myExams, setMyExams] = useState([])
   const [myExamsLoading, setMyExamsLoading] = useState(false)
 
@@ -55,7 +61,8 @@ const StudentHome = () => {
     })
   });
 
-  const notify = useNotify?.();
+  const notifyCtx = useNotify();
+  const notify = notifyCtx?.notify;
   const [profile, setProfile] = useState(null);
   const [_authUser, _setAuthUser] = useState(null);
   const [identifierUsed, setIdentifierUsed] = useState(null);
@@ -116,7 +123,7 @@ const StudentHome = () => {
         } catch { console.debug('fallback /api/student failed'); }
 
       } catch {
-        notify?.({ type: 'error', message: 'Unable to load student profile' });
+        notify?.('error', 'Unable to load student profile');
       } finally {
         if (mounted) setInfoLoading(false);
       }
@@ -127,6 +134,74 @@ const StudentHome = () => {
   }, [notify]);
 
  
+  useEffect(() => {
+    if (!identifierUsed) return;
+    let mounted = true;
+    const loadNotifications = async () => {
+      try {
+        setNotificationsLoading(true);
+        const resp = await getNotificationsByUser(identifierUsed);
+        const items = Array.isArray(resp) ? resp : (resp.notifications || resp.data || []);
+        if (mounted) {
+          setNotifications(items || []);
+          setNotificationsCount(items?.length || 0);
+        }
+      } catch (err) {
+        console.error('Failed to load notifications', err);
+        if (mounted) {
+          setNotifications([]);
+          setNotificationsCount(0);
+        }
+      } finally {
+        if (mounted) setNotificationsLoading(false);
+      }
+    }
+
+    loadNotifications();
+    return () => { mounted = false }
+  }, [identifierUsed]);
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      const unreadNotifications = notifications.filter(n => !n.read_at);
+      if (unreadNotifications.length === 0) return;
+      
+      const notificationIds = unreadNotifications.map(n => n.id);
+      await markNotificationsRead({ notification_ids: notificationIds });
+      
+      setNotifications(prev => prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() })));
+      notify?.('success', 'Notifications marked as read');
+    } catch (err) {
+      console.error('Failed to mark notifications as read', err);
+      notify?.('error', 'Failed to mark notifications as read');
+    }
+  }
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      if (!id) return;
+
+      const current = notifications.find(n => n.id == id || n.uuid == id);
+      if (!current) return;
+
+      if (current.read_at || current.is_read) return;
+
+      await markNotificationsRead({ notification_ids: [id] });
+
+      setNotifications(prev => prev.map(n => {
+        if (n.id == id || n.uuid == id) {
+          return { ...n, read_at: n.read_at || new Date().toISOString(), is_read: true };
+        }
+        return n;
+      }));
+
+      setNotificationsCount(c => Math.max(0, c - 1));
+    } catch (err) {
+      console.error(err);
+      notify?.('error', 'Failed to mark notification as read');
+    }
+  }
+
   useEffect(() => {
     if (!identifierUsed) return;
     let mounted = true;
@@ -182,6 +257,21 @@ const StudentHome = () => {
     loadGroup();
     return () => { mounted = false };
   }, [profile]);
+
+  // Notification grouping helpers
+  const getDateOnlyFrom = (value) => {
+    try {
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return '';
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    } catch (e) {
+      return '';
+    }
+  }
+
+  const todayNotifications = notifications.filter(n => getDateOnlyFrom(n.created_at || n.createdAt || n.date) === getLocalTodayString());
+  const otherNotifications = notifications.filter(n => getDateOnlyFrom(n.created_at || n.createdAt || n.date) !== getLocalTodayString());
 
   return (
     <div className={`homeLayout full scrollbar overflow-y-a`}>
@@ -288,7 +378,7 @@ const StudentHome = () => {
                       <Profile img={exam.surveillances[0].image} width="35px" border="2px solid var(--bg)" />
                       <Text align='left' text={`${exam.surveillances[0].pronoun}. ${exam.surveillances[0].name}`} size='var(--text-m)' />
                     </div>}
-                  {(exam.surveillances && exam.surveillances.length > 0) && 
+                  {(exam.surveillances && exam.surveillances.length > 1) && 
                     <div className="flex row a-center gap pos-rel clickable" onClick={()=> openSurveillancesPopup(exam.surveillances)}>
                       {exam.surveillances.map((teacher, index) => {
                         if (index > 3) return null;
@@ -318,14 +408,76 @@ const StudentHome = () => {
         </div>
       </div>
       <div className="homeSide">
-        <div className={`homeNotification flex column BGC pd gsap-y ${sessionsLoading && "shimmer"}`}>
+        <div className={`homeNotification flex column BGC pd gsap-y overflow-h ${notificationsLoading && "shimmer"}`}>
           {!notificationsLoading && <>
-            <Text text="Notifications" color='var(--text-low)' size='var(--text-m)' align='left' />
-            {notificationsCount == 0 &&
+            <div className='flex column gap' style={{height: "5em"}}>
+              <div className='flex row a-center j-spacebet' style={{marginBottom: "1em"}}>
+                <Text text="Notifications" color='var(--text-low)' size='var(--text-m)' align='left' />
+                <TextButton text='Mark all as read' icon = "fa-solid fa-check-double" textColor='var(--color-main)' onClick={handleMarkAllAsRead} />
+              </div>
+            </div>
+            {notifications.length === 0 &&
               <>
                 <Notification css="self-center" width='40%' mrg="auto 0 0 0" />
                 <Text text='No notifications' w='bold' mrg="2em 0 auto 0" color='var(--color-main)' size='var(--text-l)' />
               </>
+            }
+            {(todayNotifications.length > 0 || otherNotifications.length > 0) &&
+              <div className="flex column gap notification-container overflow-y-a scrollbar">
+                {todayNotifications.length > 0 && (
+                  <>
+                    <Text text='Today' size='var(--text-m)' align='left' color='var(--text-low)' opacity='0.5'/>
+                    {todayNotifications.map((notif, idx) => {
+                      const titleStr = (notif.title === false || notif.title == null) ? '' : String(notif.title);
+                      const descStr = notif.message == null ? '' : String(notif.message);
+                      const lowerTitle = titleStr.toLowerCase();
+                      const icon = lowerTitle.includes('update') ? 'fa-solid fa-calendar-day' : lowerTitle.includes('cancel') ? 'fa-solid fa-calendar-xmark' : lowerTitle.includes('new') ? 'fa-solid fa-calendar' : null;
+                      const iconColor = lowerTitle.includes('update') ? '#FF872C' : lowerTitle.includes('cancel') ? '#F1504A' : lowerTitle.includes('new') ? '#4FB6A3' : null;
+
+                      return (
+                        <Notif
+                          key={`today-${idx}-${notif.id || notif.uuid || idx}`}
+                          read={!!notif.is_read}
+                          title={titleStr || undefined}
+                          description={descStr}
+                          onClick={() => { handleMarkAsRead(notif.id) }}
+                          date={formatDateTime(notif.created_at).date}
+                          time={formatDateTime(notif.created_at).time}
+                          icon={icon}
+                          iconColor={iconColor}
+                        />
+                      );
+                    })}
+                  </>
+                )}
+
+                {otherNotifications.length > 0 && (
+                  <>
+                    <Text text='Other' size='var(--text-m)' align='left' color='var(--text-low)' opacity='0.5'/>
+                    {otherNotifications.map((notif, idx) => {
+                      const titleStr = (notif.title === false || notif.title == null) ? '' : String(notif.title);
+                      const descStr = notif.message == null ? '' : String(notif.message);
+                      const lowerTitle = titleStr.toLowerCase();
+                      const icon = lowerTitle.includes('update') ? 'fa-solid fa-calendar-day' : lowerTitle.includes('cancel') ? 'fa-solid fa-calendar-xmark' : lowerTitle.includes('new') ? 'fa-solid fa-calendar' : null;
+                      const iconColor = lowerTitle.includes('update') ? '#FF872C' : lowerTitle.includes('cancel') ? '#F1504A' : lowerTitle.includes('new') ? '#4FB6A3' : null;
+
+                      return (
+                        <Notif
+                          key={`other-${idx}-${notif.id || notif.uuid || idx}`}
+                          read={!!notif.is_read}
+                          title={titleStr || undefined}
+                          description={descStr}
+                          onClick={() => { handleMarkAsRead(notif.id) }}
+                          date={formatDateTime(notif.created_at).date}
+                          time={formatDateTime(notif.created_at).time}
+                          icon={icon}
+                          iconColor={iconColor}
+                        />
+                      );
+                    })}
+                  </>
+                )}
+              </div>
             }
           </>}
         </div>

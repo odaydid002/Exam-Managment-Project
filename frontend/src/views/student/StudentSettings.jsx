@@ -338,7 +338,7 @@ const StudentSettings = () => {
                       <Circle clickable color='#FEB326' active = {currentColor == "#FEB326"} onClick = {() => {changeColor("#FEB326")} }/>
                       <Circle clickable color='#1EA807' active = {currentColor == "#1EA807"} onClick = {() => {changeColor("#1EA807")} }/>
                     </div>
-                    <TextInput label="Custom Color" width='8em' placeholder='#000000' onChange={(e) =>{changeColor(e.target.value)}} value={currentColor}/>
+                    <TextInput label="Custom Color" width='8em' placeholder={currentColor} onchange={(e) =>{changeColor(e.target.value)}}/>
                   </div>
                   <Text align='left' text='Interface theme' size='var(--text-m)' />
                   <Text align='left' text='Select or customize your UI theme' size='var(--text-s)' color='var(--text-low)' opacity='0.5'/>

@@ -13,6 +13,7 @@ const Text = (
         w = "400",
         lh = "unset",
         opacity = "1",
+        overflow = true,
         ...rest
     }
 ) => {
@@ -29,7 +30,7 @@ const Text = (
         backgroundColor: high && "var(--color-main-low)",
     }
     return (
-        <h1 {...rest} className={`${css}`} style={varStyles}>{text}</h1>
+        <h1 {...rest} className={`${css} ${!overflow && "ellipsis"}`} style={varStyles}>{text}</h1>
     )
 }
 

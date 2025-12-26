@@ -252,7 +252,7 @@ class ExamenController extends Controller
                             Notification::create([
                                 'user_id' => $student->user->id,
                                 'title' => 'Exam Schedule Updated',
-                                'message' => 'The schedule for ' . $moduleName . ' has been updated to ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' from ' . $exam->start_hour . ' to ' . $exam->end_hour,
+                                'message' => 'The schedule for ' . $moduleName . ' has been updated to ' . ($exam->date ? $exam->date->toDateString() : 'TBA'),
                                 'is_read' => false,
                                 'target_type' => 'user',
                                 'target_user_id' => $student->user->id,
@@ -267,7 +267,7 @@ class ExamenController extends Controller
                             Notification::create([
                                 'user_id' => $surveillance->teacher->user->id,
                                 'title' => 'Exam Schedule Updated',
-                                'message' => 'The schedule for the ' . $moduleName . ' exam has been updated to ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' from ' . $exam->start_hour . ' to ' . $exam->end_hour,
+                                'message' => 'The schedule for the ' . $moduleName . ' exam has been updated to ' . ($exam->date ? $exam->date->toDateString() : 'TBA'),
                                 'is_read' => false,
                                 'target_type' => 'user',
                                 'target_user_id' => $surveillance->teacher->user->id,
@@ -291,7 +291,7 @@ class ExamenController extends Controller
                             Notification::create([
                                 'user_id' => $student->user->id,
                                 'title' => 'New Exam Scheduled',
-                                'message' => 'A new exam has been scheduled for ' . $moduleName . ' on ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' from ' . $exam->start_hour . ' to ' . $exam->end_hour,
+                                'message' => 'A new exam has been scheduled for ' . $moduleName . ' on ' . ($exam->date ? $exam->date->toDateString() : 'TBA'),
                                 'is_read' => false,
                                 'target_type' => 'user',
                                 'target_user_id' => $student->user->id,
@@ -307,7 +307,7 @@ class ExamenController extends Controller
                             Notification::create([
                                 'user_id' => $surveillance->teacher->user->id,
                                 'title' => 'Exam Assigned for Surveillance',
-                                'message' => 'You have been assigned to supervise the ' . $moduleName . ' exam on ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' from ' . $exam->start_hour . ' to ' . $exam->end_hour,
+                                'message' => 'You have been assigned to supervise the ' . $moduleName . ' exam on ' . ($exam->date ? $exam->date->toDateString() : 'TBA'),
                                 'is_read' => false,
                                 'target_type' => 'user',
                                 'target_user_id' => $surveillance->teacher->user->id,
@@ -364,7 +364,7 @@ class ExamenController extends Controller
                         Notification::create([
                             'user_id' => $student->user->id,
                             'title' => 'New Exam Scheduled',
-                            'message' => 'A new exam has been scheduled for ' . $moduleName . ' on ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' from ' . $exam->start_hour . ' to ' . $exam->end_hour,
+                            'message' => 'A new exam has been scheduled for ' . $moduleName . ' on ' . ($exam->date ? $exam->date->toDateString() : 'TBA'),
                             'is_read' => false,
                             'target_type' => 'user',
                             'target_user_id' => $student->user->id,
@@ -380,7 +380,7 @@ class ExamenController extends Controller
                         Notification::create([
                             'user_id' => $surveillance->teacher->user->id,
                             'title' => 'Exam Assigned for Surveillance',
-                            'message' => 'You have been assigned to supervise the ' . $moduleName . ' exam on ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' from ' . $exam->start_hour . ' to ' . $exam->end_hour,
+                            'message' => 'You have been assigned to supervise the ' . $moduleName . ' exam on ' . ($exam->date ? $exam->date->toDateString() : 'TBA'),
                             'is_read' => false,
                             'target_type' => 'user',
                             'target_user_id' => $surveillance->teacher->user->id,

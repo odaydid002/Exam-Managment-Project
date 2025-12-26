@@ -16,7 +16,6 @@ const StudentLayout = () => {
   const [verified, setVerified] = useState(false)
   useEffect(()=>{
     let mounted = true
-    // apply default theme/color before auth (will be overridden if user settings exist)
     const applyDefaultTheme = () => {
       try {
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -33,7 +32,6 @@ const StudentLayout = () => {
         const role = (user.role || user.type || user.role_name || '').toString().toLowerCase()
         if (role === 'student') {
           setVerified(true)
-          // apply user settings (theme / color) if present
           try {
             const settingsResp = await Users.getSettings(user.id)
             const srv = settingsResp && settingsResp.settings ? settingsResp.settings : settingsResp
@@ -47,7 +45,6 @@ const StudentLayout = () => {
           }
           return
         }
-        // redirect others to their layout
         if (role === 'teacher') navigate('/teacher')
         else if (role === 'admin' || role === 'employee') navigate('/admin')
         else navigate('/login')

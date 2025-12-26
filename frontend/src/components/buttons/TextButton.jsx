@@ -9,6 +9,7 @@ const TextButton = ({
   mrg = "0",
   classes = "",
   underline = false,
+  icon = null,
   textColor = "var(--text)"
 }) => {
 
@@ -23,7 +24,10 @@ const TextButton = ({
       onClick={onClick}
       className={`flex row a-center j-center ease-in-out clickable ${styles.bText} ${classes}`}
       style={varStyles}>
-        <p className={styles.text} style={{textDecoration:underline?"underline":"", color: textColor}}>{text}</p>
+        <div className='flex row a-center gap'>
+          {icon && <i className={`${icon}`} style={{color: textColor, fontSize: "var(--text-m)"}}/> }
+          <p className={styles.text} style={{textDecoration:underline?"underline":"", color: textColor}}>{text}</p>
+        </div>
     </button>
   );
 };

@@ -46,4 +46,9 @@ const removeDelegate = async (code, payload = {}) => {
   return res.data
 }
 
-export { getAll, bulkStore, add, get, update, remove, setDelegate, changeDelegate, removeDelegate }
+const assignStudent = async (code, payload) => {
+  const res = await api.post(`/groups/${code}/assign`, payload)
+  return res.data
+}
+
+export { getAll, bulkStore, add, get, update, remove, setDelegate, changeDelegate, removeDelegate, assignStudent }

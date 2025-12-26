@@ -35,5 +35,25 @@ const updateSettings = async (id, payload) => {
   return res.data
 }
 
-export { getProfile, updateProfile, deleteAccount, getNotifications, markNotificationsRead, getSettings, updateSettings }
+const updatePassword = async (id, payload) => {
+  const res = await api.put(`/user/${id}/password`, payload)
+  return res.data
+}
+
+const sendPasswordOtp = async (id) => {
+  const res = await api.post(`/user/${id}/password/otp/send`)
+  return res.data
+}
+
+const verifyPasswordOtp = async (id, payload) => {
+  const res = await api.post(`/user/${id}/password/otp/verify`, payload)
+  return res.data
+}
+
+const getNotificationsByUser = async (userId, params) => {
+  const res = await api.get(`/users/${userId}/notifications`, { params })
+  return res.data
+}
+
+export { getProfile, updateProfile, deleteAccount, getNotifications, markNotificationsRead, getSettings, updateSettings, updatePassword, sendPasswordOtp, verifyPasswordOtp, getNotificationsByUser }
 

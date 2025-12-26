@@ -20,8 +20,6 @@ const TextInput = ({
     placeholder = "",
     onchange = (e) => {e},
     oninput = (e) => {e},
-    onChange = undefined,
-    onInput = undefined,
     editable = false,
     onEdit = () => {},
     dataList = [],
