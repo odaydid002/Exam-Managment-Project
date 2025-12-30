@@ -77,15 +77,6 @@ const ListTableClient = ({
     const pages = Math.ceil(filteredItems.length / pageSize) || 1;
     const start = (currentPage - 1) * pageSize;
     const pageItems = filteredItems.slice(start, start + pageSize);
-
-    useGSAP(() => {
-        gsap.from('.gsap-row', { 
-            y: 30,
-            opacity: 0,
-            duration: 0.5,
-            stagger: 0.025,
-         });
-    });
     
   return (
     <div className={`${styles.tableList} full overflow-a`}>

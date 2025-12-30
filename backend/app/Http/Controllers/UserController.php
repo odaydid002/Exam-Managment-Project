@@ -13,7 +13,7 @@ class UserController extends Controller
 {
     public function getProfile($id)
     {
-        $user = User::with(['setting', 'student.group.speciality.department', 'teacher.speciality.department'])->findOrFail($id);
+        $user = User::with(['setting', 'department', 'student.group.speciality.department', 'teacher.speciality.department'])->findOrFail($id);
 
         if (auth()->id() != $id && !auth()->user()->hasRole(['admin', 'employee'])) {
             return response()->json(['message' => 'Unauthorized'], 403);
@@ -31,6 +31,8 @@ class UserController extends Controller
             'birth_date' => $user->birth_date ? $user->birth_date->toDateString() : null,
             'gender' => $user->gender ?? null,
             'settings' => $user->setting ?? null,
+            'department_id' => $user->department_id ?? null,
+            'department' => $user->department ? ['id' => $user->department->id, 'name' => $user->department->name] : null,
         ];
 
         if ($user->student) {
@@ -178,7 +180,8 @@ class UserController extends Controller
               })
               ->orWhere(function ($q4) use ($user) {
                   // legacy: notifications with user_id column set to recipient
-                  $q4->where('user_id', $user->id);
+                  $q4->where('user_id', $user->id)
+                     ->whereNull('target_type');
               });
         })->orderBy('created_at', 'desc')->get();
 

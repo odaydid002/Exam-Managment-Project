@@ -12,7 +12,7 @@ class GeneralSetting extends Model
     protected $table = 'general_settings';
 
     protected $fillable = [
-        'semester',
+        'semester_id',
         'academic_year_id',
         'department_id',
     ];
@@ -20,6 +20,11 @@ class GeneralSetting extends Model
     public function academicYear()
     {
         return $this->belongsTo(AcademicYear::class, 'academic_year_id');
+    }
+
+    public function semester()
+    {
+        return $this->belongsTo(Semester::class, 'semester_id');
     }
 
     public function department()

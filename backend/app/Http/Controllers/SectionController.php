@@ -41,16 +41,19 @@ class SectionController extends Controller
             'name' => 'required|string|max:100',
             'level' => 'nullable|string|max:50',
             'speciality_id' => 'nullable|exists:specialities,id',
+                'academic_year_id' => 'nullable|exists:academic_years,id',
         ]);
 
         if ($v->fails()) {
             return response()->json(['message' => 'Validation error', 'errors' => $v->errors()], 422);
         }
 
+        $user = auth()->user();
         $section = Section::create([
             'name' => $request->input('name'),
             'level' => $request->input('level') ?? null,
             'speciality_id' => $request->input('speciality_id') ?? null,
+            'academic_year_id' => $request->input('academic_year_id') ?? ($user ? $user->currentAcademicYearId() : null),
         ]);
 
         return response()->json(['message' => 'Section created', 'section' => $section], 201);
@@ -69,7 +72,8 @@ class SectionController extends Controller
             'name' => 'nullable|string|max:100',
             'level' => 'nullable|string|max:50',
             'speciality_id' => 'nullable|exists:specialities,id',
-        ]);
+                'academic_year_id' => 'nullable|exists:academic_years,id',
+            ]);
 
         if ($v->fails()) {
             return response()->json(['message' => 'Validation error', 'errors' => $v->errors()], 422);
@@ -78,6 +82,7 @@ class SectionController extends Controller
         if ($request->filled('name')) $section->name = $request->input('name');
         if ($request->filled('level')) $section->level = $request->input('level');
         if ($request->filled('speciality_id')) $section->speciality_id = $request->input('speciality_id');
+        if ($request->filled('academic_year_id')) $section->academic_year_id = $request->input('academic_year_id');
         $section->save();
 
         return response()->json(['message' => 'Section updated', 'section' => $section]);

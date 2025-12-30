@@ -158,14 +158,51 @@ export default function CalendarView({
                                         {events.map((ev, i) => {
                                             const zIndex = dayEvents.filter(e => e.startHour < ev.startHour).length + 1;
 
-                                            const conflictCount = dayEvents.filter(e =>
+                                            // compute overlapping events for room and group
+                                            const overlappingRoom = dayEvents.filter(e =>
                                                 e.room === ev.room &&
                                                 e.startHour < ev.endHour &&
                                                 ev.startHour < e.endHour
-                                            ).length;
+                                            );
 
-                                            const borderStyle = conflictCount > 1 ? `2px solid rgb(255, 81, 0)` : 'none';
-                                            {conflictCount > 1 && onConflict(ev, dayKey);}
+                                            const overlappingGroup = (ev.group)
+                                                ? dayEvents.filter(e =>
+                                                    e.group === ev.group &&
+                                                    e.startHour < ev.endHour &&
+                                                    ev.startHour < e.endHour
+                                                )
+                                                : [];
+
+                                            const roomConflict = overlappingRoom.length > 1;
+                                            const groupConflict = overlappingGroup.length > 1;
+
+                                            let borderStyle = 'none';
+                                            let conflictType = null;
+                                            if (roomConflict && groupConflict) {
+                                                borderStyle = `2px solid rgb(150, 0, 150)`; // both
+                                                conflictType = 'both';
+                                            } else if (groupConflict) {
+                                                borderStyle = `2px solid rgb(245, 91, 91)`; // group (red)
+                                                conflictType = 'group';
+                                            } else if (roomConflict) {
+                                                borderStyle = `2px solid rgb(255, 81, 0)`; // room (orange)
+                                                conflictType = 'room';
+                                            }
+
+                                            // notify parent about conflict (keeps backward compatible signature)
+                                            if ((roomConflict || groupConflict) && typeof onConflict === 'function') {
+                                                try {
+                                                    onConflict(ev, dayKey, {
+                                                        type: conflictType,
+                                                        overlappingRoomCount: overlappingRoom.length,
+                                                        overlappingGroupCount: overlappingGroup.length,
+                                                        overlappingRoomEvents: overlappingRoom,
+                                                        overlappingGroupEvents: overlappingGroup
+                                                    });
+                                                } catch (e) {
+                                                    // ignore parent errors
+                                                }
+                                            }
 
                                             return (
                                                 <div
@@ -184,12 +221,12 @@ export default function CalendarView({
                                                         position: 'relative'
                                                     }}
                                                 >
-                                                    {conflictCount > 1 && (
+                                                    {(roomConflict || groupConflict) && (
                                                         <div style={{
                                                             position: 'absolute',
                                                             top: '6px',
                                                             right: '8px',
-                                                            background: 'rgb(255, 81, 0)',
+                                                            background: groupConflict ? 'rgb(245, 91, 91)' : 'rgb(255, 81, 0)',
                                                             color: 'white',
                                                             borderRadius: '999px',
                                                             minWidth: '20px',
@@ -200,11 +237,11 @@ export default function CalendarView({
                                                             fontSize: '0.75em',
                                                             padding: '0 6px',
                                                             zIndex: zIndex + 1
-                                                        }}> <i className="fa-solid fa-exclamation-triangle text-white"></i> </div>
+                                                        }}> {groupConflict ? <i className="fa-solid fa-people-group text-white"></i> : <i className="fa-solid fa-exclamation-triangle text-white"></i>} </div>
                                                     )}
 
                                                     <div className="flex row a-center">
-                                                        <i className="fa-solid fa-door-open text-m text-white"></i>
+                                                        <i className="fa-solid fa-door-open text-m text-white" style={{ opacity: roomConflict ? 1 : 0.9, filter: roomConflict ? 'drop-shadow(0 0 4px rgba(255,81,0,0.6))' : 'none' }}></i>
                                                         <Text color="var(--color-second)" text={ev.room} align="left" size="var(--text-l)" mrg="0 0 0.25em 0.5em"/>
                                                     </div>
                                                     <Text color="white" text={`${ev.type} - ${ev.module}`} align="center" mrg="auto 0" size="var(--text-m)" w="bold"/>

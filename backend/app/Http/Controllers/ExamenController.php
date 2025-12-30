@@ -14,16 +14,9 @@ use Carbon\Carbon;
 
 class ExamenController extends Controller
 {
-    public function index(Request $request)
+    private function formatExamData($exams)
     {
-        if (!auth()->user()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $exams = Examen::with(['module', 'groupe.section.speciality', 'groupe.students.speciality', 'salle'])->orderBy('date', 'desc')->get();
-
-        $data = $exams->map(function ($e) {
-            // determine speciality: prefer group's section.speciality, otherwise fallback to first student's speciality
+        return $exams->map(function ($e) {
             $firstStudent = ($e->groupe && $e->groupe->students) ? $e->groupe->students->first() : null;
             $speciality = null;
             if ($e->groupe && $e->groupe->section && isset($e->groupe->section->speciality) && $e->groupe->section->speciality) {
@@ -32,7 +25,6 @@ class ExamenController extends Controller
                 if ($firstStudent && $firstStudent->speciality) $speciality = $firstStudent->speciality->name;
             }
 
-            // determine level: prefer section.level, otherwise fallback to first student's level
             $level = null;
             if ($e->groupe && $e->groupe->section && isset($e->groupe->section->level)) {
                 $level = $e->groupe->section->level;
@@ -58,7 +50,32 @@ class ExamenController extends Controller
                 'validated' => (bool) $e->validated,
             ];
         })->toArray();
+    }
 
+    public function index(Request $request)
+    {
+        if (!auth()->user()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $exams = Examen::with(['module', 'groupe.section.speciality', 'groupe.students.speciality', 'salle'])->orderBy('date', 'desc')->get();
+
+        $data = $this->formatExamData($exams);
+        return response()->json(['total' => count($data), 'exams' => $data]);
+    }
+
+    public function getNonValidated(Request $request)
+    {
+        if (!auth()->user()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $exams = Examen::with(['module', 'groupe.section.speciality', 'groupe.students.speciality', 'salle'])
+            ->where('validated', false)
+            ->orderBy('date', 'desc')
+            ->get();
+
+        $data = $this->formatExamData($exams);
         return response()->json(['total' => count($data), 'exams' => $data]);
     }
 
@@ -78,7 +95,6 @@ class ExamenController extends Controller
             if ($firstStudent && $firstStudent->speciality) $speciality = $firstStudent->speciality->name;
         }
 
-            // determine level: prefer section.level, otherwise fallback to first student's level
             $level = null;
             if ($e->groupe && $e->groupe->section && isset($e->groupe->section->level)) {
                 $level = $e->groupe->section->level;
@@ -120,14 +136,15 @@ class ExamenController extends Controller
             'date' => 'required|date',
             'start_hour' => 'required|numeric',
             'end_hour' => 'required|numeric|gt:start_hour',
-            'validated' => 'nullable|boolean',
+                    'academic_year_id' => 'nullable|exists:academic_years,id',
+                    'semester_id' => 'nullable|exists:semesters,id',
+                'validated' => 'nullable|boolean',
         ]);
 
         if ($v->fails()) {
             return response()->json(['message' => 'Validation error', 'errors' => $v->errors()], 422);
         }
 
-        // conflict check: prevent booking same room at overlapping time on same date
         if ($request->room_id) {
             $dateOnly = Carbon::parse($request->date)->toDateString();
             $conflict = $this->roomHasConflict($request->room_id, $dateOnly, $request->start_hour, $request->end_hour);
@@ -138,6 +155,10 @@ class ExamenController extends Controller
 
         try {
             $exam = DB::transaction(function () use ($request) {
+                $user = auth()->user();
+                $ay = $request->academic_year_id ?? ($user ? $user->currentAcademicYearId() : null);
+                $sem = $request->semester_id ?? ($user ? $user->currentSemesterId() : null);
+
                 return Examen::create([
                     'module_code' => $request->module_code,
                     'group_code' => $request->group_code,
@@ -146,6 +167,8 @@ class ExamenController extends Controller
                     'date' => $request->date,
                     'start_hour' => $request->start_hour,
                     'end_hour' => $request->end_hour,
+                    'academic_year_id' => $ay,
+                    'semester_id' => $sem,
                     'validated' => $request->validated ?? false,
                 ]);
             });
@@ -185,14 +208,15 @@ class ExamenController extends Controller
             'date' => 'nullable|date',
             'start_hour' => 'nullable|numeric',
             'end_hour' => 'nullable|numeric|gt:start_hour',
-            'validated' => 'nullable|boolean',
+                'academic_year_id' => 'nullable|exists:academic_years,id',
+                'semester_id' => 'nullable|exists:semesters,id',
+                'validated' => 'nullable|boolean',
         ]);
 
         if ($v->fails()) {
             return response()->json(['message' => 'Validation error', 'errors' => $v->errors()], 422);
         }
 
-        // determine effective values to check for conflicts
         $newRoom = $request->has('room_id') ? $request->room_id : $exam->room_id;
         $newDate = $request->filled('date') ? Carbon::parse($request->date)->toDateString() : ($exam->date ? $exam->date->toDateString() : null);
         $newStart = $request->filled('start_hour') ? $request->start_hour : $exam->start_hour;
@@ -206,10 +230,8 @@ class ExamenController extends Controller
         }
 
         try {
-            // Check if exam is being validated
             $isBeingValidated = $request->has('validated') && $request->validated === true && !$exam->validated;
 
-            // preserve original scheduling fields when request doesn't include new values
             $originalDate = $exam->date;
             $originalStart = $exam->start_hour;
             $originalEnd = $exam->end_hour;
@@ -225,14 +247,14 @@ class ExamenController extends Controller
                 else $exam->date = $originalDate;
                 if ($request->filled('start_hour')) $exam->start_hour = $request->start_hour;
                 if ($request->filled('end_hour')) $exam->end_hour = $request->end_hour;
+                    if ($request->filled('academic_year_id')) $exam->academic_year_id = $request->academic_year_id;
+                    if ($request->filled('semester_id')) $exam->semester_id = $request->semester_id;
                 if ($request->has('validated')) $exam->validated = $request->validated;
                 $exam->save();
             });
 
-            // reload exam to get fresh values after save
             $exam->refresh();
 
-            // determine if schedule changed (date/start/end/room/exam_type)
             $origDateStr = $originalDate ? $originalDate->toDateTimeString() : null;
             $newDateStr = $exam->date ? $exam->date->toDateTimeString() : null;
             $scheduleChanged = ($origDateStr !== $newDateStr)
@@ -241,7 +263,6 @@ class ExamenController extends Controller
                 || ($originalRoom != $exam->room_id)
                 || ($originalExamType != $exam->exam_type);
 
-            // Send schedule update notifications if scheduling changed
             if ($scheduleChanged) {
                 $exam->load('groupe.students.user', 'surveillances.teacher.user', 'module');
                 $moduleName = $exam->module ? $exam->module->name : $exam->module_code;
@@ -275,16 +296,32 @@ class ExamenController extends Controller
                         }
                     }
                 }
+
+                // Notify teachers assigned to this module
+                $moduleTeachers = \App\Models\TeacherModule::where('module_code', $exam->module_code)
+                    ->with('teacher.user')
+                    ->get();
+                $notifiedTeacherIds = $exam->surveillances ? $exam->surveillances->pluck('teacher.user.id')->filter()->toArray() : [];
+
+                foreach ($moduleTeachers as $tm) {
+                    if ($tm->teacher && $tm->teacher->user && !in_array($tm->teacher->user->id, $notifiedTeacherIds)) {
+                        Notification::create([
+                            'user_id' => $tm->teacher->user->id,
+                            'title' => 'Exam Schedule Updated',
+                            'message' => 'The schedule for ' . $moduleName . ' has been updated to ' . ($exam->date ? $exam->date->toDateString() : 'TBA'),
+                            'is_read' => false,
+                            'target_type' => 'user',
+                            'target_user_id' => $tm->teacher->user->id,
+                        ]);
+                    }
+                }
             }
 
-            // Send notifications if exam was just validated
             if ($isBeingValidated) {
                 $exam->load('groupe.students.user', 'surveillances.teacher.user', 'module');
 
-                // Get module name for message
                 $moduleName = $exam->module ? $exam->module->name : $exam->module_code;
 
-                // Notify all students in the group
                 if ($exam->groupe && $exam->groupe->students) {
                     foreach ($exam->groupe->students as $student) {
                         if ($student->user) {
@@ -300,7 +337,6 @@ class ExamenController extends Controller
                     }
                 }
 
-                // Notify all assigned surveillance teachers
                 if ($exam->surveillances) {
                     foreach ($exam->surveillances as $surveillance) {
                         if ($surveillance->teacher && $surveillance->teacher->user) {
@@ -313,6 +349,25 @@ class ExamenController extends Controller
                                 'target_user_id' => $surveillance->teacher->user->id,
                             ]);
                         }
+                    }
+                }
+
+                // Notify teachers assigned to this module
+                $moduleTeachers = \App\Models\TeacherModule::where('module_code', $exam->module_code)
+                    ->with('teacher.user')
+                    ->get();
+                $notifiedTeacherIds = $exam->surveillances ? $exam->surveillances->pluck('teacher.user.id')->filter()->toArray() : [];
+
+                foreach ($moduleTeachers as $tm) {
+                    if ($tm->teacher && $tm->teacher->user && !in_array($tm->teacher->user->id, $notifiedTeacherIds)) {
+                        Notification::create([
+                            'user_id' => $tm->teacher->user->id,
+                            'title' => 'Exam Scheduled for Your Module',
+                            'message' => 'An exam has been scheduled for ' . $moduleName . ' on ' . ($exam->date ? $exam->date->toDateString() : 'TBA'),
+                            'is_read' => false,
+                            'target_type' => 'user',
+                            'target_user_id' => $tm->teacher->user->id,
+                        ]);
                     }
                 }
             }
@@ -344,20 +399,15 @@ class ExamenController extends Controller
         }
 
         try {
-            // Mark exam as validated without altering other fields (avoid touching date)
-            // Preserve existing `date` to avoid MySQL TIMESTAMP auto-update side-effects
             DB::transaction(function () use ($exam, $existingDate) {
                 DB::table('exams')->where('id', $exam->id)->update(['validated' => true, 'date' => $existingDate]);
             });
 
-            // Reload exam and relationships for notifications
             $exam = Examen::find($id);
             $exam->load('groupe.students.user', 'surveillances.teacher.user', 'module');
 
-            // Get module name for message
             $moduleName = $exam->module ? $exam->module->name : $exam->module_code;
 
-            // Notify all students in the group
             if ($exam->groupe && $exam->groupe->students) {
                 foreach ($exam->groupe->students as $student) {
                     if ($student->user) {
@@ -373,7 +423,6 @@ class ExamenController extends Controller
                 }
             }
 
-            // Notify all assigned surveillance teachers
             if ($exam->surveillances) {
                 foreach ($exam->surveillances as $surveillance) {
                     if ($surveillance->teacher && $surveillance->teacher->user) {
@@ -386,6 +435,25 @@ class ExamenController extends Controller
                             'target_user_id' => $surveillance->teacher->user->id,
                         ]);
                     }
+                }
+            }
+
+            // Notify teachers assigned to this module
+            $moduleTeachers = \App\Models\TeacherModule::where('module_code', $exam->module_code)
+                ->with('teacher.user')
+                ->get();
+            $notifiedTeacherIds = $exam->surveillances ? $exam->surveillances->pluck('teacher.user.id')->filter()->toArray() : [];
+
+            foreach ($moduleTeachers as $tm) {
+                if ($tm->teacher && $tm->teacher->user && !in_array($tm->teacher->user->id, $notifiedTeacherIds)) {
+                    Notification::create([
+                        'user_id' => $tm->teacher->user->id,
+                        'title' => 'Exam Scheduled for Your Module',
+                        'message' => 'An exam has been scheduled for ' . $moduleName . ' on ' . ($exam->date ? $exam->date->toDateString() : 'TBA'),
+                        'is_read' => false,
+                        'target_type' => 'user',
+                        'target_user_id' => $tm->teacher->user->id,
+                    ]);
                 }
             }
 
@@ -411,7 +479,6 @@ class ExamenController extends Controller
         if (!$exam) return response()->json(['message' => 'Exam not found'], 404);
 
         try {
-            // notify students and surveillances about cancellation before deletion
             $exam->load('groupe.students.user', 'surveillances.teacher.user', 'module');
             $moduleName = $exam->module ? $exam->module->name : $exam->module_code;
 
@@ -442,6 +509,25 @@ class ExamenController extends Controller
                             'target_user_id' => $surveillance->teacher->user->id,
                         ]);
                     }
+                }
+            }
+
+            // Notify teachers assigned to this module
+            $moduleTeachers = \App\Models\TeacherModule::where('module_code', $exam->module_code)
+                ->with('teacher.user')
+                ->get();
+            $notifiedTeacherIds = $exam->surveillances ? $exam->surveillances->pluck('teacher.user.id')->filter()->toArray() : [];
+
+            foreach ($moduleTeachers as $tm) {
+                if ($tm->teacher && $tm->teacher->user && !in_array($tm->teacher->user->id, $notifiedTeacherIds)) {
+                    Notification::create([
+                        'user_id' => $tm->teacher->user->id,
+                        'title' => 'Exam Canceled',
+                        'message' => 'The ' . $moduleName . ' exam scheduled on ' . ($exam->date ? $exam->date->toDateString() : 'TBA') . ' has been canceled.',
+                        'is_read' => false,
+                        'target_type' => 'user',
+                        'target_user_id' => $tm->teacher->user->id,
+                    ]);
                 }
             }
 
@@ -477,6 +563,13 @@ class ExamenController extends Controller
         $batchBookings = [];
 
         foreach ($items as $index => $item) {
+            $user = auth()->user();
+            if (!isset($item['academic_year_id']) && $user) {
+                $item['academic_year_id'] = $user->currentAcademicYearId();
+            }
+            if (!isset($item['semester_id']) && $user) {
+                $item['semester_id'] = $user->currentSemesterId();
+            }
             $v = Validator::make($item, [
                 'module_code' => 'required|exists:modules,code',
                 'group_code' => 'required|exists:groups,code',
@@ -486,7 +579,9 @@ class ExamenController extends Controller
                 'start_hour' => 'required|numeric',
                 'end_hour' => 'required|numeric|gt:start_hour',
                 'validated' => 'nullable|boolean',
-            ]);
+                    'academic_year_id' => 'required|exists:academic_years,id',
+                    'semester_id' => 'required|exists:semesters,id',
+                ]);
 
             if ($v->fails()) {
                 $errors[] = ['index' => $index, 'status' => 'validation_failed', 'errors' => $v->errors()];
@@ -528,6 +623,8 @@ class ExamenController extends Controller
                     'date' => $item['date'],
                     'start_hour' => $item['start_hour'],
                     'end_hour' => $item['end_hour'],
+                    'academic_year_id' => $item['academic_year_id'],
+                    'semester_id' => $item['semester_id'],
                     'validated' => $item['validated'] ?? false,
                 ]);
                 DB::commit();
@@ -559,10 +656,6 @@ class ExamenController extends Controller
         ]);
     }
 
-    /**
-     * Check DB for existing exam that overlaps the given interval for the same room and date.
-     * Returns the conflicting exam (minimal info) or null.
-     */
     private function roomHasConflict($roomId, $dateOnly, $startHour, $endHour, $excludeId = null)
     {
         $query = Examen::where('room_id', $roomId)

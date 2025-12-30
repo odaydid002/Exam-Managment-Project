@@ -5,6 +5,11 @@ const getAll = async (params) => {
   return res.data
 }
 
+const getNonValidated = async (params) => {
+  const res = await api.get('/exams/non-validated', { params })
+  return res.data
+}
+
 const bulkStore = async (list) => {
   const res = await api.post('/exams/bulk', list)
   return res.data
@@ -35,4 +40,4 @@ const validateExam = async (id, payload) => {
   return res.data
 }
 
-export { getAll, bulkStore, add, get, update, remove, validateExam }
+export { getAll, getNonValidated, bulkStore, add, get, update, remove, validateExam }

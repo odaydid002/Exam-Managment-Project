@@ -22,6 +22,8 @@ import ImageInput from '../../components/input/ImageInput';
 import ConfirmDialog from '../../components/containers/ConfirmDialog';
 
 import { Teachers, Specialities } from '../../API'
+import * as Users from '../../API/users'
+import { authCheck } from '../../API/auth'
 import * as XLSX from 'xlsx'
 
 
@@ -70,10 +72,12 @@ const AdminTeachers = () => {
     number: '',
     position: '',
     speciality: '',
+    department: '',
     phone: '',
     email: '',
     image: null
   });
+  const [adminProfile, setAdminProfile] = useState(null);
 
   useEffect(() => {
     let mounted = true
@@ -87,6 +91,21 @@ const AdminTeachers = () => {
     load()
     let mountedSpecs = true
     const loadSpecs = async () => {
+      // Load admin profile to get department_id
+      try {
+        const auth = await authCheck()
+        const user = auth?.user || auth || null
+        if (user && user.id) {
+          const prof = await Users.getProfile(user.id)
+          if (mounted && prof && prof.user) {
+            setAdminProfile(prof.user)
+          }
+        }
+      } catch (err) { 
+        console.warn('Failed to load admin profile', err) 
+      }
+
+      // Load specialities with department data
       try {
         const resp = await Specialities.getAll()
         const data = resp ?? []
@@ -94,7 +113,11 @@ const AdminTeachers = () => {
         if (!mountedSpecs) return
         const options = list.map(item => {
           if (typeof item === 'string') return { value: item, text: item }
-          if (item.id && (item.name || item.title)) return { value: item.id, text: item.name || item.title }
+          if (item.id && (item.name || item.title)) return { 
+            value: item.id, 
+            text: item.name || item.title,
+            department: item.department?.name || item.department || ''
+          }
           if (item.code && item.label) return { value: item.code, text: item.label }
           if (item.name) return { value: item.name, text: item.name }
           if (item.speciality) return { value: item.speciality, text: item.speciality }
@@ -138,6 +161,7 @@ const AdminTeachers = () => {
       number: teacher.number || '',
       position: teacher.position || '',
       speciality: teacher.speciality_id || teacher.speciality || '',
+      department: teacher.department || '',
       phone: teacher.phone || '',
       email: teacher.email || '',
       image: teacher.image || null
@@ -250,6 +274,7 @@ const AdminTeachers = () => {
         number: '',
         position: '',
         speciality: '',
+        department: '',
         phone: '',
         email: '',
         image: null
@@ -318,6 +343,7 @@ const AdminTeachers = () => {
         number: '',
         position: '',
         speciality: '',
+        department: '',
         phone: '',
         email: '',
         image: null
@@ -397,12 +423,26 @@ const AdminTeachers = () => {
                   width='40%'
                   onchange={(e) => handleFormChange('position', e.target.value)}
                 />
-                <div style={{width: '60%'}}>
+                {editingTeacher && (
+                  <TextInput 
+                    label="Department" 
+                    placeholder='Auto-filled from speciality'
+                    value={formData.department} 
+                    width='60%'
+                    readOnly
+                  />
+                )}
+              </div>
+              <div className="flex row a-end gap">
+                <div style={{width: '100%'}}>
                   <SelectInput
                     w='100%'
                     value={formData.speciality}
                     options={specialitiesOptions.length ? specialitiesOptions : [{ value: '', text: 'Select speciality' }]}
-                    onChange={(val) => handleFormChange('speciality', val)}
+                    onChange={(val) => {
+                      const selectedSpec = specialitiesOptions.find(s => s.value == val)
+                      setFormData(prev => ({ ...prev, speciality: val, department: selectedSpec?.department || '' }))
+                    }}
                   />
                 </div>
               </div>

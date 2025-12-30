@@ -12,8 +12,13 @@ use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ExamenController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SurveillanceController;
-use App\Http\Controllers\ExamReportController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ExamRequestController;
 use App\Http\Controllers\MailerController;
+use App\Http\Controllers\GeneralSettingController;
+use App\Http\Controllers\SemesterController;
+use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\DepartmentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -66,6 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Teachers
     Route::get('/teachers/all', [TeacherController::class, 'index']);
+    Route::get('/teachers/{number}/modules', [TeacherController::class, 'modules']);
     Route::get('/teachers/{identifier}', [TeacherController::class, 'show']);
     Route::post('/teachers/bulk', [TeacherController::class, 'bulkStore']);
     Route::post('/teachers/add', [TeacherController::class, 'store']);
@@ -84,6 +90,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Modules
     Route::get('/modules/all', [ModuleController::class, 'index']);
     Route::get('/modules/stats', [ModuleController::class, 'stats']);
+    Route::get('/modules/teacher/{teacherNumber}', [ModuleController::class, 'getByTeacher']);
     Route::post('/modules/{code}/assign', [ModuleController::class, 'assignTeacher']);
     Route::put('/modules/{code}/assign/{teacher_number}', [ModuleController::class, 'updateAssignment']);
     Route::delete('/modules/{code}/assign/{teacher_number}', [ModuleController::class, 'unassignTeacher']);
@@ -117,8 +124,18 @@ Route::middleware('auth:sanctum')->group(function () {
     // Image upload (authenticated)
     Route::post('/images/upload', [ImageController::class, 'upload']);
 
+    // Semesters & Academic Years
+    Route::get('/semesters/all', [SemesterController::class, 'index']);
+    Route::get('/academic-years/all', [AcademicYearController::class, 'index']);
+    Route::get('/departments/all', [DepartmentController::class, 'index']);
+
+    // Department general settings (semester, academic-year, etc.)
+    Route::get('/departments/{id}/general-settings', [GeneralSettingController::class, 'show']);
+    Route::put('/departments/{id}/general-settings', [GeneralSettingController::class, 'update']);
+
     // Exams
     Route::get('/exams/all', [ExamenController::class, 'index']);
+    Route::get('/exams/non-validated', [ExamenController::class, 'getNonValidated']);
     Route::post('/exams/bulk', [ExamenController::class, 'bulkStore']);
     Route::post('/exams/add', [ExamenController::class, 'store']);
     Route::get('/exams/{id}', [ExamenController::class, 'show']);
@@ -128,8 +145,22 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Surveillance
     Route::get('/surveillance/exam/{examId}', [SurveillanceController::class, 'getByExam']);
+    Route::get('/surveillance/teacher/{teacherId}', [SurveillanceController::class, 'getByTeacher']);
+    Route::get('/surveillance/exams/teacher/{teacherId}', [SurveillanceController::class, 'getTeacherExams']);
     Route::post('/surveillance/assign', [SurveillanceController::class, 'assign']);
+    Route::post('/surveillance/approve', [SurveillanceController::class, 'approve']);
+    Route::post('/surveillance/reject', [SurveillanceController::class, 'reject']);
     Route::delete('/surveillance/{examId}/{teacherNumber}', [SurveillanceController::class, 'unassign']);
+
+    // Exam Requests
+    Route::get('/requests/teacher/{teacherNumber}', [ExamRequestController::class, 'getByTeacher']);
+    Route::post('/requests/add', [ExamRequestController::class, 'store']);
+    Route::post('/requests/{id}/approve', [ExamRequestController::class, 'approve']);
+    Route::post('/requests/{id}/reject', [ExamRequestController::class, 'reject']);
+    Route::get('/requests/all', [ExamRequestController::class, 'index']);
+
+    // Conflicts statistics
+    Route::get('/conflicts/stats', [\App\Http\Controllers\ConflictController::class, 'stats']);
 
     // Mailer
     Route::post('/email/send', [MailerController::class, 'sendEmail']);
@@ -138,5 +169,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/email/teachers', [MailerController::class, 'sendToTeachers']);
     Route::post('/email/employees', [MailerController::class, 'sendToEmployees']);
 
-    Route::apiResource('exam-reports', ExamReportController::class);
+    // Reports
+    Route::get('/reports', [ReportController::class, 'index']);
+    Route::post('/reports/add', [ReportController::class, 'store']);
+    Route::delete('/reports/{id}', [ReportController::class, 'destroy']);
+    Route::post('/reports/delete-range', [ReportController::class, 'destroyByDateRange']);
+    Route::get('/reports/role/{role}', [ReportController::class, 'getByRole']);
 });

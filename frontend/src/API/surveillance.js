@@ -22,4 +22,36 @@ const unassign = async (examId, teacherNumber) => {
   return res.data
 }
 
-export { getByExam, assign, unassign }
+const getByTeacher = async (teacherId) => {
+  const res = await api.get(`/surveillance/teacher/${teacherId}`)
+  // Handle both array response and object response
+  if (Array.isArray(res.data)) {
+    return res.data
+  }
+  return res.data.surveillances || res.data.surveillance || res.data || []
+}
+
+const getTeacherExams = async (teacherId, params) => {
+  const res = await api.get(`/surveillance/exams/teacher/${teacherId}`, { params })
+  // Handle both array response and object response
+  if (Array.isArray(res.data)) {
+    return res.data
+  }
+  return res.data.exams || res.data || []
+}
+
+const approve = async (surveillanceId) => {
+  const res = await api.post(`/surveillance/approve`, {
+    surveillance_id: surveillanceId
+  })
+  return res.data
+}
+
+const reject = async (surveillanceId) => {
+  const res = await api.post(`/surveillance/reject`, {
+    surveillance_id: surveillanceId
+  })
+  return res.data
+}
+
+export { getByExam, assign, unassign, getByTeacher, getTeacherExams, approve, reject }

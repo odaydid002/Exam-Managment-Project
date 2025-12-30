@@ -24,6 +24,7 @@ class User extends Authenticatable
         'birth_date',
         'gender',
             'image', // Added image to fillable fields
+            'department_id',
     ];
 
     protected $hidden = [
@@ -54,6 +55,29 @@ class User extends Authenticatable
     public function setting()
     {
         return $this->hasOne(Setting::class, 'user_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    public function currentGeneralSetting()
+    {
+        if (!$this->department_id) return null;
+        return \App\Models\GeneralSetting::where('department_id', $this->department_id)->orderByDesc('id')->first();
+    }
+
+    public function currentAcademicYearId()
+    {
+        $gs = $this->currentGeneralSetting();
+        return $gs ? $gs->academic_year_id : null;
+    }
+
+    public function currentSemesterId()
+    {
+        $gs = $this->currentGeneralSetting();
+        return $gs ? $gs->semester_id : null;
     }
 
     public function hasRole($role)

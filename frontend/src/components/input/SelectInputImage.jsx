@@ -25,7 +25,7 @@ const SelectInputImage = ({
   w = "max-content", 
   options = [{value:"", text:"", img: ""}],
   indexed = false,
-  bg = '',
+  bg = 'var(--bg)',
   onChange = () => {}
 }) => {
     const varStyles = {

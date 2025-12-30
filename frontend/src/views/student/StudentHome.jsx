@@ -7,6 +7,7 @@ import { authCheck } from '../../API/auth';
 import { get as getStudent, getExams as getStudentExams } from '../../API/students';
 import { get as getGroup } from '../../API/groups';
 import { getNotificationsByUser, markNotificationsRead } from '../../API/users';
+import { useNavigate } from 'react-router-dom'
 
 import formatDateTime from '../../hooks/formatDateTime';
 
@@ -36,6 +37,8 @@ function floatToTimeString(num) {
 
 const StudentHome = () => {
 
+  const navigate = useNavigate();
+
   const [infoLoading, setInfoLoading] = useState(false)
   const [notificationsLoading, setNotificationsLoading] = useState(false)
   const [sessionsLoading, _setSessionsLoading] = useState(false)
@@ -44,6 +47,7 @@ const StudentHome = () => {
   const [notifications, setNotifications] = useState([])
   const [myExams, setMyExams] = useState([])
   const [myExamsLoading, setMyExamsLoading] = useState(false)
+  const [notificationFilter, setNotificationFilter] = useState('all')
 
   const getLocalTodayString = () => {
     const d = new Date();
@@ -135,16 +139,37 @@ const StudentHome = () => {
 
  
   useEffect(() => {
-    if (!identifierUsed) return;
+    if (!identifierUsed || !_authUser) return;
     let mounted = true;
     const loadNotifications = async () => {
       try {
         setNotificationsLoading(true);
         const resp = await getNotificationsByUser(identifierUsed);
         const items = Array.isArray(resp) ? resp : (resp.notifications || resp.data || []);
+        
+        // Filter notifications on frontend to ensure they are targeted to this user's role
+        const filteredItems = (items || []).filter(notif => {
+          const targetType = notif.target_type || 'user';
+          const targetRole = notif.target_role;
+          const targetUserId = notif.target_user_id;
+          const userRole = _authUser?.role;
+          const userId = _authUser?.id;
+          
+          // If target_type is 'all', include it
+          if (targetType === 'all') return true;
+          // If target_type is 'role', check if user's role matches
+          if (targetType === 'role' && targetRole && userRole === targetRole) return true;
+          // If target_type is 'user', check if notification is for this user
+          if (targetType === 'user' && targetUserId && userId === targetUserId) return true;
+          // Legacy: if no target_type specified but user_id matches, include it
+          if (!notif.target_type && notif.user_id === userId) return true;
+          
+          return false;
+        });
+        
         if (mounted) {
-          setNotifications(items || []);
-          setNotificationsCount(items?.length || 0);
+          setNotifications(filteredItems || []);
+          setNotificationsCount(filteredItems?.length || 0);
         }
       } catch (err) {
         console.error('Failed to load notifications', err);
@@ -159,7 +184,7 @@ const StudentHome = () => {
 
     loadNotifications();
     return () => { mounted = false }
-  }, [identifierUsed]);
+  }, [identifierUsed, _authUser]);
 
   const handleMarkAllAsRead = async () => {
     try {
@@ -272,6 +297,18 @@ const StudentHome = () => {
 
   const todayNotifications = notifications.filter(n => getDateOnlyFrom(n.created_at || n.createdAt || n.date) === getLocalTodayString());
   const otherNotifications = notifications.filter(n => getDateOnlyFrom(n.created_at || n.createdAt || n.date) !== getLocalTodayString());
+
+  // Notification counts
+  const unreadCount = notifications.filter(n => !n.is_read && !n.read_at).length;
+  const allCount = notifications.length;
+
+  // Apply filter
+  const filteredNotifications = notificationFilter === 'unread' 
+    ? notifications.filter(n => !n.is_read && !n.read_at)
+    : notifications;
+  
+  const filteredTodayNotifications = filteredNotifications.filter(n => getDateOnlyFrom(n.created_at || n.createdAt || n.date) === getLocalTodayString());
+  const filteredOtherNotifications = filteredNotifications.filter(n => getDateOnlyFrom(n.created_at || n.createdAt || n.date) !== getLocalTodayString());
 
   return (
     <div className={`homeLayout full scrollbar overflow-y-a`}>
@@ -410,24 +447,113 @@ const StudentHome = () => {
       <div className="homeSide">
         <div className={`homeNotification flex column BGC pd gsap-y overflow-h ${notificationsLoading && "shimmer"}`}>
           {!notificationsLoading && <>
-            <div className='flex column gap' style={{height: "5em"}}>
-              <div className='flex row a-center j-spacebet' style={{marginBottom: "1em"}}>
-                <Text text="Notifications" color='var(--text-low)' size='var(--text-m)' align='left' />
-                <TextButton text='Mark all as read' icon = "fa-solid fa-check-double" textColor='var(--color-main)' onClick={handleMarkAllAsRead} />
-              </div>
+            {/* Header */}
+            <div className='flex row a-center j-spacebet' style={{marginBottom: "1em"}}>
+              <Text text="Notifications" color='var(--text-low)' size='var(--text-m)' align='left' />
+              <TextButton text='Mark all as read' icon = "fa-solid fa-check-double" textColor='var(--color-main)' onClick={handleMarkAllAsRead} />
             </div>
-            {notifications.length === 0 &&
+
+            {/* Filter Bar */}
+            <div className='flex row a-center j-spacebet' style={{paddingBottom: "0.75em", marginBottom: "1em", borderBottom: "1px solid rgba(255,255,255,0.1)"}}>
+              <div className='flex row a-center gap' style={{flex: 1}}>
+                <button 
+                  onClick={() => setNotificationFilter('all')}
+                  style={{
+                    background: 'transparent',
+                    border: "none",
+                    borderBottom: notificationFilter === 'all' ? '3px solid var(--color-main)' : 'none',
+                    padding: '0.5em 1em',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontWeight: notificationFilter === 'all' ? '600' : '400',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5em'
+                  }}
+                >
+                  <Text text="All" color= {notificationFilter === 'all' ? 'var(--color-main)' : 'var(--text-low)'}/>
+                  {allCount > 0 && (
+                    <span style={{
+                      background: notificationFilter === 'all' ? 'var(--color-main)' : 'var(--trans-grey)',
+                      color: notificationFilter === 'all' ? 'white' : 'var(--text-low)',
+                      padding: '0.125em 0.5em',
+                      borderRadius: '5px',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      minWidth: '1.5em',
+                      textAlign: 'center'
+                    }}>
+                      {allCount > 99 ? '99+' : allCount}
+                    </span>
+                  )}
+                </button>
+                
+                <button 
+                  onClick={() => setNotificationFilter('unread')}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: notificationFilter === 'unread' ? '3px solid var(--color-main)' : 'none',
+                    padding: '0.5em 1em',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontWeight: notificationFilter === 'unread' ? '600' : '400',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5em'
+                  }}
+                >
+                  <Text text="Unread" color= {notificationFilter === 'unread' ? 'var(--color-main)' : 'var(--text-low)'}/>
+                  {unreadCount > 0 && (
+                     <span style={{
+                      background: notificationFilter === 'unread' ? 'var(--color-main)' : 'var(--trans-grey)',
+                      color: notificationFilter === 'unread' ? 'white' : 'var(--text-low)',
+                      padding: '0.125em 0.5em',
+                      borderRadius: '5px',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      minWidth: '1.5em',
+                      textAlign: 'center'
+                    }}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+              
+              <button 
+                onClick = {() => {navigate('/student/settings')}}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-low)',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  padding: '0.5em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  hover: {color: 'white'}
+                }}
+                title="Settings"
+                
+              >
+                <i className="fa-solid fa-gear"></i>
+              </button>
+            </div>
+
+            {filteredNotifications.length === 0 &&
               <>
                 <Notification css="self-center" width='40%' mrg="auto 0 0 0" />
-                <Text text='No notifications' w='bold' mrg="2em 0 auto 0" color='var(--color-main)' size='var(--text-l)' />
+                <Text text={notificationFilter === 'unread' ? 'No unread notifications' : 'No notifications'} w='bold' mrg="2em 0 auto 0" color='var(--color-main)' size='var(--text-l)' />
               </>
             }
-            {(todayNotifications.length > 0 || otherNotifications.length > 0) &&
+            {(filteredTodayNotifications.length > 0 || filteredOtherNotifications.length > 0) &&
               <div className="flex column gap notification-container overflow-y-a scrollbar">
-                {todayNotifications.length > 0 && (
+                {filteredTodayNotifications.length > 0 && (
                   <>
                     <Text text='Today' size='var(--text-m)' align='left' color='var(--text-low)' opacity='0.5'/>
-                    {todayNotifications.map((notif, idx) => {
+                    {filteredTodayNotifications.map((notif, idx) => {
                       const titleStr = (notif.title === false || notif.title == null) ? '' : String(notif.title);
                       const descStr = notif.message == null ? '' : String(notif.message);
                       const lowerTitle = titleStr.toLowerCase();
@@ -451,10 +577,10 @@ const StudentHome = () => {
                   </>
                 )}
 
-                {otherNotifications.length > 0 && (
+                {filteredOtherNotifications.length > 0 && (
                   <>
                     <Text text='Other' size='var(--text-m)' align='left' color='var(--text-low)' opacity='0.5'/>
-                    {otherNotifications.map((notif, idx) => {
+                    {filteredOtherNotifications.map((notif, idx) => {
                       const titleStr = (notif.title === false || notif.title == null) ? '' : String(notif.title);
                       const descStr = notif.message == null ? '' : String(notif.message);
                       const lowerTitle = titleStr.toLowerCase();

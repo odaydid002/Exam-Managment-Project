@@ -27,6 +27,8 @@ import AdminStudents from '../views/admin/AdminStudents'
 import AdminTeachers from '../views/admin/AdminTeachers'
 import AdminSettings from '../views/admin/AdminSettings'
 import AdminGroups from '../views/admin/AdminGroups'
+import AdminReports from '../views/admin/AdminReports'
+import AdminExamRequests from '../views/admin/AdminExamRequests'
 
 import ErrorPage from '../views/error/ErrorPage'
 import ForgetPassword from '../views/ForgetPassword';
@@ -81,6 +83,8 @@ const router = createBrowserRouter([
       { path: "modules", element: <AdminModules  /> },
       { path: "groups", element: <AdminGroups  /> },
       { path: "planning", element: <AdminPlanning /> },
+      { path: "reports", element: <AdminReports /> },
+      { path: "exam-requests", element: <AdminExamRequests /> },
       { path: "students", element: <AdminStudents /> },
       { path: "teachers", element: <AdminTeachers /> },
       { path: "settings", element: <AdminSettings /> },

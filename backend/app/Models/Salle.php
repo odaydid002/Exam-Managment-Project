@@ -15,6 +15,7 @@ class Salle extends Model
         'name',
         'capacity',
         'disabled',
+        'type',
     ];
 
     protected $casts = [

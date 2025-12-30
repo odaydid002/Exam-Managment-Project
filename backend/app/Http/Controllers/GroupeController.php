@@ -129,16 +129,19 @@ class GroupeController extends Controller
             'code' => 'required|string|max:20|unique:groups,code',
             'name' => 'required|string|max:100',
             'section_id' => 'required|exists:sections,id',
-        ]);
+                'academic_year_id' => 'nullable|exists:academic_years,id',
+          ]);
 
         if ($v->fails()) {
             return response()->json(['message' => 'Validation error', 'errors' => $v->errors()], 422);
         }
 
+        $user = auth()->user();
         $group = Groupe::create([
             'code' => $request->code,
             'name' => $request->name,
             'section_id' => $request->section_id,
+            'academic_year_id' => $request->input('academic_year_id') ?? ($user ? $user->currentAcademicYearId() : null),
         ]);
 
         return response()->json(['message' => 'Group created', 'group' => $group], 201);
@@ -152,10 +155,10 @@ class GroupeController extends Controller
 
         $group = Groupe::find($code);
         if (!$group) return response()->json(['message' => 'Group not found'], 404);
-
         $v = Validator::make($request->all(), [
             'name' => "nullable|string|max:100",
             'section_id' => 'nullable|exists:sections,id',
+            'academic_year_id' => 'nullable|exists:academic_years,id',
         ]);
 
         if ($v->fails()) {
@@ -164,9 +167,9 @@ class GroupeController extends Controller
 
         if ($request->filled('name')) $group->name = $request->name;
         if ($request->filled('section_id')) $group->section_id = $request->section_id;
+        if ($request->filled('academic_year_id')) $group->academic_year_id = $request->academic_year_id;
         // level is derived from the linked section; do not accept level here
         $group->save();
-
         return response()->json(['message' => 'Group updated', 'group' => $group]);
     }
 
@@ -267,7 +270,7 @@ class GroupeController extends Controller
                 foreach ($request->student_numbers as $studentNumber) {
                     $student = Student::find($studentNumber);
                     if (!$student) continue;
-                    if ($student->group_code !== $code) continue; 
+                    if ($student->group_code !== $code) continue;
 
                     $existing = GroupDelegate::where('student_number', $student->number)->first();
                     if ($existing && $existing->group_code !== $code) {

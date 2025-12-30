@@ -16,6 +16,26 @@ class AcademicYear extends Model
         'end_year',
     ];
 
+    public function semesters()
+    {
+        return $this->hasMany(Semester::class, 'academic_year_id');
+    }
+
+    public function sections()
+    {
+        return $this->hasMany(Section::class, 'academic_year_id');
+    }
+
+    public function groups()
+    {
+        return $this->hasMany(Groupe::class, 'academic_year_id');
+    }
+
+    public function exams()
+    {
+        return $this->hasMany(Examen::class, 'academic_year_id');
+    }
+
     public function generalSettings()
     {
         return $this->hasMany(GeneralSetting::class, 'academic_year_id');

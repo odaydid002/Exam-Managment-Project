@@ -12,6 +12,10 @@ VALUES
 INSERT INTO academic_years (start_year, end_year)
 VALUES (2025, 2026);
 
+-- create semesters for the academic year
+INSERT INTO semesters (name, "order", academic_year_id)
+VALUES ('Semester 1', 1, 1), ('Semester 2', 2, 1);
+
 INSERT INTO departments (name)
 VALUES ('Computer Science');
 
@@ -53,6 +57,9 @@ VALUES
 ('Computer Science General', 'CSG', 1, 'General CS studies'),
 ('Virtual Reality', 'VR', 1, 'Virtual/Augmented reality');
 
-INSERT INTO general_settings (semester, academic_year_id, department_id)
-VALUES 
-('Semester 1', 1, 1);
+-- updated to use semester_id (new schema)
+INSERT INTO general_settings (semester_id, academic_year_id, department_id)
+VALUES ( (SELECT id FROM semesters WHERE name = 'Semester 1' AND academic_year_id = 1 LIMIT 1), 1, 1 );
+
+-- assign existing users to the department (default)
+UPDATE users SET department_id = 1 WHERE id IN (1,2);

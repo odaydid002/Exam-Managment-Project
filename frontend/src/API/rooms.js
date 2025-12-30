@@ -2,7 +2,8 @@ import api from './app'
 
 const getAll = async (params) => {
   const res = await api.get('/rooms/all', { params })
-  return res.data
+  const data = res.data
+  return (data && data.rooms) ? data.rooms : data || []
 }
 
 const bulkStore = async (list) => {

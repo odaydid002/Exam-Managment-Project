@@ -117,7 +117,6 @@ const StudentSettings = () => {
           return out;
         };
         if (prof) prof = normalizeProfile(prof);
-        console.log(prof)
         setProfile(prof || {});
 
         try {
@@ -137,14 +136,13 @@ const StudentSettings = () => {
           const mapServerToLocal = (srv) => {
             if (!srv) return {};
             return {
-              two_factor: srv.two_factor_authentication ?? srv.two_factor ?? false,
+              two_factor: srv.two_factor_authentication ?? false,
               login_alerts: srv.login_alerts ?? false,
               notify_exams: srv.exam_reminder ?? false,
               notify_schedule: srv.schedule_updates ?? false,
-              // server uses `notifications` as a general email toggle
               notify_email: srv.notifications ?? false,
               theme: srv.theme ?? 'system',
-              theme_color: srv.main_color ?? srv.theme_color ?? (getComputedStyle(root).getPropertyValue('--color-main').trim() || currentColor)
+              theme_color: srv.main_color ?? (getComputedStyle(root).getPropertyValue('--color-main').trim() || currentColor)
             }
           }
 
@@ -290,8 +288,8 @@ const StudentSettings = () => {
                     <TextInput width='50%' type='phone' label="Phone" value={profile?.phone ?? '_'} placeholder='Ex: +213 69876543210' onChange={(e) => handleProfileChange('phone', e.target.value)} editable/>
                   </div>
                   <div className='flex row gap'>
-                    <TextInput width='50%' label="Birthdate" value={profile?.birthdate ?? '_'} placeholder='Ex: 12-12-2012' onChange={(e) => handleProfileChange('birthdate', e.target.value)} editable/>
-                    <TextInput width='50%' label="address" value={profile?.address ?? '_'} placeholder='Ex: Wilaya, City' onChange={(e) => handleProfileChange('address', e.target.value)} editable/>
+                    <TextInput width='50%' label="Birthdate" value={profile?.birth_date ?? '_'} placeholder='Ex: 2000-01-01' onChange={(e) => handleProfileChange('birth_date', e.target.value)} editable/>
+                    <TextInput width='50%' label="Address" value={profile?.address ?? '_'} placeholder='Ex: Wilaya, City' onChange={(e) => handleProfileChange('address', e.target.value)} editable/>
                   </div>
                   
                 </div>

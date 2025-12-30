@@ -55,6 +55,16 @@ class InitialSeeder extends Seeder
             ['updated_at' => $now, 'created_at' => DB::raw('COALESCE(created_at, NOW())')]
         );
 
+        // Semesters for the academic year
+        DB::table('semesters')->updateOrInsert(
+            ['name' => 'Semester 1', 'academic_year_id' => 1],
+            ['order' => 1, 'updated_at' => $now, 'created_at' => DB::raw('COALESCE(created_at, NOW())')]
+        );
+        DB::table('semesters')->updateOrInsert(
+            ['name' => 'Semester 2', 'academic_year_id' => 1],
+            ['order' => 2, 'updated_at' => $now, 'created_at' => DB::raw('COALESCE(created_at, NOW())')]
+        );
+
         // Departments
         DB::table('departments')->updateOrInsert(
             ['name' => 'Computer Science'],
@@ -140,9 +150,23 @@ class InitialSeeder extends Seeder
         }
 
         // General settings
+        $semesterId = DB::table('semesters')
+            ->where('name', 'Semester 1')
+            ->where('academic_year_id', 1)
+            ->value('id');
+
         DB::table('general_settings')->updateOrInsert(
             ['academic_year_id' => 1, 'department_id' => 1],
-            ['semester' => 'Semester 1', 'updated_at' => $now, 'created_at' => DB::raw('COALESCE(created_at, NOW())')]
+            [
+                'semester' => 'Semester 1',
+                'semester_id' => $semesterId,
+                'updated_at' => $now,
+                'created_at' => DB::raw('COALESCE(created_at, NOW())')
+            ]
         );
+
+        // Assign seeded users to the default department
+        DB::table('users')->where('email', 'admin@system.com')->update(['department_id' => 1, 'updated_at' => $now]);
+        DB::table('users')->where('email', 'employee@system.com')->update(['department_id' => 1, 'updated_at' => $now]);
     }
 }

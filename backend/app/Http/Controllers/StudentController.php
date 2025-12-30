@@ -106,6 +106,7 @@ class StudentController extends Controller
 
         try {
             $result = DB::transaction(function () use ($request) {
+                $adminDepartmentId = auth()->user()->department_id ?? null;
                 $user = User::create([
                     'fname' => $request->fname,
                     'lname' => $request->lname,
@@ -116,6 +117,7 @@ class StudentController extends Controller
                     'phone' => $request->phone ?? null,
                     'image' => $request->image ?? null,
                     'role' => 'student',
+                    'department_id' => $adminDepartmentId,
                 ]);
 
                 $student = Student::create([
@@ -180,6 +182,7 @@ class StudentController extends Controller
             try {
                 DB::beginTransaction();
 
+                $adminDepartmentId = auth()->user()->department_id ?? null;
                 $user = User::create([
                     'fname' => $item['fname'],
                     'lname' => $item['lname'],
@@ -190,6 +193,7 @@ class StudentController extends Controller
                     'phone' => $item['phone'] ?? null,
                     'image' => $item['image'] ?? null,
                     'role' => 'student',
+                    'department_id' => $adminDepartmentId,
                 ]);
 
                 $student = Student::create([
@@ -253,6 +257,7 @@ class StudentController extends Controller
 
         try {
             $result = DB::transaction(function () use ($request, $student, $user) {
+                $adminDepartmentId = auth()->user()->department_id ?? null;
                 // update user
                 $user->fname = $request->filled('fname') ? $request->fname : $user->fname;
                 $user->lname = $request->filled('lname') ? $request->lname : $user->lname;
@@ -262,6 +267,7 @@ class StudentController extends Controller
                 if ($request->filled('gender')) $user->gender = $request->gender;
                 if ($request->filled('image')) $user->image = $request->image;
                 if ($request->filled('password')) $user->password = Hash::make($request->password);
+                if (!$user->department_id) $user->department_id = $adminDepartmentId;
                 $user->save();
 
                 // update student

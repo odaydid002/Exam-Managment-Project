@@ -45,6 +45,7 @@ class TeacherController extends Controller
         // Always create a new user first, then create teacher in a transaction.
         try {
             $result = DB::transaction(function () use ($request) {
+                $adminDepartmentId = auth()->user()->department_id ?? null;
                 $user = User::create([
                     'fname' => $request->fname,
                     'lname' => $request->lname,
@@ -55,6 +56,7 @@ class TeacherController extends Controller
                     'phone' => $request->phone,
                     'image' => $request->image,
                     'role' => 'teacher',
+                    'department_id' => $adminDepartmentId,
                 ]);
 
                 $teacher = Teacher::create([
@@ -147,6 +149,36 @@ class TeacherController extends Controller
     }
 
     /**
+     * Get modules assigned to a teacher
+     */
+    public function modules($teacherNumber)
+    {
+        try {
+            $assignments = \App\Models\TeacherModule::where('teacher_number', $teacherNumber)
+                ->with('module')
+                ->get();
+
+            $modules = $assignments->map(function ($a) {
+                $m = $a->module;
+                return [
+                    'module_code' => $m->code ?? $a->module_code,
+                    'module_name' => $m->name ?? null,
+                    'module_credit' => $m->credit ?? null,
+                    'module_factor' => $m->factor ?? null,
+                    'speciality_id' => $a->speciality_id ?? null,
+                ];
+            });
+
+            return response()->json($modules);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to retrieve modules',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Bulk create teachers. Expects JSON: { "teachers": [ { ... }, ... ] }
      * Returns created items and per-item errors.
      */
@@ -199,6 +231,7 @@ class TeacherController extends Controller
             try {
                 DB::beginTransaction();
 
+                $adminDepartmentId = auth()->user()->department_id ?? null;
                 $user = User::create([
                     'fname' => $item['fname'],
                     'lname' => $item['lname'],
@@ -209,6 +242,7 @@ class TeacherController extends Controller
                     'phone' => $item['phone'] ?? null,
                     'image' => $item['image'] ?? null,
                     'role' => 'teacher',
+                    'department_id' => $adminDepartmentId,
                 ]);
 
                 $teacher = Teacher::create([
@@ -296,6 +330,7 @@ class TeacherController extends Controller
 
         try {
             $result = DB::transaction(function () use ($request, $teacher, $user) {
+                $adminDepartmentId = auth()->user()->department_id ?? null;
                 // Update user first
                 $user->fname = $request->filled('fname') ? $request->fname : $user->fname;
                 $user->lname = $request->filled('lname') ? $request->lname : $user->lname;
@@ -305,6 +340,7 @@ class TeacherController extends Controller
                 if ($request->filled('gender')) $user->gender = $request->gender;
                 if ($request->filled('image')) $user->image = $request->image;
                 if ($request->filled('password')) $user->password = Hash::make($request->password);
+                if (!$user->department_id) $user->department_id = $adminDepartmentId;
                 $user->save();
 
                 // Then update teacher

@@ -13,6 +13,11 @@ class Surveillance extends Model
     protected $fillable = [
         'exam_id',
         'teacher_number',
+        'status',
+    ];
+
+    protected $casts = [
+        'status' => 'string',
     ];
 
     public function teacher()

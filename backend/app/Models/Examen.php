@@ -19,6 +19,8 @@ class Examen extends Model
         'start_hour',
         'end_hour',
         'validated',
+        'academic_year_id',
+        'semester_id',
     ];
 
     protected $casts = [
@@ -27,6 +29,16 @@ class Examen extends Model
         'end_hour' => 'float',
         'validated' => 'boolean',
     ];
+
+    public function academicYear()
+    {
+        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
+    }
+
+    public function semester()
+    {
+        return $this->belongsTo(Semester::class, 'semester_id');
+    }
 
     public function module()
     {

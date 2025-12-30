@@ -20,6 +20,11 @@ class Department extends Model
         return $this->hasMany(Speciality::class, 'department_id');
     }
 
+    public function sections()
+    {
+        return $this->hasManyThrough(Section::class, Speciality::class, 'department_id', 'speciality_id');
+    }
+
     public function generalSettings()
     {
         return $this->hasMany(GeneralSetting::class, 'department_id');

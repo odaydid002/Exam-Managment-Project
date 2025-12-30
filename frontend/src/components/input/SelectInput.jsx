@@ -10,7 +10,7 @@ const SelectInput = ({
   onChange = () =>{},
   indexed = false,
   icon = null,
-  bg = 'var(--trans-grey)',
+  bg = 'var(--bg)',
   value = null
 }) => {
     const varStyles = {

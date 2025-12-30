@@ -20,6 +20,7 @@ import Popup from '../../components/containers/Popup';
 import IconButton from '../../components/buttons/IconButton';
 import Profile from '../../components/containers/profile';
 import { Exams, Rooms, Modules, Teachers, Groups, Surveillance } from '../../API'
+import * as ConflictsAPI from '../../API/conflicts'
 import { useNotify } from '../../components/loaders/NotificationContext';
 
 const AdminPlanning = () => {
@@ -308,6 +309,107 @@ const AdminPlanning = () => {
     })
   }
 
+  // Detect all conflicts: room overlaps and group schedule conflicts
+  const detectAllConflicts = useCallback(() => {
+    const detectedConflicts = []
+    
+    // Check for room conflicts (same room, same day, overlapping time)
+    for (let i = 0; i < examsList.length; i++) {
+      for (let j = i + 1; j < examsList.length; j++) {
+        const exam1 = examsList[i]
+        const exam2 = examsList[j]
+        
+        const date1 = exam1.date ? exam1.date.split('T')[0] : ''
+        const date2 = exam2.date ? exam2.date.split('T')[0] : ''
+        
+        // Check if same day and same room
+        if (date1 === date2 && exam1.room_id && exam1.room_id === exam2.room_id) {
+          const start1 = parseFloat(exam1.start_hour)
+          const end1 = parseFloat(exam1.end_hour)
+          const start2 = parseFloat(exam2.start_hour)
+          const end2 = parseFloat(exam2.end_hour)
+          
+          // Check if times overlap
+          if (start1 < end2 && end1 > start2) {
+            const conflict = {
+              day: date1,
+              startHour: Math.min(start1, start2),
+              type: 'room',
+              description: `Room conflict: ${exam1.room_name} (${exam1.module_name} and ${exam2.module_name})`
+            }
+            
+            const exists = detectedConflicts.some(c => 
+              c.day === conflict.day && 
+              c.type === conflict.type && 
+              c.description === conflict.description
+            )
+            if (!exists) {
+              detectedConflicts.push(conflict)
+            }
+          }
+        }
+        
+        // Check for group schedule conflicts (same group, same day, overlapping time)
+        if (date1 === date2 && exam1.group_code === exam2.group_code) {
+          const start1 = parseFloat(exam1.start_hour)
+          const end1 = parseFloat(exam1.end_hour)
+          const start2 = parseFloat(exam2.start_hour)
+          const end2 = parseFloat(exam2.end_hour)
+          
+          // Check if times overlap
+          if (start1 < end2 && end1 > start2) {
+            const conflict = {
+              day: date1,
+              startHour: Math.min(start1, start2),
+              type: 'group',
+              group: exam1.group_code,
+              description: `Group schedule conflict: ${exam1.group_name} has overlapping exams (${exam1.module_name} ${start1}-${end1} and ${exam2.module_name} ${start2}-${end2})`
+            }
+            
+            const exists = detectedConflicts.some(c => 
+              c.day === conflict.day && 
+              c.type === conflict.type && 
+              c.group === conflict.group &&
+              c.description === conflict.description
+            )
+            if (!exists) {
+              detectedConflicts.push(conflict)
+            }
+          }
+        }
+      }
+    }
+    
+    setConflicts(detectedConflicts)
+  }, [examsList])
+
+  // Run conflict detection whenever exam list changes
+  useEffect(() => {
+    detectAllConflicts()
+  }, [detectAllConflicts])
+
+  const handleCheckConflicts = async () => {
+    try {
+      // Run local detection to populate conflicts list
+      detectAllConflicts()
+
+      // Fetch backend stats
+      const stats = await ConflictsAPI.getStats()
+      const total = stats?.total_conflicts || 0
+      const roomConflicts = stats?.room_conflicts || 0
+      const groupConflicts = stats?.group_conflicts || 0
+
+      if (total === 0) {
+        notify('success', 'No conflicts detected! ✓')
+      } else {
+        notify('warning', `Found ${total} conflict(s): ${roomConflicts} room, ${groupConflicts} group`)
+      }
+    } catch (err) {
+      console.error('Failed to check conflicts', err)
+      notify('error', 'Failed to check conflicts')
+    }
+  }
+
   return (
     <div className={`${styles.modulesLayout} full scrollbar`}>
       <Popup isOpen={addExamModal} blur={2} bg='rgba(0,0,0,0.2)' onClose={()=>{ setAddExamModal(false); setEditingExam(null); resetExamForm() }}>
@@ -568,7 +670,11 @@ const AdminPlanning = () => {
                   <Text text='No conflicts detected' size='var(--text-m)' color='var(--text-low)' align='left' />
                 ) : (
                   conflicts.map((conflict, idx) => {
-                    const conflictType = `Room overlap (${conflict.room})`
+                    const isGroupConflict = conflict.type === 'group'
+                    const bgColor = isGroupConflict ? 'rgba(245, 91, 91, 0.08)' : 'rgba(255, 81, 0, 0.08)'
+                    const borderColor = isGroupConflict ? 'rgba(245, 91, 91, 0.2)' : 'rgba(255, 81, 0, 0.2)'
+                    const iconColor = isGroupConflict ? 'rgb(245, 91, 91)' : 'rgb(255, 81, 0)'
+                    const icon = isGroupConflict ? 'fa-people-group' : 'fa-door-open'
                     
                     return (
                       <div key={idx} style={{
@@ -577,32 +683,36 @@ const AdminPlanning = () => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '0.75em 1em',
-                        backgroundColor: 'rgba(255, 81, 0, 0.08)',
+                        backgroundColor: bgColor,
                         borderRadius: '0.5em',
-                        border: '1px solid rgba(255, 81, 0, 0.2)'
+                        border: `1px solid ${borderColor}`
                       }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75em' }}>
-                          <i className="fa-solid fa-exclamation-triangle" style={{
-                            color: 'rgb(255, 81, 0)',
-                            fontSize: 'var(--text-l)'
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75em', flex: 1 }}>
+                          <i className={`fa-solid ${icon}`} style={{
+                            color: iconColor,
+                            fontSize: 'var(--text-l)',
+                            flexShrink: 0
                           }}></i>
-                          <Text text={conflictType} size='var(--text-m)' color='var(--text)' align='left' />
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2em' }}>
+                            <Text text={conflict.description} size='var(--text-m)' color='var(--text)' align='left' />
+                          </div>
                         </div>
                         <button style={{
                             background: 'none',
                             border: 'none',
-                            color: 'rgb(255, 81, 0)',
+                            color: iconColor,
                             cursor: 'pointer',
                             fontSize: 'var(--text-m)',
                             fontWeight: 'bold',
-                            padding: '0',
-                            transition: 'opacity 0.3s'
+                            padding: '0 0 0 1em',
+                            transition: 'opacity 0.3s',
+                            flexShrink: 0
                           }}
                           onMouseEnter={(e) => e.target.style.opacity = '0.7'}
                           onMouseLeave={(e) => e.target.style.opacity = '1'}
                           onClick={() => setConflicts(prev => prev.filter((_, i) => i !== idx))}
                           >
-                          Fix
+                          ✕
                         </button>
                       </div>
                     );
@@ -618,11 +728,11 @@ const AdminPlanning = () => {
               <div className={`flex a-center h100 gap wrap`}>
                 <PrimaryButton text='Add Exam' icon='fa-solid fa-plus' onClick={()=>{ resetExamForm(); setAddExamModal(true) }} mrg='0 0.25em 0 0'/>
                 <SecondaryButton text='Auto assign rooms' />
-                <SecondaryButton text='Check conflicts' />
+                <SecondaryButton text='Check conflicts' onClick={handleCheckConflicts} />
               </div>
               <div className={`flex a-center h100 gap wrap`}>
-                <SecondaryButton text='Export Pdf' />
-                <SecondaryButton text='Export Excel' />
+                <SecondaryButton text='Send Email' />
+                <SecondaryButton text='Export PDF' />
                 <Button text='Publish' mrg='0 0 0 0.25em'/>
               </div>
             </div>

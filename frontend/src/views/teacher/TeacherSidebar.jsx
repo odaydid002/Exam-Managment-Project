@@ -18,7 +18,6 @@ const TeacherSidebar = () => {
       <NavElement path="schedule" title="Schedule" icon="fa-solid fa-calendar" mrt="0" hover/>
       <NavElement path="modules" title="Modules" icon="fa-solid fa-book" mrt="0" hover/>
       <NavSeparator title="System"/>
-      <NavElementButton onClick={()=>{}} title="" icon="fa-solid fa-bell" mrt="0" hover/>
       <NavElement path="settings" title="" icon="fa-solid fa-gear" mrt="0" hover/>
       <NavElementButton onClick={()=>{logout(); navigate('/login')}} title="" icon="fa-solid fa-arrow-right-from-bracket" mrt="0" hover/>
     </ExpendContainer>

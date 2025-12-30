@@ -56,7 +56,7 @@ export const ListTable = ({
     rowTitles = [],
     rowTemplate = "1fr 1fr",
     dataList = { total: 0, items: [] },
-
+    ovh = false,
     rowRenderer,    
     filterFunction, 
     sortFunction,   
@@ -97,7 +97,7 @@ export const ListTable = ({
     });
 
     return (
-        <div className={`${styles.tableList} full overflow-a`}>
+        <div className={`${styles.tableList} full ${ovh?"overflow-h":"overflow-a"}`}>
 
             <div className="flex row a-center w100 j-spacebet">
                 <div className="flex row a-center gap">

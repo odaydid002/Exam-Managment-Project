@@ -19,6 +19,7 @@ class RoomController extends Controller
                 'name' => $r->name,
                 'capacity' => $r->capacity,
                 'disabled' => (bool) $r->disabled,
+                'type' => $r->type ?? 'classroom',
             ];
         })->toArray();
 
@@ -35,6 +36,7 @@ class RoomController extends Controller
             'name' => $r->name,
             'capacity' => $r->capacity,
             'disabled' => (bool) $r->disabled,
+            'type' => $r->type ?? 'classroom',
         ]);
     }
 
@@ -48,6 +50,7 @@ class RoomController extends Controller
             'name' => 'required|string|max:50|unique:rooms,name',
             'capacity' => 'required|integer|min:0',
             'disabled' => 'nullable|boolean',
+            'type' => 'nullable|in:classroom,laboratory,amphitheater',
         ]);
 
         if ($v->fails()) {
@@ -58,6 +61,7 @@ class RoomController extends Controller
             'name' => $request->name,
             'capacity' => $request->capacity,
             'disabled' => $request->disabled ?? false,
+            'type' => $request->type ?? 'classroom',
         ]);
 
         return response()->json(['message' => 'Room created', 'room' => $room], 201);
@@ -76,6 +80,7 @@ class RoomController extends Controller
             'name' => "nullable|string|max:50|unique:rooms,name,{$room->id}",
             'capacity' => 'nullable|integer|min:0',
             'disabled' => 'nullable|boolean',
+            'type' => 'nullable|in:classroom,laboratory,amphitheater',
         ]);
 
         if ($v->fails()) {
@@ -85,6 +90,7 @@ class RoomController extends Controller
         if ($request->filled('name')) $room->name = $request->name;
         if ($request->filled('capacity')) $room->capacity = $request->capacity;
         if ($request->filled('disabled')) $room->disabled = $request->disabled;
+        if ($request->filled('type')) $room->type = $request->type;
         $room->save();
 
         return response()->json(['message' => 'Room updated', 'room' => $room]);
@@ -132,6 +138,7 @@ class RoomController extends Controller
                 'name' => 'required|string|max:50|unique:rooms,name',
                 'capacity' => 'required|integer|min:0',
                 'disabled' => 'nullable|boolean',
+                'type' => 'nullable|in:classroom,laboratory,amphitheater',
             ]);
 
             if ($v->fails()) {
@@ -145,6 +152,7 @@ class RoomController extends Controller
                     'name' => $item['name'],
                     'capacity' => $item['capacity'],
                     'disabled' => $item['disabled'] ?? false,
+                    'type' => $item['type'] ?? 'classroom',
                 ]);
                 DB::commit();
                 $created[] = ['index' => $index, 'room' => $room];

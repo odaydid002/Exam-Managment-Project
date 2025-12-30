@@ -25,6 +25,12 @@ const get = async (code) => {
   return res.data
 }
 
+const getByTeacher = async (teacherNumber) => {
+  const res = await api.get(`/modules/teacher/${teacherNumber}`)
+  // Return consistent shape: { total, modules }
+  return res.data
+}
+
 const update = async (code, payload) => {
   const res = await api.put(`/modules/edit/${code}`, payload)
   return res.data
@@ -50,4 +56,4 @@ const unassignTeacher = async (code, teacherNumber) => {
   return res.data
 }
 
-export { getAll, stats, bulkStore, add, get, update, remove, assignTeacher, updateAssignment, unassignTeacher }
+export { getAll, stats, bulkStore, add, get, update, remove, assignTeacher, updateAssignment, unassignTeacher, getByTeacher }

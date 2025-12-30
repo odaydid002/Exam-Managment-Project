@@ -108,17 +108,69 @@
 
 /* --------------///------------- */
 
-@media (max-width: 1100px) {
+/* Desktop: Full layout with sidebar */
+@media (min-width: 1400px) {
     .homeLayout{
-        grid-template-columns: 1fr 300px;
+        grid-template-columns: 1fr 400px;
+    }
+}
+
+/* Large Tablets: Reduce sidebar width */
+@media (max-width: 1399px) and (min-width: 1100px) {
+    .homeLayout{
+        grid-template-columns: 1fr 360px;
     }
     .studentProfile{
         grid-template-columns: 88px 1fr;
     }
 }
 
+/* Tablets: Convert to flexible column layout */
+@media (max-width: 1099px) and (min-width: 768px) {
+    .homeLayout{
+        grid-template-columns: 1fr;
+        padding: 0.75em;
+        grid-column-gap: 0.75em;
+    }
+    .homeSide{
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto;
+    }
+    .homeBody{
+        grid-template-rows: auto auto 1fr;
+    }
+    .studentProfile{
+        grid-template-columns: 80px 1fr;
+        grid-column-gap: 1.5em;
+    }
+    .scheduleBody{
+        grid-template-columns: 1fr;
+    }
+    .scheduleSide{
+        grid-template-columns: 1fr 1fr;
+    }
+}
 
-@media (max-width: 767px) {
+/* Mobile Landscape (768px - 1024px) */
+@media (max-width: 1024px) and (orientation: landscape) {
+    .homeLayout{
+        grid-template-columns: 1fr;
+        padding: 0.5em;
+        grid-column-gap: 0.5em;
+    }
+    .homeSide{
+        grid-template-columns: 1fr 1fr;
+    }
+    .homeProfile{
+        grid-row-gap: 1.5em;
+    }
+    .studentProfile{
+        grid-template-columns: 70px 1fr;
+    }
+}
+
+/* Small Tablets & Large Mobile (600px - 767px) */
+@media (max-width: 767px) and (min-width: 600px) {
     .navigator{
         height: 5em;
     }
@@ -128,14 +180,110 @@
     .homeLayout{
         display: flex;
         flex-direction: column;
-        padding: var(--pd);
-        gap: var(--pd);
+        padding: 0.75em;
+        gap: 0.75em;
+        height: auto;
     }
     .homeBody,
     .homeSide,
     .homeProfile{
         display: flex;
         flex-direction: column;
+        height: auto;
+        min-height: auto;
+    }
+    .studentProfile{
+        grid-template-columns: 75px 1fr;
+        grid-column-gap: 1em;
+    }
+    .homeBody > *:last-child,
+    .homeSide > *{
+        overflow: visible;
+        min-height: 200px;
+        max-height: 350px;
+    }
+}
+
+/* Mobile Devices (below 600px) */
+@media (max-width: 599px) {
+    :root {
+        --pd: 0.75em;
+        --pdc: 0.375em;
+    }
+    .navigator{
+        height: 4.5em;
+    }
+    .content{
+        height: calc(100vh - 4.5em);
+    }
+    .homeLayout{
+        display: flex;
+        flex-direction: column;
+        padding: 0.5em;
+        gap: 0.5em;
+        height: auto;
+    }
+    .homeBody,
+    .homeSide,
+    .homeProfile{
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: auto;
+    }
+    .studentProfile{
+        grid-template-columns: 65px 1fr;
+        grid-column-gap: 0.75em;
+        gap: 0.5em;
+    }
+    .homeBody > *,
+    .homeSide > *{
+        overflow: visible;
+        min-height: auto;
+        max-height: none;
+        margin-bottom: 0.5em;
+    }
+    .homeProfile{
+        padding: 1em !important;
+        border-radius: 12px;
+    }
+    .scheduleBody{
+        grid-template-columns: 1fr;
+        grid-column-gap: 0.5em;
+    }
+    .scheduleSide{
+        grid-template-columns: 1fr;
+        grid-row-gap: 0.5em;
+    }
+    .settingsLayout{
+        grid-template-columns: 1fr;
+        grid-column-gap: 0.5em;
+    }
+    .settingsBody{
+        grid-row-gap: 0.5em;
+    }
+    .settingsSide{
+        grid-row-gap: 0.5em;
+    }
+}
+
+/* Extra Small Mobile (below 375px) */
+@media (max-width: 374px) {
+    :root {
+        --pd: 0.5em;
+        --pdc: 0.25em;
+    }
+    .homeLayout{
+        padding: 0.25em;
+        gap: 0.25em;
+    }
+    .studentProfile{
+        grid-template-columns: 60px 1fr;
+        grid-column-gap: 0.5em;
+    }
+    .homeProfile{
+        grid-row-gap: 1em;
+        padding: 0.75em !important;
     }
 }
 
@@ -174,12 +322,54 @@
     border-radius: 6px;
 }
 
+/* Responsive Profile Image */
 @media (max-width: 767px) {
-    .homeLayout{
+    .studentProfile img,
+    .studentProfile .avatar{
+        width: 75px;
+        height: 75px;
+    }
+}
+
+@media (max-width: 599px) {
+    .studentProfile img,
+    .studentProfile .avatar{
+        width: 65px;
+        height: 65px;
+    }
+}
+
+@media (max-width: 374px) {
+    .studentProfile img,
+    .studentProfile .avatar{
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* Responsive text wrapping */
+@media (max-width: 767px) {
+    .homeLayout,
+    .homeBody,
+    .homeSide,
+    .homeProfile,
+    .studentProfile{
         height: auto;
     }
     .homeBody > *:last-child,
     .homeSide > *{
         overflow: visible;
+    }
+}
+
+/* Ensure proper scrolling on mobile */
+@media (max-width: 767px) {
+    .content{
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .homeLayout{
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 }

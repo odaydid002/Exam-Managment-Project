@@ -18,7 +18,13 @@ class Groupe extends Model
         'code',
         'name',
         'section_id',
+        'academic_year_id',
     ];
+
+    public function academicYear()
+    {
+        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
+    }
 
     public function examens()
     {

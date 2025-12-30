@@ -21,6 +21,8 @@ import SelectInput from '../../components/input/SelectInput';
 import ImageInput from '../../components/input/ImageInput';
 import ConfirmDialog from '../../components/containers/ConfirmDialog';
 import { Students, Specialities, Groups } from '../../API'
+import * as Users from '../../API/users'
+import { authCheck } from '../../API/auth'
 import * as XLSX from 'xlsx'
 import { useNotify } from '../../components/loaders/NotificationContext';
 
@@ -36,10 +38,11 @@ const AdminStudents = () => {
   const [addmodal, setAddmodal] = useState(false)
   const [editingStudent, setEditingStudent] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: 'normal', title: '', message: '', action: null, actionData: null })
-  const [formData, setFormData] = useState({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', email: '', image: null })
+  const [formData, setFormData] = useState({ fname: '', lname: '', number: '', level: '', department: '', speciality: '', section: '', group: '', email: '', image: null })
   const fileInputRef = useRef(null)
   const { notify } = useNotify()
   const [importLoading, setImportLoading] = useState(false)
+  const [adminProfile, setAdminProfile] = useState(null)
   
   const fetchStudents = async () => {
     try {
@@ -61,10 +64,29 @@ const AdminStudents = () => {
     let mounted = true
     fetchStudents()
     const loadExtras = async () => {
+      // Load admin profile to get department_id
+      try {
+        const auth = await authCheck()
+        const user = auth?.user || auth || null
+        if (user && user.id) {
+          const prof = await Users.getProfile(user.id)
+          if (mounted && prof && prof.user) {
+            setAdminProfile(prof.user)
+          }
+        }
+      } catch (err) { 
+        console.warn('Failed to load admin profile', err) 
+      }
+
+      // Load specialities with department data
       try {
         const sp = await Specialities.getAll()
         const listS = Array.isArray(sp) ? sp : (sp.data || sp.items || sp.specialities || [])
-        const sOptions = listS.map(item => ({ value: item.id || item.value || item.name, text: item.name || item.title || item.speciality || item }))
+        const sOptions = listS.map(item => ({ 
+          value: item.id || item.value || item.name, 
+          text: item.name || item.title || item.speciality || item,
+          department: item.department?.name || item.department || ''
+        }))
         if (mounted) setSpecialitiesOptions(sOptions)
       } catch (err) { console.warn('Failed to load specialities', err) }
       try {
@@ -123,7 +145,7 @@ const AdminStudents = () => {
       await Students.add(payload)
       notify('success', 'Student added')
       await fetchStudents()
-      setFormData({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', gender: '', email: '', image: null })
+      setFormData({ fname: '', lname: '', number: '', level: '', department: '', speciality: '', section: '', group: '', gender: '', email: '', image: null })
       setEditingStudent(null)
       setAddmodal(false)
     } catch (err) {
@@ -156,7 +178,7 @@ const AdminStudents = () => {
       await Students.update(editingStudent.number, payload)
       notify('success', 'Student updated')
       await fetchStudents()
-      setFormData({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', gender: '', email: '', image: null })
+      setFormData({ fname: '', lname: '', number: '', level: '', department: '', speciality: '', section: '', group: '', gender: '', email: '', image: null })
       setEditingStudent(null)
       setAddmodal(false)
     } catch (err) {
@@ -233,8 +255,22 @@ const AdminStudents = () => {
                     "Engineer 5",
                   ]}
                 />
-                <div style={{ width: '52%' }}>
-                  <SelectInput value={formData.speciality} options={specialitiesOptions.length ? specialitiesOptions : [{ value: '', text: 'Select speciality' }]} onChange={(val) => setFormData(prev => ({ ...prev, speciality: val }))} />
+                {editingStudent && (
+                  <TextInput 
+                    label="Department" 
+                    placeholder='Auto-filled from speciality'
+                    value={formData.department} 
+                    width='52%'
+                    readOnly
+                  />
+                )}
+              </div>
+              <div className="flex row a-end gap">
+                <div style={{ width: '100%' }}>
+                  <SelectInput value={formData.speciality} options={specialitiesOptions.length ? specialitiesOptions : [{ value: '', text: 'Select speciality' }]} onChange={(val) => {
+                    const selectedSpec = specialitiesOptions.find(s => s.value == val)
+                    setFormData(prev => ({ ...prev, speciality: val, department: selectedSpec?.department || '' }))
+                  }} />
                 </div>
               </div>
             </div>
@@ -263,7 +299,7 @@ const AdminStudents = () => {
             <Text align='left' text='Students List' w='600' color='var(--text)' size='var(--text-l)'/>
               <div className="flex row h100 a-center gap h4p">
               <SecondaryButton isLoading={importLoading} text="Import List" icon="fa-regular fa-file-excel" onClick={() => fileInputRef.current && fileInputRef.current.click()} />
-              <PrimaryButton text='Add Student' icon='fa-solid fa-plus' onClick={() => { setEditingStudent(null); setFormData({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', gender: '', email: '', image: null }); setAddmodal(true) }} />
+              <PrimaryButton text='Add Student' icon='fa-solid fa-plus' onClick={() => { setEditingStudent(null); setFormData({ fname: '', lname: '', number: '', level: '', department: '', speciality: '', section: '', group: '', gender: '', email: '', image: null }); setAddmodal(true) }} />
             </div>
               <input
                 ref={fileInputRef}
@@ -446,7 +482,7 @@ const AdminStudents = () => {
               <div className="flex row center gap">
                 <IconButton icon="fa-regular fa-pen-to-square" onClick={() => {
                   setEditingStudent(student)
-                  setFormData({ fname: student.fname || '', lname: student.lname || '', number: student.number || '', level: student.level || '', departement: student.department || '', speciality: student.speciality_id || student.speciality || '', section: student.section || '', group: student.group_code || student.group || '', gender: student.gender || '', email: student.email || '', image: student.image || null })
+                  setFormData({ fname: student.fname || '', lname: student.lname || '', number: student.number || '', level: student.level || '', department: student.department || '', speciality: student.speciality_id || student.speciality || '', section: student.section || '', group: student.group_code || student.group || '', gender: student.gender || '', email: student.email || '', image: student.image || null })
                   setAddmodal(true)
                 }} />
                 <IconButton icon="fa-regular fa-trash-can" onClick={() => setConfirmDialog({ isOpen: true, type: 'danger', title: 'Delete Student', message: `Delete ${student.fname} ${student.lname}?`, action: 'delete', actionData: student })} />

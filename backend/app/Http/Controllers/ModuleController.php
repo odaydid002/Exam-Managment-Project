@@ -348,5 +348,35 @@ class ModuleController extends Controller
             'transversal' => $transversal,
         ]);
     }
+
+    /**
+     * Get modules assigned to a specific teacher by their number
+     */
+    public function getByTeacher($teacherNumber)
+    {
+        try {
+            $tn = (string) $teacherNumber;
+            $assignments = \App\Models\TeacherModule::where('teacher_number', $tn)
+                ->with('module')
+                ->get();
+
+            $modules = $assignments->map(function ($a) {
+                $m = $a->module;
+                if (!$m) return null;
+                return [
+                    'code' => $m->code,
+                    'name' => $m->name,
+                    'short_name' => $m->short_name ?? null,
+                    'type' => $m->type ?? null,
+                    'factor' => $m->factor ?? null,
+                    'credits' => $m->credits ?? null,
+                ];
+            })->filter()->values();
+
+            return response()->json(['total' => $modules->count(), 'modules' => $modules->toArray()]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to retrieve teacher modules', 'error' => $e->getMessage()], 500);
+        }
+    }
 }
 

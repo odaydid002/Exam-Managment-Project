@@ -62,7 +62,7 @@ const TeacherLayout = () => {
   if (!verified) return null
 
   return (
-    <section className='page-row'>
+    <section className={`flex full-view column4p overflow-h section`}>
         <div className="nav">
           <TeacherSidebar />
           <TeacherAppbar />
