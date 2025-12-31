@@ -16,6 +16,7 @@ import CalendarView from '../../components/calendar/CalendarView';
 import { Specialities, Groups, Rooms } from '../../API'
 import { getAll as getExams } from '../../API/exams'
 import { get as getStudent } from '../../API/students';
+import { exportExamsToPDF } from '../../utils/examSchedulePDF';
 
 const StudentSchedule = () => {
 
@@ -31,6 +32,7 @@ const StudentSchedule = () => {
   const [filterSpeciality, setFilterSpeciality] = useState("*");
   const [filterGroup, setFilterGroup] = useState("*");
   const [profile, setProfile] = useState(null);
+  const [userDepartment, setUserDepartment] = useState('Computer Science');
 
   const [specialitiesOptions, setSpecialitiesOptions] = useState([{ value: '*', text: 'All Specialities' }]);
   const [groupsOptions, setGroupsOptions] = useState([{ value: '*', text: 'All Groups' }]);
@@ -232,9 +234,15 @@ const StudentSchedule = () => {
         setProfileLoaded(true);
         console.debug('loaded profile', prof)
 
+        // Get department for PDF export
+        const dept = prof.department?.name || prof.department || 'Computer Science';
+        setUserDepartment(dept);
+
         const specialityVal = prof.speciality ?? prof.department ?? prof.department_id ?? '';
         const groupVal = prof.group_code ?? prof.group ?? prof.group_name ?? prof.groupe_name ?? '';
         const levelVal = prof.level ?? prof.study_level ?? '';
+
+        console.debug('Profile data:', { specialityVal, groupVal, levelVal, fullProfile: prof });
 
         if (specialityVal) setFilterSpeciality(specialityVal);
         if (groupVal) setFilterGroup(groupVal);
@@ -284,7 +292,10 @@ const StudentSchedule = () => {
           const filtered = normalized.filter(ex => matchesProfile(ex, prof));
           if (mounted) setExamsRaw(filtered);
           if (mounted) setExamsLoaded(true);
-          console.debug('loaded exams (filtered)', filtered)
+          console.debug('loaded exams total:', normalized.length);
+          console.debug('loaded exams (filtered):', filtered.length);
+          console.debug('exam samples:', normalized.slice(0, 3));
+          console.debug('filtered samples:', filtered.slice(0, 3))
         } catch (err) {
           console.error('Failed to load exams', err);
           if (mounted) setExamsRaw([]);
@@ -361,18 +372,43 @@ const StudentSchedule = () => {
     }
   }, [filterSpeciality]);
 
+  const handlePrintSchedule = () => {
+    try {
+      const filteredExams = filterEvents(examsRaw, {
+        startDate: filterStartdate,
+        endDate: filterEnddate,
+        room: filterRoom,
+        level: filterLevel,
+        examType: filterExamType,
+        speciality: filterSpeciality,
+        group: filterGroup
+      });
+
+      console.debug('Filtered exams for PDF:', filteredExams);
+      console.debug('Filter params:', { filterStartdate, filterEnddate, filterRoom, filterLevel, filterExamType, filterSpeciality, filterGroup });
+
+      if (filteredExams.length === 0) {
+        notify('warning', 'No exams to export after filtering');
+        return;
+      }
+
+      exportExamsToPDF(filteredExams, userDepartment, filterStartdate, filterEnddate, 'student_exam_schedule.pdf');
+      notify('success', 'Exam schedule exported successfully');
+    } catch (err) {
+      console.error('Failed to export PDF', err);
+      notify('error', 'Failed to export exam schedule');
+    }
+  };
+
   return (
     <div className={`full flex column scrollbar overflow-y-a gap`} style={{ padding: "1em 1em 1em 0" }}>
       <div className="flex row a-center j-spacebet" style={{ height: "3.5em" }}>
         <Text text='Schedule - Calendar' size='var(--text-m)' opacity='0.8' />
         <div className="flex row a-center gap" style={{ paddingRight: "1em" }}>
-          <SelectInput
-            bg='var(--bg)'
-            icon="fa-solid fa-book-bookmark "
-            options={specialitiesOptions}
-            value={filterSpeciality}
-            onChange={(v) => { setFilterSpeciality(v); loadGroupsFor(v); }}
-          />
+          <div className="flex row a-center gap" style={{ padding: "0.5em 1em", backgroundColor: "var(--bg)", borderRadius: "0.25em", fontSize: "0.9em" }}>
+            <i className="fa-solid fa-book-bookmark" style={{ color: "var(logo)", marginRight: "0.5em" }}></i>
+            <span>{filterSpeciality}</span>
+          </div>
           <SelectInput
             bg='var(--bg)'
             icon="fa-solid fa-graduation-cap"
@@ -400,7 +436,7 @@ const StudentSchedule = () => {
             onChange={(v) => setFilterGroup(v)}
           />
           <IconButton color='var(logo)' icon='fa-solid fa-download' onClick={() => { }} />
-          <IconButton color='var(logo)' icon='fa-solid fa-print' onClick={() => { }} />
+          <IconButton color='var(logo)' icon='fa-solid fa-print' onClick={handlePrintSchedule} />
         </div>
       </div>
       <div className="scheduleBody" style={{ minHeight: "calc(100vh - 3.5em - 2em)" }}>

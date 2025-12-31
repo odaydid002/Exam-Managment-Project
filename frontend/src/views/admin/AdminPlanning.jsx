@@ -20,8 +20,10 @@ import Popup from '../../components/containers/Popup';
 import IconButton from '../../components/buttons/IconButton';
 import Profile from '../../components/containers/profile';
 import { Exams, Rooms, Modules, Teachers, Groups, Surveillance } from '../../API'
+import { authCheck } from '../../API/auth';
 import * as ConflictsAPI from '../../API/conflicts'
 import { useNotify } from '../../components/loaders/NotificationContext';
+import { exportExamsToPDF } from '../../utils/examSchedulePDF';
 
 const AdminPlanning = () => {
   document.title = "Unitime - Planning";
@@ -37,6 +39,7 @@ const AdminPlanning = () => {
     })
   });
 
+  const [userDepartment, setUserDepartment] = useState('Computer Science')
   const [examsList, setExamsList] = useState([])
   const [roomsList, setRoomsList] = useState([])
   const [modulesList, setModulesList] = useState([])
@@ -76,6 +79,21 @@ const AdminPlanning = () => {
   const checkMobile = () => {
     setIsMobile(window.innerWidth <= 600)
   }
+
+  // Fetch current user department
+  useEffect(() => {
+    const fetchUserDepartment = async () => {
+      try {
+        const data = await authCheck();
+        const user = data?.user || data || {};
+        const dept = user.department?.name || user.department || 'Computer Science';
+        setUserDepartment(dept);
+      } catch (err) {
+        console.error('Failed to fetch user department', err);
+      }
+    };
+    fetchUserDepartment();
+  }, []);
 
   const loadAllData = useCallback(async () => {
     setDataLoading(true)
@@ -410,6 +428,27 @@ const AdminPlanning = () => {
     }
   }
 
+  const handleExportPDF = () => {
+    try {
+      const filteredExams = filterEvents(examsList, { 
+        room: filterRoom,
+        level: filterLevel,
+        examType: filterExamType
+      })
+      
+      if (filteredExams.length === 0) {
+        notify('warning', 'No exams to export after filtering')
+        return
+      }
+
+      exportExamsToPDF(filteredExams, userDepartment, filterStartdate, filterEnddate, 'exam_schedule.pdf')
+      notify('success', 'Exam schedule exported successfully')
+    } catch (err) {
+      console.error('Failed to export PDF', err)
+      notify('error', 'Failed to export exam schedule')
+    }
+  }
+
   return (
     <div className={`${styles.modulesLayout} full scrollbar`}>
       <Popup isOpen={addExamModal} blur={2} bg='rgba(0,0,0,0.2)' onClose={()=>{ setAddExamModal(false); setEditingExam(null); resetExamForm() }}>
@@ -732,7 +771,7 @@ const AdminPlanning = () => {
               </div>
               <div className={`flex a-center h100 gap wrap`}>
                 <SecondaryButton text='Send Email' />
-                <SecondaryButton text='Export PDF' />
+                <SecondaryButton text='Export PDF' onClick={handleExportPDF} />
                 <Button text='Publish' mrg='0 0 0 0.25em'/>
               </div>
             </div>

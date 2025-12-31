@@ -17,8 +17,22 @@ export default function CalendarView({
     onEventSurveillance = () => {}
     , readOnly = false
 }) {
-    let start = new Date(startDate);
-    let end = new Date(endDate);
+    // Parse date string in local timezone (not UTC)
+    const parseLocalDate = (dateStr) => {
+        if (!dateStr) return null;
+        if (dateStr instanceof Date) return new Date(dateStr);
+        
+        // Handle ISO format YYYY-MM-DD by parsing locally
+        const match = String(dateStr).match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+            const [, year, month, day] = match;
+            return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        }
+        return new Date(dateStr);
+    };
+
+    let start = parseLocalDate(startDate);
+    let end = parseLocalDate(endDate);
 
     const isValidDate = (d) => d instanceof Date && !isNaN(d.getTime());
     if (!isValidDate(start)) start = new Date();
