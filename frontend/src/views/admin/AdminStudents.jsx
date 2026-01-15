@@ -43,6 +43,22 @@ const AdminStudents = () => {
   const { notify } = useNotify()
   const [importLoading, setImportLoading] = useState(false)
   const [adminProfile, setAdminProfile] = useState(null)
+  const [assignGroupModal, setAssignGroupModal] = useState(false)
+  const [selectedStudentForGroup, setSelectedStudentForGroup] = useState(null)
+  const [selectedGroup, setSelectedGroup] = useState('')
+  
+  const downloadTemplate = () => {
+    const headers = ['fname', 'lname', 'number', 'password', 'speciality', 'level', 'phone', 'email', 'image']
+    const sampleData = [
+      ['Hicham', 'Boudaoui', '7417415', '7417415', 'Software Engineering', 'Master 1', '9638527412', 'Hicham.Boudaoui@univ-tlemcen.dz', 'https://api.dicebear.com/7.x/initials/svg?seed=HichamBoudaoui'],
+      ['Mohamed', 'Amoura', '8528526', '8528526', 'Web Technologies', 'Licence 2', '7418529633', 'Mohamed.Amoura@univ-tlemcen.dz', 'https://api.dicebear.com/7.x/initials/svg?seed=MohamedAmoura'],
+      ['Aissa', 'Mandi', '9639634', '9639634', 'Data Science', 'Engineer 5', '7417417415', 'Aissa.Mandi@univ-tlemcen.dz', 'https://api.dicebear.com/7.x/initials/svg?seed=AissaMandi']
+    ]
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Students Template')
+    XLSX.writeFile(wb, 'students_import_template.xlsx')
+  }
   
   const fetchStudents = async () => {
     try {
@@ -50,8 +66,8 @@ const AdminStudents = () => {
       const resp = await Students.getAll()
       const data = resp ?? []
       const items = Array.isArray(data) ? data : (data.data || data.items || data.students || [])
+      console.log(items)
       setStudentsList({ total: items.length, students: items })
-      console.log('Fetched students:', items)
     } catch (err) {
       console.error('Failed to fetch students', err)
       notify('error', 'Failed to fetch students')
@@ -72,29 +88,32 @@ const AdminStudents = () => {
           const prof = await Users.getProfile(user.id)
           if (mounted && prof && prof.user) {
             setAdminProfile(prof.user)
+            // set newbie flag to false
+            if (user.newbie) {
+              try { await Users.setNewbie(user.id, false) } catch(e){ console.debug('setNewbie failed', e) }
+            }
           }
         }
       } catch (err) { 
         console.warn('Failed to load admin profile', err) 
       }
 
-      // Load specialities with department data
+      // Load specialities and groups in parallel
       try {
-        const sp = await Specialities.getAll()
+        const [sp, gr] = await Promise.all([Specialities.getAll(), Groups.getAll()])
         const listS = Array.isArray(sp) ? sp : (sp.data || sp.items || sp.specialities || [])
         const sOptions = listS.map(item => ({ 
           value: item.id || item.value || item.name, 
           text: item.name || item.title || item.speciality || item,
           department: item.department?.name || item.department || ''
         }))
-        if (mounted) setSpecialitiesOptions(sOptions)
-      } catch (err) { console.warn('Failed to load specialities', err) }
-      try {
-        const gr = await Groups.getAll()
         const listG = Array.isArray(gr) ? gr : (gr.data || gr.items || gr.groups || [])
         const gOptions = listG.map(item => ({ value: item.id || item.value || item.name, text: item.name || item.title || item.group || item }))
-        if (mounted) setGroupsOptions(gOptions)
-      } catch (err) { console.warn('Failed to load groups', err) }
+        if (mounted) {
+          setSpecialitiesOptions(sOptions)
+          setGroupsOptions(gOptions)
+        }
+      } catch (err) { console.warn('Failed to load specialities/groups', err) }
     }
     loadExtras()
     return () => { mounted = false }
@@ -255,17 +274,15 @@ const AdminStudents = () => {
                     "Engineer 5",
                   ]}
                 />
-                {editingStudent && (
                   <TextInput 
                     label="Department" 
-                    placeholder='Auto-filled from speciality'
+                    placeholder='Auto-filled'
                     value={formData.department} 
                     width='52%'
                     readOnly
                   />
-                )}
               </div>
-              <div className="flex row a-end gap">
+              <div className="flex row a-end gap mrt">
                 <div style={{ width: '100%' }}>
                   <SelectInput value={formData.speciality} options={specialitiesOptions.length ? specialitiesOptions : [{ value: '', text: 'Select speciality' }]} onChange={(val) => {
                     const selectedSpec = specialitiesOptions.find(s => s.value == val)
@@ -288,6 +305,35 @@ const AdminStudents = () => {
           </div>
         </div>
       </Popup>
+      <Popup isOpen={assignGroupModal} blur={2} bg='rgba(0,0,0,0.1)' onClose={() => setAssignGroupModal(false)}>
+        <div className={`${styles.dashBGC}`} style={{ maxWidth: '500px', borderRadius: '0.8em', padding: '2em' }}>
+          <div className="flex row a-center j-spacebet w100" style={{ marginBottom: '1.5em' }}>
+            <Text text={`Assign Group to ${selectedStudentForGroup?.fname} ${selectedStudentForGroup?.lname}`} size='var(--text-l)' w='600' />
+            <IconButton icon='fa-solid fa-xmark' color='var(--text)' size='var(--text-l)' onClick={() => setAssignGroupModal(false)} />
+          </div>
+          <SelectInput label="Select Group" value={selectedGroup} options={groupsOptions.length ? groupsOptions : [{ value: '', text: 'No groups available' }]} onChange={(val) => setSelectedGroup(val)} />
+          <div className="flex row a-center gap mrt">
+            <SecondaryButton text='Cancel' onClick={() => setAssignGroupModal(false)} />
+            <PrimaryButton text='Assign Group' onClick={async () => {
+              if (!selectedGroup) { notify('error', 'Please select a group'); return; }
+              setDialogLoading(true);
+              try {
+                await Students.update(selectedStudentForGroup.number, { group_code: selectedGroup });
+                notify('success', 'Group assigned');
+                await fetchStudents();
+                setAssignGroupModal(false);
+                setSelectedStudentForGroup(null);
+                setSelectedGroup('');
+              } catch (err) {
+                console.error('Failed to assign group', err);
+                notify('error', err?.response?.data?.message || err?.message || 'Failed to assign group');
+              } finally {
+                setDialogLoading(false);
+              }
+            }} />
+          </div>
+        </div>
+      </Popup>
       <div ref={layoutPath} className={`${styles.teachersHeader} h4p`}>
         <div className={`${styles.teachersPath} flex`}>
           <Text css='h4p' align='left' text='Main /' color='var(--text-low)' size='var(--text-m)' />
@@ -298,8 +344,9 @@ const AdminStudents = () => {
         <div ref={layoutHead} className={`${styles.teachersHead} flex row a-center j-spacebet`}>
             <Text align='left' text='Students List' w='600' color='var(--text)' size='var(--text-l)'/>
               <div className="flex row h100 a-center gap h4p">
+              <IconButton icon="fa-solid fa-question" onClick={downloadTemplate} />
               <SecondaryButton isLoading={importLoading} text="Import List" icon="fa-regular fa-file-excel" onClick={() => fileInputRef.current && fileInputRef.current.click()} />
-              <PrimaryButton text='Add Student' icon='fa-solid fa-plus' onClick={() => { setEditingStudent(null); setFormData({ fname: '', lname: '', number: '', level: '', department: '', speciality: '', section: '', group: '', gender: '', email: '', image: null }); setAddmodal(true) }} />
+              <div><PrimaryButton text='Add Student' icon='fa-solid fa-plus' onClick={() => { setEditingStudent(null); setFormData({ fname: '', lname: '', number: '', level: '', department: '', speciality: '', section: '', group: '', gender: '', email: '', image: null }); setAddmodal(true) }} /></div>
             </div>
               <input
                 ref={fileInputRef}
@@ -327,13 +374,10 @@ const AdminStudents = () => {
                       let freshSpecialities = []
                       let freshGroups = []
                       try {
-                        const sp = await Specialities.getAll()
+                        const [sp, gr] = await Promise.all([Specialities.getAll(), Groups.getAll()])
                         freshSpecialities = Array.isArray(sp) ? sp : (sp.data || sp.items || sp.specialities || [])
-                      } catch (err) { console.warn('Failed to fetch specialities for mapping', err) }
-                      try {
-                        const gr = await Groups.getAll()
                         freshGroups = Array.isArray(gr) ? gr : (gr.data || gr.items || gr.groups || [])
-                      } catch (err) { console.warn('Failed to fetch groups for mapping', err) }
+                      } catch (err) { console.warn('Failed to fetch specialities/groups for mapping', err) }
 
                       const specMap = new Map()
                       freshSpecialities.forEach(s => {
@@ -356,7 +400,9 @@ const AdminStudents = () => {
                         section: ['section'],
                         image: ['image', 'photo', 'picture', 'img'],
                         group: ['group', 'group name', 'group_id'],
-                        email: ['email', 'e-mail']
+                        email: ['email', 'e-mail'],
+                        phone: ['phone', 'phone number'],
+                        password: ['password']
                       }
 
                       const normalizeRow = (row) => {
@@ -384,20 +430,19 @@ const AdminStudents = () => {
                           normalized.group_id = isNaN(n) ? null : n
                         }
 
-                        const num = normalized.number || row.number || row.Number || row.code || null
-                        normalized.password = num != null ? String(num) : null
+                        if (!normalized.password) {
+                          const num = normalized.number || row.number || row.Number || row.code || null
+                          normalized.password = num != null ? String(num) : null
+                        }
 
                         return normalized
                       }
 
                       const transformed = raw.map(normalizeRow)
-                      console.log('Students import - parsed:', raw)
-                      console.log('Students import - transformed:', transformed)
 
                       try {
                         const payload = { students: transformed }
                         const resp = await Students.bulkStore(payload)
-                        console.log('Students bulk response:', resp)
                         notify('success', 'Students imported successfully')
                         await fetchStudents()
                       } catch (err) {
@@ -422,8 +467,7 @@ const AdminStudents = () => {
                   reader.readAsBinaryString(f)
                 }}
               />
-              <Float css='flex column a-center gap h4pc' bottom="6em" right="1em">
-                <FloatButton icon="fa-solid fa-file-arrow-up" onClick={() => fileInputRef.current && fileInputRef.current.click()} isLoading={importLoading} />
+              <Float css='flex column a-center gap h4pc' bottom="6em" right="1em">                <FloatButton icon="fa-solid fa-question" onClick={downloadTemplate} />                <FloatButton icon="fa-solid fa-file-arrow-up" onClick={() => fileInputRef.current && fileInputRef.current.click()} isLoading={importLoading} />
                 <FloatButton icon='fa-solid fa-plus' onClick={() => { setEditingStudent(null); setFormData({ fname: '', lname: '', number: '', level: '', departement: '', speciality: '', section: '', group: '', gender: '', email: '', image: null }); setAddmodal(true) }} />
               </Float>
         </div>
@@ -465,9 +509,9 @@ const AdminStudents = () => {
 
           rowRenderer={(student) => (
             <>
-              <div className="flex row a-center gap">
+              <div className="flex row a-center gap" >
                 <Profile img={student.image} width='35px' classes='clickable' border="2px solid var(--bg)"/>
-                <Text align='left' css='ellipsis' text={`${student.fname} ${student.lname}`} size='var(--text-m)'/>
+                <Text align='left' text={`${student.fname} ${student.lname}`} size='var(--text-m)'/>
               </div>
 
               <Text align='left' css='ellipsis' text={student.number} size='var(--text-m)'/>
@@ -476,7 +520,7 @@ const AdminStudents = () => {
               <Text align='left' css='ellipsis' text={student.speciality} size='var(--text-m)'/>
               {student.group_code?
               <Text align='left' css='ellipsis' text={student.group_name} size='var(--text-m)'/>:
-              <Button mrg='0 0 0 0.25em' text="Assign Group" icon='fa-solid fa-plus'/>}
+              <Button mrg='0 0 0 0.25em' text="Assign Group" icon='fa-solid fa-plus' onClick={() => { setSelectedStudentForGroup(student); setAssignGroupModal(true) }} />}
               <Text align='left' css='ellipsis' text={student.email} size='var(--text-m)'/>
 
               <div className="flex row center gap">

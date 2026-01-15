@@ -57,6 +57,7 @@ class TeacherController extends Controller
                     'image' => $request->image,
                     'role' => 'teacher',
                     'department_id' => $adminDepartmentId,
+                    'newbie' => true,
                 ]);
 
                 $teacher = Teacher::create([
@@ -128,6 +129,7 @@ class TeacherController extends Controller
                 'id' => $user->id ?? null,
                 'fname' => $user->fname ?? null,
                 'lname' => $user->lname ?? null,
+                    'newbie' => $user->newbie ?? true,
                 'adj' => $t->adj ?? null,
                 'number' => (string) $t->number,
                 'speciality_id' => $t->speciality_id,
@@ -243,6 +245,7 @@ class TeacherController extends Controller
                     'image' => $item['image'] ?? null,
                     'role' => 'teacher',
                     'department_id' => $adminDepartmentId,
+                    'newbie' => true,
                 ]);
 
                 $teacher = Teacher::create([
@@ -264,6 +267,7 @@ class TeacherController extends Controller
                     'teacher' => [
                         'fname' => $user->fname,
                         'lname' => $user->lname,
+                        'newbie' => $user->newbie ?? true,
                         'adj' => $teacher->adj,
                         'number' => (string) $teacher->number,
                         'speciality_id' => $teacher->speciality_id,
@@ -383,6 +387,7 @@ class TeacherController extends Controller
                 'id' => $user->id ?? null,
                 'fname' => $user->fname ?? null,
                 'lname' => $user->lname ?? null,
+                'newbie' => $user->newbie ?? true,
                 'adj' => $teacher->adj ?? null,
                 'number' => (string) $teacher->number,
                 'speciality_id' => $teacher->speciality_id,
@@ -415,6 +420,7 @@ class TeacherController extends Controller
         return response()->json([
             'fname' => $user->fname ?? null,
             'lname' => $user->lname ?? null,
+            'newbie' => $user->newbie ?? true,
             'adj' => $teacher->adj ?? null,
             'number' => (string) $teacher->number,
             'speciality_id' => $teacher->speciality_id,

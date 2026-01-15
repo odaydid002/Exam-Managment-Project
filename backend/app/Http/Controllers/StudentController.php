@@ -45,6 +45,10 @@ class StudentController extends Controller
             });
         }
 
+        if ($request->filled('group_code')) {
+            $q->where('group_code', $request->input('group_code'));
+        }
+
         $students = $q->get();
 
         $data = $students->map(function ($s) {
@@ -56,6 +60,7 @@ class StudentController extends Controller
                 'id' => $user->id ?? null,
                 'fname' => $user->fname ?? null,
                 'lname' => $user->lname ?? null,
+                'newbie' => $user->newbie ?? true,
                 'number' => (string) $s->number,
                 'group_code' => $group->code ?? null,
                 'group_name' => $group->name ?? null,
@@ -118,6 +123,7 @@ class StudentController extends Controller
                     'image' => $request->image ?? null,
                     'role' => 'student',
                     'department_id' => $adminDepartmentId,
+                    'newbie' => true,
                 ]);
 
                 $student = Student::create([
@@ -194,6 +200,7 @@ class StudentController extends Controller
                     'image' => $item['image'] ?? null,
                     'role' => 'student',
                     'department_id' => $adminDepartmentId,
+                    'newbie' => true,
                 ]);
 
                 $student = Student::create([
@@ -336,6 +343,7 @@ class StudentController extends Controller
                 'id' => $user->id ?? null,
                 'fname' => $user->fname ?? null,
                 'lname' => $user->lname ?? null,
+                'newbie' => $user->newbie ?? true,
                 'number' => (string) $student->number,
                 'group_code' => $group->code ?? null,
                 'group_name' => $group->name ?? null,
@@ -370,6 +378,7 @@ class StudentController extends Controller
         return response()->json([
             'fname' => $user->fname ?? null,
             'lname' => $user->lname ?? null,
+            'newbie' => $user->newbie ?? true,
             'number' => (string) $student->number,
             'group_code' => $group->code ?? null,
             'group_name' => $group->name ?? null,

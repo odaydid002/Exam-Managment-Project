@@ -368,35 +368,26 @@ const AdminSettings = () => {
           console.debug('Failed to load lookups', err);
         }
 
-        // Load departments
+        // Load departments, rooms, and department general setting in parallel
+        const deptId = prof?.department_id || prof?.department?.id || null;
         try {
-          const dres = await DepartmentsAPI.getAll();
+          const promises = [
+            DepartmentsAPI.getAll(),
+            RoomsAPI.getAll()
+          ];
+          if (deptId) {
+            promises.push(GeneralSettingsAPI.getByDepartment(deptId));
+          }
+          const [dres, rres, gres] = await Promise.all(promises);
           if (!mounted) return;
           setDepartments(dres || []);
-        } catch (err) {
-          console.debug('Failed to load departments', err);
-        }
-
-        // Load department-level general setting
-        try {
-          const deptId = prof?.department_id || prof?.department?.id || null;
-          if (deptId) {
-            const gres = await GeneralSettingsAPI.getByDepartment(deptId);
-            if (!mounted) return;
+          setRooms(rres || []);
+          if (deptId && gres) {
             const g = (gres && (gres.general_setting || gres)) ? (gres.general_setting || gres) : null;
             setDeptGeneral(g);
           }
         } catch (err) {
-          console.debug('Failed to load department general setting', err);
-        }
-
-        // Load rooms
-        try {
-          const rres = await RoomsAPI.getAll();
-          if (!mounted) return;
-          setRooms(rres || []);
-        } catch (err) {
-          console.debug('Failed to load rooms', err);
+          console.debug('Failed to load departments/rooms/general', err);
         }
 
         // Load user settings with defaults and field mapping

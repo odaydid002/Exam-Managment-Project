@@ -3,6 +3,7 @@ import styles from './buttons.module.css';
 import Spinner from '../loaders/Spinner';
 
 const SecondaryButton = ({ 
+    id = null,
     type = "button", 
     icon = "", 
     text = "", 
@@ -20,6 +21,7 @@ const SecondaryButton = ({
         }
         return (
             <button 
+                id = {id}
                 disabled = {isLoading}
                 onClick={isLoading?() => {}:onClick} 
                 type={type} 

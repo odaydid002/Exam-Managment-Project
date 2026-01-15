@@ -25,8 +25,9 @@ const SelectInputImage = ({
   w = "max-content", 
   options = [{value:"", text:"", img: ""}],
   indexed = false,
-  bg = 'var(--bg)',
-  onChange = () => {}
+  bg = 'var(--trans-grey)',
+  onChange = () => {},
+  value = ''
 }) => {
     const varStyles = {
         margin: mrg,
@@ -35,8 +36,8 @@ const SelectInputImage = ({
         backgroundColor: "var(--trans-grey)",
     };
 
-    const [selected, setSelected] = useState(0);
-    const [selectedVal, setselectedVal] = useState(options[0].value);
+    const [selected, setSelected] = useState(options.length > 0 ? 0 : -1);
+    const [selectedVal, setselectedVal] = useState(options[0]?.value || '');
     const [open, setOpen] = useState(false);
 
     const containerRef = useRef(null);
@@ -49,6 +50,20 @@ const SelectInputImage = ({
         containerRef.current.style.width = width + "px";
         listRef.current.classList.remove(styles.measure);
     }, []);
+
+    useEffect(() => {
+        const index = options.findIndex(opt => opt.value === value);
+        if (index >= 0) {
+            setSelected(index);
+            setselectedVal(value);
+        } else if (options.length > 0) {
+            setSelected(0);
+            setselectedVal(options[0].value);
+        } else {
+            setSelected(-1);
+            setselectedVal('');
+        }
+    }, [value, options]);
 
     useEffect(() => {
     function handleClickOutside(e) {
@@ -73,13 +88,13 @@ const SelectInputImage = ({
         onClick={() => setOpen(!open)}
       >
         <div className="flex row a-center">
-            <Profile width="20px" mrg="0 1em 0 0" img={options[selected].img} />
-            <p className="text-m text-low">{options[selected].text}</p>
+            <Profile width="20px" mrg="0 1em 0 0" img={selected >= 0 ? options[selected]?.img : ''} />
+            <p className="text-m text-low">{selected >= 0 ? options[selected]?.text : 'Select teacher'}</p>
         </div>
         <i className="fa-solid fa-sort text-low text-m"></i>
       </div>
 
-      <ul ref={listRef} className={`flex column ${styles.selectList} pos-abs`} style={{backgroundColor: bg}}>
+      <ul ref={listRef} className={`flex column ${styles.selectList} pos-abs`} style={{backgroundColor: "var(--bgc)", boxShadow: "5px 5px 20px rgba(0,0,0,0.5)", borderRadius: "8px"}}>
         {options.map((option, index) => (
           <li
             key={index}
@@ -89,7 +104,7 @@ const SelectInputImage = ({
               setSelected(index);
               setselectedVal(option.value);
               setOpen(false);
-              onChange(index);
+              onChange(option.value);
             }}
           >
             <div className="flex row a-center j-spacebet">

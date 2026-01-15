@@ -26,6 +26,7 @@ import { getByTeacher as getRequestsByTeacher, add as addExamRequest } from '../
 import { getAll as getAllGroups } from '../../API/groups';
 import { getAll as getAllExams } from '../../API/exams';
 import { getAll as getAllRooms } from '../../API/rooms';
+import { getAll as getAllStudents } from '../../API/students';
 
 const TeacherModules = () => {
   document.title = 'Unitime - Modules';
@@ -92,11 +93,23 @@ const TeacherModules = () => {
             if (mounted) setModules(items || []);
             // load groups list for the select
             try {
-              const gresp = await getAllGroups();
+              const [gresp, sresp] = await Promise.all([
+                getAllGroups(),
+                getAllStudents()
+              ]);
               const gitems = Array.isArray(gresp) ? gresp : (gresp.groups || gresp.data || []);
-              if (mounted) setGroupsList(gitems || []);
+              const sitems = Array.isArray(sresp) ? sresp : (sresp.students || sresp.data || []);
+
+              // Enrich groups with speciality from first student
+              const enrichedGroups = gitems.map(g => {
+                const firstStudent = sitems.find(s => s.group_code === g.code);
+                const speciality = firstStudent?.speciality || 'N/A';
+                return { ...g, displayName: `${speciality} - ${g.name}` };
+              });
+
+              if (mounted) setGroupsList(enrichedGroups || []);
             } catch (err) {
-              console.debug('Failed to load groups', err)
+              console.debug('Failed to load groups or students', err)
               if (mounted) setGroupsList([])
             }
 
@@ -380,10 +393,10 @@ const TeacherModules = () => {
                     { value: 'Engineer 5', text: 'Engineer 5' }
                   ]} />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <SelectInput label='Group' value={examFormData.group_code} onChange={(v) => setExamFormData(prev => ({ ...prev, group_code: v || '' }))} options={(groupsList || []).map(g => ({ value: g.code || g.id || '', text: g.name || g.code || '' }))} />
-                </div>
               </div>
+                <div style={{ flex: 1 }}>
+                  <SelectInput label='Group' value={examFormData.group_code} onChange={(v) => setExamFormData(prev => ({ ...prev, group_code: v || '' }))} options={(groupsList || []).map(g => ({ value: g.code || g.id || '', text: g.displayName || g.name || g.code || '' }))} />
+                </div>
 
               <div>
                 <TextInput label='Optional message' type='text' value={examFormData.message} onchange={(e)=> setExamFormData(prev=>({...prev, message: e.target.value}))} />

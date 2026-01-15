@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ExamScheduleMail;
+use App\Models\Teacher;
+use App\Models\Student;
+use App\Models\User;
 use App\Models\Examen;
-use App\Models\Module;
-use App\Models\Groupe;
-use App\Models\Salle;
-use App\Models\Notification;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class ExamenController extends Controller
 {
@@ -35,16 +34,22 @@ class ExamenController extends Controller
             return [
                 'id' => $e->id,
                 'module_code' => $e->module_code,
-                'module_name' => $e->module->name ?? null,
+                'module_name' => $e->module ? $e->module->name : null,
                 'group_code' => $e->group_code,
                 'group_name' => $e->groupe ? $e->groupe->name : null,
                 'section' => ($e->groupe && $e->groupe->section) ? $e->groupe->section->name : null,
                 'speciality' => $speciality,
                 'level' => $level,
                 'room_id' => $e->room_id,
-                'room_name' => $e->salle->name ?? null,
+                'room_name' => $e->salle ? $e->salle->name : null,
                 'exam_type' => $e->exam_type,
-                'date' => $e->date ? $e->date->toDateTimeString() : null,
+                'date' => $e->date ? (function($date) {
+                    try {
+                        return Carbon::parse($date)->toDateTimeString();
+                    } catch (\Exception $ex) {
+                        return $date; // return as is if parsing fails
+                    }
+                })($e->date) : null,
                 'start_hour' => $e->start_hour,
                 'end_hour' => $e->end_hour,
                 'validated' => (bool) $e->validated,
@@ -58,10 +63,14 @@ class ExamenController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $exams = Examen::with(['module', 'groupe.section.speciality', 'groupe.students.speciality', 'salle'])->orderBy('date', 'desc')->get();
+        try {
+            $exams = Examen::with(['module', 'groupe.section.speciality', 'groupe.students.speciality', 'salle'])->orderBy('date', 'desc')->get();
 
-        $data = $this->formatExamData($exams);
-        return response()->json(['total' => count($data), 'exams' => $data]);
+            $data = $this->formatExamData($exams);
+            return response()->json(['total' => count($data), 'exams' => $data]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to load exams', 'details' => $e->getMessage()], 500);
+        }
     }
 
     public function getNonValidated(Request $request)
@@ -683,5 +692,44 @@ class ExamenController extends Controller
     private function intervalsOverlap($aStart, $aEnd, $bStart, $bEnd)
     {
         return ($aStart < $bEnd) && ($aEnd > $bStart);
+    }
+
+    public function sendExamSchedule(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'pdf_base64' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Invalid data', 'details' => $validator->errors()], 400);
+        }
+
+        try {
+            // Decode the Base64 PDF
+            $pdfData = base64_decode($request->pdf_base64);
+            $pdfPath = storage_path('app/temp_exam_schedule.pdf');
+            file_put_contents($pdfPath, $pdfData);
+
+            // Get all teacher and student emails
+            $teacherEmails = User::where('role', 'teacher')->whereNotNull('email')->pluck('email')->toArray();
+            $studentEmails = User::where('role', 'student')->whereNotNull('email')->pluck('email')->toArray();
+            $allEmails = array_merge($teacherEmails, $studentEmails);
+
+            if (empty($allEmails)) {
+                return response()->json(['error' => 'No emails found'], 400);
+            }
+
+            // Send email to all
+            Mail::to('noreply@example.com')->bcc($allEmails)->send(new ExamScheduleMail($pdfPath));
+
+            // Clean up temp file
+            if (file_exists($pdfPath)) {
+                unlink($pdfPath);
+            }
+
+            return response()->json(['message' => 'Exam schedule sent successfully to ' . count($allEmails) . ' recipients']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to send email', 'details' => $e->getMessage()], 500);
+        }
     }
 }

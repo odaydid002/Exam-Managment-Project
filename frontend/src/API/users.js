@@ -50,10 +50,15 @@ const verifyPasswordOtp = async (id, payload) => {
   return res.data
 }
 
+const setNewbie = async (id, state) => {
+  const res = await api.put(`/user/${id}/newbie`, { newbie: state })
+  return res.data
+}
+
 const getNotificationsByUser = async (userId, params) => {
   const res = await api.get(`/users/${userId}/notifications`, { params })
   return res.data
 }
 
-export { getProfile, updateProfile, deleteAccount, getNotifications, markNotificationsRead, getSettings, updateSettings, updatePassword, sendPasswordOtp, verifyPasswordOtp, getNotificationsByUser }
+export { getProfile, updateProfile, deleteAccount, getNotifications, markNotificationsRead, getSettings, updateSettings, updatePassword, sendPasswordOtp, verifyPasswordOtp, getNotificationsByUser, setNewbie }
 

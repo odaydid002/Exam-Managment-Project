@@ -10,13 +10,13 @@ const SelectInput = ({
   onChange = () =>{},
   indexed = false,
   icon = null,
-  bg = 'var(--bg)',
+  bg = 'var(--trans-grey)',
   value = null
 }) => {
     const varStyles = {
       margin: mrg,
       cursor: "default",
-      backgroundColor: bg || 'var(--trans-grey)'
+      backgroundColor: bg
     };
 
     // Only set a fixed inline width when the caller provided an explicit width
@@ -126,7 +126,7 @@ const SelectInput = ({
           }}></i>
         </div>
 
-        <ul ref={listRef} style={{backgroundColor: bg}} className={`flex column ${styles.selectList} pos-abs z-10`}>
+        <ul ref={listRef} style={{backgroundColor: "var(--bgc)", boxShadow: "5px 5px 15px rgba(0,0,0,0.4)", borderRadius: "8px"}} className={`flex column ${styles.selectList} pos-abs z-10`}>
           {options.map((option, index) => (
             <li
               key={index}

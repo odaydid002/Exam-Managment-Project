@@ -24,7 +24,6 @@ class Examen extends Model
     ];
 
     protected $casts = [
-        'date' => 'datetime',
         'start_hour' => 'float',
         'end_hour' => 'float',
         'validated' => 'boolean',

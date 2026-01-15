@@ -14,6 +14,8 @@ import Popup from '../../components/containers/Popup';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Groups, Specialities, Students, Sections } from '../../API'
+import * as Users from '../../API/users'
+import { authCheck } from '../../API/auth'
 
 import Profile from '../../components/containers/profile';
 import IconButton from '../../components/buttons/IconButton';
@@ -25,12 +27,20 @@ import ConfirmDialog from '../../components/containers/ConfirmDialog';
 import { ListTable } from '../../components/tables/ListTable';
 gsap.registerPlugin(useGSAP);
 
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
 import { useNotify } from '../../components/loaders/NotificationContext';
 
 const AdminGroups = () => {
   document.title = "Unitime - Groups";
   const [staticsLoading, setStaticsLoading] = useState(false);
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [totalSections, setTotalSections] = useState(0);
+  const [totalGroups, setTotalGroups] = useState(0);
+  const [averageStudents, setAverageStudents] = useState(0);
   const [tableLoading, setTableLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
 
   useGSAP(() => {
     gsap.from('.gsap-y', { 
@@ -68,14 +78,28 @@ const AdminGroups = () => {
   const [delegateLoading, setDelegateLoading] = useState(false)
   const [delegateGroup, setDelegateGroup] = useState(null)
   const [delegateStudentsList, setDelegateStudentsList] = useState([])
-  const [selectedDelegates, setSelectedDelegates] = useState([])
+  const [selectedDelegates, setSelectedDelegates] = useState(null)
   const { notify } = useNotify()
   useEffect(() => {
     const HH = layoutPath.current.offsetHeight + layoutHead.current.offsetHeight + layoutTHead.current.offsetHeight
     layoutBody.current.style.maxHeight = `calc(100vh - ${HH}px - 2em)`
 
+    const loadExtras = async () => {
+      try {
+        const auth = await authCheck()
+        const user = auth?.user || auth || null
+        if (user && user.newbie) {
+          // set newbie flag to false
+          if (user.newbie) {
+            try { await Users.setNewbie(user.id, false) } catch(e){ console.debug('setNewbie failed', e) }
+          }
+        }
+      } catch(e) { console.debug('newbie check failed', e) }
+    }
+    loadExtras()
     loadGroups()
     loadSpecialities()
+    return () => { }
   }, []);
 
   const loadGroups = async () => {
@@ -85,6 +109,19 @@ const AdminGroups = () => {
       const data = resp ?? {}
       const items = Array.isArray(data) ? data : (data.groups || [])
       setGroupsList({ total: data.total || items.length, groups: items })
+
+      // Calculate counts
+      const groups = items
+      const totalGroups = groups.length
+      const totalStudents = groups.reduce((sum, g) => sum + (parseInt(g.members) || 0), 0)
+      const sections = [...new Set(groups.map(g => g.section))]
+      const totalSections = sections.length
+      const averageStudents = totalGroups > 0 ? Math.round(totalStudents / totalGroups) : 0
+
+      setTotalGroups(totalGroups)
+      setTotalStudents(totalStudents)
+      setTotalSections(totalSections)
+      setAverageStudents(averageStudents)
     } catch (err) {
       console.error('Failed to load groups', err)
       notify('error', 'Failed to load groups')
@@ -250,12 +287,14 @@ const AdminGroups = () => {
   const openDelegateModal = async (group) => {
     try {
       setDelegateGroup(group)
-      setSelectedDelegates(group.delegate ? group.delegate.map(d => d.id) : [])
+      setSelectedDelegates(group.delegate && group.delegate.length > 0 ? group.delegate[0].id : null)
       
       const params = { group_code: group.code }
       const resp = await Students.getAll(params)
       const items = Array.isArray(resp) ? resp : (resp.students || [])
-      setDelegateStudentsList(items)
+      // Filter to ensure only students of this group
+      const groupStudents = items.filter(s => s.group_code === group.code)
+      setDelegateStudentsList(groupStudents)
       setDelegateModal(true)
     } catch (err) {
       console.error('Failed to load group students', err)
@@ -268,10 +307,10 @@ const AdminGroups = () => {
 
     setDelegateLoading(true)
     try {
-      if (selectedDelegates.length === 0) {
+      if (!selectedDelegates) {
         await Groups.removeDelegate(delegateGroup.code, {})
       } else {
-        await Groups.setDelegate(delegateGroup.code, { student_numbers: selectedDelegates })
+        await Groups.setDelegate(delegateGroup.code, { student_numbers: [selectedDelegates] })
       }
 
       notify('success', 'Delegates updated successfully')
@@ -289,10 +328,7 @@ const AdminGroups = () => {
   }
 
   const toggleDelegateStudent = (studentNumber) => {
-    setSelectedDelegates(prev => {
-      if (prev.includes(studentNumber)) return prev.filter(n => n !== studentNumber)
-      return [...prev, studentNumber]
-    })
+    setSelectedDelegates(prev => prev === studentNumber ? null : studentNumber)
   }
 
   const generateGroups = async () => {
@@ -316,12 +352,15 @@ const AdminGroups = () => {
         return
       }
 
-      students.sort((a, b) => `${a.fname} ${a.lname}`.localeCompare(`${b.fname} ${b.lname}`))
-
       const groupsOfStudents = []
       for (let i = 0; i < students.length; i += 30) {
         groupsOfStudents.push(students.slice(i, i + 30))
       }
+
+      // Sort each group alphabetically
+      groupsOfStudents.forEach(group => {
+        group.sort((a, b) => `${a.fname} ${a.lname}`.localeCompare(`${b.fname} ${b.lname}`))
+      })
 
       const spec = specialitiesList.find(s => s.id === generateFormData.speciality)
       const specName = spec ? spec.name : 'Unknown'
@@ -412,6 +451,69 @@ const AdminGroups = () => {
       notify('error', 'Failed to generate groups')
     } finally {
       setGenerateLoading(false)
+    }
+  }
+
+  const generatePDF = async () => {
+    setExportLoading(true);
+    try {
+      const doc = new jsPDF();
+      let first = true;
+
+      for (const group of groupsList.groups) {
+        if (!first) doc.addPage();
+        first = false;
+
+        /* HEADER */
+        doc.setFont("times", "bold");
+        doc.setFontSize(14);
+        doc.text(`${group.level} - ${group.speciality}`, 105, 20, { align: "center" });
+
+        doc.setFontSize(12);
+        doc.text(`Group: ${group.name} (${group.code})`, 105, 28, { align: "center" });
+
+
+        let yPosition = 45;
+
+        // Fetch students
+        const params = { group_code: group.code };
+        const resp = await Students.getAll(params);
+        const students = Array.isArray(resp) ? resp : (resp.students || []);
+
+        if (students.length === 0) {
+          doc.setFontSize(10);
+          doc.text('No students in this group.', 14, yPosition);
+          continue;
+        }
+
+        // Sort students alphabetically A to Z
+        students.sort((a, b) => `${a.fname} ${a.lname}`.localeCompare(`${b.fname} ${b.lname}`));
+
+        // Prepare table data
+        const tableData = students.map((student, index) => [
+          index + 1,
+          student.number,
+          `${student.fname} ${student.lname}`,
+          student.email || ''
+        ]);
+
+        autoTable(doc, {
+          startY: yPosition,
+          head: [['#', 'Number', 'Name', 'Email']],
+          body: tableData,
+          theme: 'grid',
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [41, 128, 185] },
+        });
+      }
+
+      doc.save('groups_students.pdf');
+      notify('success', 'PDF downloaded successfully');
+    } catch (err) {
+      console.error('Failed to generate PDF', err);
+      notify('error', 'Failed to generate PDF');
+    } finally {
+      setExportLoading(false);
     }
   }
 
@@ -546,26 +648,26 @@ const AdminGroups = () => {
       </div>
       <div ref={layoutHead} className={`${styles.modulesStatics} flex row gap wrap j-center`}>
         <div className={`gsap-y ${styles.modulesStatic} ${styles.dashBGC} grow-1 ${staticsLoading && "shimmer"}`}>
-          {!staticsLoading && <StaticsCard title='Students' value={formatNumber(0)} icon="fa-solid fa-user-graduate" color='#2B8CDF'/>}
+          {!staticsLoading && <StaticsCard title='Students' value={formatNumber(totalStudents)} icon="fa-solid fa-user-graduate" color='#2B8CDF'/>}
         </div>
         <div className={`gsap-y ${styles.modulesStatic} ${styles.dashBGC} grow-1 ${staticsLoading && "shimmer"}`}>
-          {!staticsLoading && <StaticsCard title='Sections' value={formatNumber(0)} icon="fa-solid fa-users-viewfinder" color='#F1504A'/>}
+          {!staticsLoading && <StaticsCard title='Sections' value={formatNumber(totalSections)} icon="fa-solid fa-users-viewfinder" color='#F1504A'/>}
         </div>
         <div className={`gsap-y ${styles.modulesStatic} ${styles.dashBGC} grow-1 ${staticsLoading && "shimmer"}`}>
-          {!staticsLoading && <StaticsCard title='Groups' value={formatNumber(0)} icon="fa-solid fa-people-group" color='#9A8CE5'/>}
+          {!staticsLoading && <StaticsCard title='Groups' value={formatNumber(totalGroups)} icon="fa-solid fa-people-group" color='#9A8CE5'/>}
 
         </div>
         <div className={`gsap-y ${styles.modulesStatic} ${styles.dashBGC} grow-1 ${staticsLoading && "shimmer"}`}>
-          {!staticsLoading && <StaticsCard title='Average' value={formatNumber(0)} icon="fa-solid fa-percent" color='#4FB6A3'/>}
+          {!staticsLoading && <StaticsCard title='Average' value={formatNumber(averageStudents)} icon="fa-solid fa-percent" color='#4FB6A3'/>}
         </div>
       </div>
       <div className={`${styles.modulesContent} flex column gsap-y`}>
           <div ref={layoutTHead} className="flex row a-center">
           <Text align='left' text='Groups List' size='var(--text-l)' />
           <div className="flex row a-center gap mrla">
-            <PrimaryButton text='Add Group' icon='fa-solid fa-plus' onClick={()=>{ setEditingGroup(null); setFormData({ code: '', name: '' }); setSelectedSpeciality(null); setSelectedSection(null); setSelectedLevel(''); setStudentsList([]); setSelectedStudents([]); setAddModal(true) }} css='h4p'/>
+            <div><PrimaryButton text='Add Group' icon='fa-solid fa-plus' onClick={()=>{ setEditingGroup(null); setFormData({ code: '', name: '' }); setSelectedSpeciality(null); setSelectedSection(null); setSelectedLevel(''); setStudentsList([]); setSelectedStudents([]); setAddModal(true) }} css='h4p'/></div>
             <PrimaryButton text='Generate' icon='fa-solid fa-wand-magic-sparkles' onClick={()=>{ setGenerateModal(true); setGenerateFormData({ speciality: null, level: '' }) }} css='h4p'/>
-            <SecondaryButton text='Export' onClick={()=>{}} css='h4p'/>
+            <SecondaryButton text='Export' isLoading={exportLoading} onClick={generatePDF} css='h4p'/>
           </div>
         </div>
         <div ref={layoutBody} className={`${styles.modulesTable} full ${styles.dashBGC} ${tableLoading && "shimmer"}`}>
@@ -613,34 +715,11 @@ const AdminGroups = () => {
                     <Text align='left' text={group.section} size='var(--text-m)'/>
                     <Text align='left' text={group.members} size='var(--text-m)'/>
                     <div className="flex row a-center gap">
-                      {group.delegate.length == 0 && <Button text='Attach Delegate' icon='fa-solid fa-plus' onClick={()=>openDelegateModal(group)} />}
-                      {group.delegate.length == 1 && 
+                      {(!group.delegate || group.delegate.length == 0) && <Button text='Attach Delegate' icon='fa-solid fa-plus' onClick={()=>openDelegateModal(group)} />}
+                      {group.delegate && group.delegate.length > 0 && 
                       <div className="flex row a-center gap" style={{ cursor: 'pointer' }} onClick={()=>openDelegateModal(group)}>
                         <Profile img={group.delegate[0].image} width="35px" border="2px solid var(--bg)"/>
                         <Text align='left' text={`${group.delegate[0].fname} ${group.delegate[0].lname}`} size='var(--text-m)'/>
-                      </div>}
-                      {group.delegate.length > 1 && 
-                        <div className="flex row a-center gap pos-rel" style={{ cursor: 'pointer' }} onClick={()=>openDelegateModal(group)}>
-                          {group.delegate.map((d, index) => {
-                            if (index > 3) return null;
-                            return (
-                              <Profile
-                                key={index}
-                                img={d.image}
-                                width="35px"
-                                classes="pos-abs pos-center-v"
-                                left={`${index * 12}px`}
-                                border="2px solid var(--bg)"
-                              />
-                            );
-                          })}
-                          
-                          <Text
-                            align="left"
-                            text="+2 Students"
-                            size="var(--text-m)"
-                            mrg={`0 0 0 ${35 + group.delegate.length * 12}px`}
-                          />
                       </div>}
                     </div>
                     <div className="flex row center gap">
@@ -653,17 +732,17 @@ const AdminGroups = () => {
         </div>
       </div>
 
-      <Popup isOpen={delegateModal} blur={2} bg='rgba(0,0,0,0.2)' onClose={()=>{ setDelegateModal(false); setDelegateGroup(null); setSelectedDelegates([]); setDelegateStudentsList([]) }}>
+      <Popup isOpen={delegateModal} blur={2} bg='rgba(0,0,0,0.2)' onClose={()=>{ setDelegateModal(false); setDelegateGroup(null); setSelectedDelegates(null); setDelegateStudentsList([]) }}>
         <div className={`${styles.dashBGC}`} style={{ maxWidth: '700px', padding: '2em' }}>
           <div className="flex row a-center j-spacebet">
-            <Text text={`Manage Delegates - ${delegateGroup?.name || ''}`} size='var(--text-l)' color='var(--text)' align='left' />
+            <Text text={`Manage Delegate - ${delegateGroup?.name || ''}`} size='var(--text-l)' color='var(--text)' align='left' />
             <IconButton icon='fa-solid fa-xmark' onClick={()=>{ setDelegateModal(false) }} />
           </div>
           <div className="flex column gap mrv">
-            <Text text='Select one or more students from this group to be delegates' size='var(--text-s)' color='var(--text-low)' align='left' />
+            <Text text='Select one student from this group to be the delegate' size='var(--text-s)' color='var(--text-low)' align='left' />
             
             <div>
-              <Text text='Select Delegates' size='var(--text-m)' align='left' />
+              <Text text='Select Delegate' size='var(--text-m)' align='left' />
               <div className='mrt flex column gap scrollbar pdh overflow-y-a' style={{ maxHeight: '300px'}}>
                 {delegateStudentsList.length === 0 && <Text text='No students in this group' size='0.9em' color='var(--text-low)' />}
                 {delegateStudentsList.map(s => (
@@ -675,7 +754,7 @@ const AdminGroups = () => {
                         <Text text={s.number} size='var(--text-s)' color='var(--text-low)' />
                       </div>
                     </div>
-                    <input type='checkbox' checked={selectedDelegates.includes(s.number)} onChange={()=>toggleDelegateStudent(s.number)} />
+                    <input type='radio' checked={selectedDelegates === s.number} onChange={()=>toggleDelegateStudent(s.number)} />
                   </label>
                 ))}
               </div>
@@ -683,7 +762,7 @@ const AdminGroups = () => {
 
             <div className='flex row a-center gap pdt' style={{ marginTop: '1em' }}>
               <SecondaryButton text='Cancel' onClick={()=>{ setDelegateModal(false) }} />
-              <PrimaryButton isLoading={delegateLoading} text='Update Delegates' onClick={submitDelegates} />
+              <PrimaryButton isLoading={delegateLoading} text='Update Delegate' onClick={submitDelegates} />
             </div>
           </div>
         </div>

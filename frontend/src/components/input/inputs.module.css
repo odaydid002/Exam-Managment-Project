@@ -5,6 +5,10 @@
     max-width: 80%;
 }
 
+.otpInput:focus, .otp:hover{
+    border: "2px solid var(--color-main)"
+}
+
 .container{
     border-radius: 5px;
     padding: 0.5em 1em;

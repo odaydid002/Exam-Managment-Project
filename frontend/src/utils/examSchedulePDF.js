@@ -155,30 +155,14 @@ function buildWeeklySchedule(exams, startDate = null, endDate = null) {
 /* --------------------------------------------------
    PDF GENERATOR (ONE WEEK PER PAGE)
 -------------------------------------------------- */
-export function exportExamsToPDF(exams, department = "Computer Science", startDate = null, endDate = null, filename = "exam_schedule_by_speciality.pdf") {
-  console.debug('exportExamsToPDF called with:', { examsCount: exams?.length, department, startDate, endDate, filename });
-  console.debug('Raw exams before normalization:', exams);
-  
-  const normalizedExams = normalizeExams(exams || []);
-  console.debug('Normalized exams:', normalizedExams);
+function generateExamPDF(exams, department = "Computer Science", startDate = null, endDate = null) {
+  const doc = new jsPDF();
+  const normalized = normalizeExams(exams);
+  const schedule = buildWeeklySchedule(normalized, startDate, endDate);
 
-  // group exams by speciality
-  const specMap = {};
-  normalizedExams.forEach(e => {
-    const s = e.speciality || 'General';
-    if (!specMap[s]) specMap[s] = [];
-    specMap[s].push(e);
-  });
-
-  console.debug('Exams grouped by speciality:', specMap);
-
-  const doc = new jsPDF({ orientation: "landscape" });
   let pageCount = 0;
 
-  Object.entries(specMap).forEach(([spec, examsForSpec]) => {
-    const weeks = buildWeeklySchedule(examsForSpec, startDate, endDate);
-    console.debug(`Building schedule for speciality "${spec}":`, weeks);
-
+  Object.entries(schedule).forEach(([spec, weeks]) => {
     Object.entries(weeks).forEach(([weekStart, days]) => {
       if (pageCount > 0) doc.addPage();
       pageCount++;
@@ -198,35 +182,45 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
       /* TABLE */
       const head = [
         [
-          "",
-          ...WEEK_DAYS.map(day => {
-            const d = new Date(weekStart);
-            d.setDate(d.getDate() + WEEK_DAYS.indexOf(day));
-            return `${day}\n${formatDate(d)}`;
-          })
+          { content: "Time", styles: { halign: "center", valign: "middle" } },
+          { content: "Monday", styles: { halign: "center", valign: "middle" } },
+          { content: "Tuesday", styles: { halign: "center", valign: "middle" } },
+          { content: "Wednesday", styles: { halign: "center", valign: "middle" } },
+          { content: "Thursday", styles: { halign: "center", valign: "middle" } },
+          { content: "Friday", styles: { halign: "center", valign: "middle" } },
+          { content: "Saturday", styles: { halign: "center", valign: "middle" } },
+          { content: "Sunday", styles: { halign: "center", valign: "middle" } }
         ]
       ];
 
       const body = TIME_SLOTS.map(slot => [
-        slot.label,
-        ...WEEK_DAYS.map(day => days[day][slot.label] || "")
-      ]).filter(row => {
-        // Only include rows that have at least one exam (skip empty time slots)
-        return row.slice(1).some(cell => cell !== "");
-      });
+        { content: slot.label, styles: { halign: "center", valign: "middle" } },
+        { content: days.Monday?.[slot.label] || "", styles: { halign: "center", valign: "middle" } },
+        { content: days.Tuesday?.[slot.label] || "", styles: { halign: "center", valign: "middle" } },
+        { content: days.Wednesday?.[slot.label] || "", styles: { halign: "center", valign: "middle" } },
+        { content: days.Thursday?.[slot.label] || "", styles: { halign: "center", valign: "middle" } },
+        { content: days.Friday?.[slot.label] || "", styles: { halign: "center", valign: "middle" } },
+        { content: days.Saturday?.[slot.label] || "", styles: { halign: "center", valign: "middle" } },
+        { content: days.Sunday?.[slot.label] || "", styles: { halign: "center", valign: "middle" } }
+      ]);
 
       autoTable(doc, {
+        head: head,
+        body: body,
         startY: 45,
-        head,
-        body,
         styles: {
-          fontSize: 10,
-          halign: "center",
-          valign: "middle",
-          minCellHeight: 28
+          font: "times",
+          fontSize: 8,
+          cellPadding: 2,
+          overflow: "linebreak",
+          cellWidth: "wrap"
         },
         headStyles: {
-          fillColor: [220, 220, 220],
+          fillColor: [41, 128, 185],
+          textColor: 255,
+          fontStyle: "bold"
+        },
+        bodyStyles: {
           textColor: 0
         },
         columnStyles: {
@@ -238,5 +232,15 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
     });
   });
 
+  return doc;
+}
+
+export { generateExamPDF }
+
+/* --------------------------------------------------
+   PDF GENERATOR (ONE WEEK PER PAGE)
+-------------------------------------------------- */
+export function exportExamsToPDF(exams, department = "Computer Science", startDate = null, endDate = null, filename = "exam_schedule_by_speciality.pdf") {
+  const doc = generateExamPDF(exams, department, startDate, endDate);
   doc.save(filename);
 }

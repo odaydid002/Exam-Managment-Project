@@ -30,6 +30,9 @@ Route::get('/test', function () {
 Route::get('/images/{path}', [ImageController::class, 'show'])->where('path', '.*');
 Route::post('/auth/signup', [AuthController::class, 'signup']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/send-otp', [AuthController::class, 'sendOtp']);
+Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -42,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // User
     Route::get('/user/{id}/profile', [UserController::class, 'getProfile']);
     Route::put('/user/{id}/profile', [UserController::class, 'updateProfile']);
+    Route::put('/user/{id}/newbie', [UserController::class, 'setNewbie']);
     Route::put('/user/{id}/password', [UserController::class, 'updatePassword']);
     Route::get('/user/{id}/settings', [UserController::class, 'getSettings']);
     Route::put('/user/{id}/settings', [UserController::class, 'updateSettings']);
@@ -142,6 +146,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/exams/edit/{id}', [ExamenController::class, 'update']);
     Route::put('/exams/{id}/validate', [ExamenController::class, 'validateExam']);
     Route::delete('/exams/delete/{id}', [ExamenController::class, 'destroy']);
+    Route::post('/exams/send-schedule', [ExamenController::class, 'sendExamSchedule']);
 
     // Surveillance
     Route::get('/surveillance/exam/{examId}', [SurveillanceController::class, 'getByExam']);

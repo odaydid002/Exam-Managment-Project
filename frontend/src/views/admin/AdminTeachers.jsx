@@ -79,6 +79,19 @@ const AdminTeachers = () => {
   });
   const [adminProfile, setAdminProfile] = useState(null);
 
+  const downloadTemplate = () => {
+    const headers = ['firstname', 'lastname', 'adj', 'number', 'departement', 'position', 'speciality', 'phone', 'email', 'image', 'password']
+    const sampleData = [
+      ['Ryad', 'Mehrez', 'Mr', '991122331', 'Computer Science', 'Associate Professor', 'Data Science', '7417417411', 'ryad.mehrez@univ-alger.dz', 'https://api.dicebear.com/7.x/initials/svg?seed=RyadMehrez', '00112233'],
+      ['Youcef', 'Atal', 'Mr', '112233442', 'Computer Science', 'Lecturer', 'DevOps Engineering', '7417417412', 'youcef.atal@univ-alger.dz', 'https://api.dicebear.com/7.x/initials/svg?seed=YoucefAtal', '11223344'],
+      ['Ismail', 'Bennacer', 'Mr', '223344553', 'Computer Science', 'Assistant Professor', 'Web Technologies', '7417417413', 'ismail.Bennacer@univ-alger.dz', 'https://api.dicebear.com/7.x/initials/svg?seed=IsmailBennacer', '22334455']
+    ]
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Teachers Template')
+    XLSX.writeFile(wb, 'teachers_import_template.xlsx')
+  }
+
   useEffect(() => {
     let mounted = true
     const load = async () => {
@@ -99,6 +112,13 @@ const AdminTeachers = () => {
           const prof = await Users.getProfile(user.id)
           if (mounted && prof && prof.user) {
             setAdminProfile(prof.user)
+            // set newbie flag to false
+            if (user.newbie) {
+              try { 
+                await Users.setNewbie(user.id, false)
+               } 
+                catch(e){ console.debug('setNewbie failed', e) }
+            }
           }
         }
       } catch (err) { 
@@ -222,7 +242,6 @@ const AdminTeachers = () => {
     }
     setAddmodal(false)
     try {
-      console.log('Submitting new teacher:', formData)
       const fullName = `${formData.fname} ${formData.lname}`.trim()
       const password = String(formData.number)
 
@@ -423,7 +442,6 @@ const AdminTeachers = () => {
                   width='40%'
                   onchange={(e) => handleFormChange('position', e.target.value)}
                 />
-                {editingTeacher && (
                   <TextInput 
                     label="Department" 
                     placeholder='Auto-filled from speciality'
@@ -431,13 +449,14 @@ const AdminTeachers = () => {
                     width='60%'
                     readOnly
                   />
-                )}
               </div>
               <div className="flex row a-end gap">
                 <div style={{width: '100%'}}>
                   <SelectInput
                     w='100%'
+                    mrg='1em 0 0 0'
                     value={formData.speciality}
+                    bg='var(--trans-grey)'
                     options={specialitiesOptions.length ? specialitiesOptions : [{ value: '', text: 'Select speciality' }]}
                     onChange={(val) => {
                       const selectedSpec = specialitiesOptions.find(s => s.value == val)
@@ -496,8 +515,9 @@ const AdminTeachers = () => {
         <div ref={layoutHead} className={`${styles.teachersHead} flex row a-center j-spacebet`}>
           <Text align='left' text='Teachers List' w='600' color='var(--text)' size='var(--text-l)' />
           <div className="flex row h100 a-center gap h4p">
-            <SecondaryButton isLoading={importLoading} text="Import List" icon="fa-regular fa-file-excel" onClick={() => fileInputRef.current && fileInputRef.current.click()} />
-            <PrimaryButton text='Add Teacher' icon='fa-solid fa-plus' onClick={() => setAddmodal(true)} />
+            <IconButton icon="fa-solid fa-question" onClick={downloadTemplate} />
+            <SecondaryButton id="importButton" isLoading={importLoading} text="Import List" icon="fa-regular fa-file-excel" onClick={() => fileInputRef.current && fileInputRef.current.click()} />
+            <div><PrimaryButton id='addButton' text='Add Teacher' icon='fa-solid fa-plus' onClick={() => setAddmodal(true)} /></div>
           </div>
           <input
             ref={fileInputRef}
@@ -523,15 +543,11 @@ const AdminTeachers = () => {
                     return
                   }
 
-                  console.log('Parsed rows:', raw)
-                  console.log('Column headers:', Object.keys(raw[0] || {}))
-                  console.log('Available specialities:', specialitiesOptions)
 
                   let freshSpecialities = []
                   try {
                     const resp = await Specialities.getAll()
                     freshSpecialities = Array.isArray(resp) ? resp : (resp.data || resp.items || resp.specialities || [])
-                    console.log('Fresh specialities from backend:', freshSpecialities)
                   } catch (err) {
                     console.warn('Could not fetch specialities, using cached:', err)
                   }
@@ -544,10 +560,43 @@ const AdminTeachers = () => {
                     }
                   })
 
-                  console.log('Speciality name-to-ID mapping:', Array.from(nameToIdMap.entries()))
-
                   const transformed = raw.map(row => {
                     const r = { ...row }
+                    
+                    // Normalize keys
+                    const normalized = {}
+                    const fieldMap = {
+                      'adj': ['adj', 'title', 'salutation'],
+                      'fname': ['fname', 'first name', 'firstname', 'first_name', 'firstname'],
+                      'lname': ['lname', 'last name', 'lastname', 'last_name', 'lastname'],
+                      'number': ['number', 'teacher number', 'id', 'code'],
+                      'image': ['image', 'img', 'photo', 'picture'],
+                      'position': ['position', 'job title', 'job_title'],
+                      'department': ['department', 'departement', 'dept'],
+                      'speciality': ['speciality', 'speciality_id', 'specialty'],
+                      'phone': ['phone', 'phone number', 'phone_number'],
+                      'email': ['email', 'e-mail'],
+                      'password': ['password']
+                    }
+
+                    Object.entries(fieldMap).forEach(([apiField, possibleNames]) => {
+                      const rowKeyLower = Object.keys(r).find(key => 
+                        possibleNames.includes(String(key).toLowerCase().trim())
+                      )
+                      if (rowKeyLower && r[rowKeyLower] != null) {
+                        normalized[apiField] = r[rowKeyLower]
+                      }
+                    })
+
+                    if (normalized.number && !normalized.password) {
+                      normalized.password = String(normalized.number)
+                    }
+
+                    return normalized
+                  })
+
+                  // Now map speciality names to ids
+                  const finalTransformed = transformed.map(r => {
                     
                     if (r.speciality != null && typeof r.speciality === 'string') {
                       const specialityName = r.speciality.toLowerCase().trim()
@@ -570,9 +619,7 @@ const AdminTeachers = () => {
                     return r
                   })
 
-                  console.log('Transformed rows:', transformed)
-
-                  const unmapped = transformed
+                  const unmapped = finalTransformed
                     .filter(r => (r.speciality_id == null || r.speciality_id === ''))
                     .map((r, idx) => `Row ${idx + 1}`)
 
@@ -581,15 +628,16 @@ const AdminTeachers = () => {
                     const normalized = {}
                     const fieldMap = {
                       'adj': ['adj', 'title', 'salutation'],
-                      'fname': ['fname', 'first name', 'firstname', 'first_name'],
-                      'lname': ['lname', 'last name', 'lastname', 'last_name'],
+                      'fname': ['fname', 'first name', 'firstname', 'first_name', 'firstname'],
+                      'lname': ['lname', 'last name', 'lastname', 'last_name', 'lastname'],
                       'number': ['number', 'teacher number', 'id', 'code'],
                       'image': ['image', 'img', 'photo', 'picture'],
                       'position': ['position', 'job title', 'job_title'],
-                      'speciality': ['speciality', 'speciality_id', 'specialty', 'department'],
-                      'speciality_id': ['speciality_id', 'speciality'],
+                      'department': ['department', 'departement', 'dept'],
+                      'speciality': ['speciality', 'speciality_id', 'specialty'],
                       'phone': ['phone', 'phone number', 'phone_number'],
-                      'email': ['email', 'e-mail']
+                      'email': ['email', 'e-mail'],
+                      'password': ['password']
                     }
 
                     Object.entries(fieldMap).forEach(([apiField, possibleNames]) => {
@@ -614,16 +662,13 @@ const AdminTeachers = () => {
                   }
 
                   const normalized = transformed.map(normalizeRow)
-                  console.log('Normalized rows:', normalized)
 
                   setDialogLoading(true)
                   try {
-                    const payload = { teachers: normalized }
-                    console.log('Sending payload:', payload)
+                    const payload = { teachers: finalTransformed }
                     const response = await Teachers.bulkStore(payload)
-                    console.log('Backend response:', response)
                     if (unmapped && unmapped.length) {
-                      notify('error', `Imported but ${unmapped.length} rows have unmapped specialities`)
+                      notify('success', 'Teachers imported successfully')
                     } else {
                       notify('success', 'Teachers imported successfully')
                     }
@@ -655,7 +700,8 @@ const AdminTeachers = () => {
             }}
           />
           <Float css='flex column a-center gap h4pc' bottom="6em" right="1em">
-            <FloatButton icon="fa-solid fa-file-arrow-up" onClick={() => { }} />
+            <FloatButton icon="fa-solid fa-question" onClick={downloadTemplate} />
+            <FloatButton icon="fa-solid fa-file-arrow-up" onClick={() => fileInputRef.current && fileInputRef.current.click()} isLoading={importLoading} />
             <FloatButton icon='fa-solid fa-plus' onClick={() => setAddmodal(true)} />
           </Float>
         </div>

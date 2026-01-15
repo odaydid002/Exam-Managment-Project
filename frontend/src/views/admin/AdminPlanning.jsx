@@ -19,11 +19,13 @@ import Checkbox from '../../components/input/Checkbox';
 import Popup from '../../components/containers/Popup';
 import IconButton from '../../components/buttons/IconButton';
 import Profile from '../../components/containers/profile';
-import { Exams, Rooms, Modules, Teachers, Groups, Surveillance } from '../../API'
+import SelectInputImage from '../../components/input/SelectInputImage';
+import { Exams, Rooms, Modules, Teachers, Groups, Surveillance, Students } from '../../API'
 import { authCheck } from '../../API/auth';
+import * as Users from '../../API/users'
 import * as ConflictsAPI from '../../API/conflicts'
 import { useNotify } from '../../components/loaders/NotificationContext';
-import { exportExamsToPDF } from '../../utils/examSchedulePDF';
+import { exportExamsToPDF, generateExamPDF } from '../../utils/examSchedulePDF';
 
 const AdminPlanning = () => {
   document.title = "Unitime - Planning";
@@ -72,6 +74,8 @@ const AdminPlanning = () => {
     end_hour: '',
   })
   const [selectedSurveillance, setSelectedSurveillance] = useState([])
+  const [selectedSpeciality, setSelectedSpeciality] = useState('')
+  const [selectedTeacher, setSelectedTeacher] = useState('')
 
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
@@ -88,6 +92,10 @@ const AdminPlanning = () => {
         const user = data?.user || data || {};
         const dept = user.department?.name || user.department || 'Computer Science';
         setUserDepartment(dept);
+        // set newbie flag to false
+        if (user.newbie) {
+          try { await Users.setNewbie(user.id, false) } catch(e){ console.debug('setNewbie failed', e) }
+        }
       } catch (err) {
         console.error('Failed to fetch user department', err);
       }
@@ -98,12 +106,13 @@ const AdminPlanning = () => {
   const loadAllData = useCallback(async () => {
     setDataLoading(true)
     try {
-      const [examsResp, roomsResp, modulesResp, teachersResp, groupsResp] = await Promise.all([
+      const [examsResp, roomsResp, modulesResp, teachersResp, groupsResp, studentsResp] = await Promise.all([
         Exams.getAll(),
         Rooms.getAll(),
         Modules.getAll(),
         Teachers.getAll(),
-        Groups.getAll()
+        Groups.getAll(),
+        Students.getAll()
       ])
 
       const exams = Array.isArray(examsResp) ? examsResp : (examsResp.exams || [])
@@ -111,12 +120,19 @@ const AdminPlanning = () => {
       const modules = Array.isArray(modulesResp) ? modulesResp : (modulesResp.modules || [])
       const teachers = Array.isArray(teachersResp) ? teachersResp : (teachersResp.teachers || [])
       const groups = Array.isArray(groupsResp) ? groupsResp : (groupsResp.groups || [])
+      const students = Array.isArray(studentsResp) ? studentsResp : (studentsResp.students || [])
+
+      // Add speciality from first student of each group
+      const groupsWithSpeciality = groups.map(g => {
+        const firstStudent = students.find(s => s.group_code === g.code)
+        return { ...g, speciality: firstStudent?.speciality || 'N/A' }
+      })
 
       setExamsList(exams)
       setRoomsList(rooms)
       setModulesList(modules)
       setTeachersList(teachers)
-      setGroupsList(groups)
+      setGroupsList(groupsWithSpeciality)
       setCalendarLoading(false)
     } catch (err) {
       console.error('Failed to load data', err)
@@ -131,7 +147,7 @@ const AdminPlanning = () => {
     loadAllData()
     checkMobile()
     window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
+    return () => { window.removeEventListener('resize', checkMobile) }
   }, [loadAllData])
 
   const filterEvents = (exams, filters = {}) => {
@@ -298,6 +314,8 @@ const AdminPlanning = () => {
   const openSurveillanceModal = async (exam) => {
     setSelectedExamForSurveillance(exam)
     setSelectedSurveillance([])
+    setSelectedSpeciality('')
+    setSelectedTeacher('')
     setSurveillanceModal(true)
     
     try {
@@ -449,6 +467,30 @@ const AdminPlanning = () => {
     }
   }
 
+  const handlePublish = async () => {
+    try {
+      const filteredExams = filterEvents(examsList, { 
+        room: filterRoom,
+        level: filterLevel,
+        examType: filterExamType
+      })
+      
+      if (filteredExams.length === 0) {
+        notify('warning', 'No exams to publish after filtering')
+        return
+      }
+
+      const doc = generateExamPDF(filteredExams, userDepartment, filterStartdate, filterEnddate)
+      const pdfBase64 = doc.output('datauristring')
+      
+      await Exams.sendExamSchedule(pdfBase64)
+      notify('success', 'Exam schedule published successfully')
+    } catch (err) {
+      console.error('Failed to publish PDF', err)
+      notify('error', 'Failed to publish exam schedule')
+    }
+  }
+
   return (
     <div className={`${styles.modulesLayout} full scrollbar`}>
       <Popup isOpen={addExamModal} blur={2} bg='rgba(0,0,0,0.2)' onClose={()=>{ setAddExamModal(false); setEditingExam(null); resetExamForm() }}>
@@ -460,7 +502,6 @@ const AdminPlanning = () => {
           <div className="flex column gap mrv">
             <div className="flex row a-center gap">
               <SelectInput
-                bg='var(--bg)'
                 label='Module'
                 placeholder='Choose module'
                 options={modulesList.map(m => ({ value: m.code, text: m.name }))}
@@ -468,10 +509,9 @@ const AdminPlanning = () => {
                 value={examFormData.module_code}
               />
               <SelectInput
-                bg='var(--bg)'
                 label='Group'
                 placeholder='Choose group'
-                options={groupsList.map(g => ({ value: g.code, text: g.name }))}
+                options={groupsList.map(g => ({ value: g.code, text: `${g.speciality} - ${g.name}` }))}
                 onChange={(val) => setExamFormData(prev => ({ ...prev, group_code: val || '' }))}
                 value={examFormData.group_code}
               />
@@ -479,7 +519,6 @@ const AdminPlanning = () => {
 
             <div className="flex row a-center gap">
               <SelectInput
-                bg='var(--bg)'
                 label='Room'
                 placeholder='Choose room (optional)'
                 options={roomsList.map(r => ({ value: r.id, text: r.name }))}
@@ -487,7 +526,6 @@ const AdminPlanning = () => {
                 value={examFormData.room_id}
               />
               <SelectInput
-                bg='var(--bg)'
                 label='Exam Type'
                 placeholder='Choose type'
                 options={[
@@ -579,68 +617,94 @@ const AdminPlanning = () => {
         </div>
       </Popup>
 
-      <Popup isOpen={surveillanceModal} blur={2} bg='rgba(0,0,0,0.2)' onClose={()=>{ setSurveillanceModal(false); setSelectedExamForSurveillance(null); setSelectedSurveillance([]) }}>
+      <Popup isOpen={surveillanceModal} blur={2} bg='rgba(0,0,0,0.2)' onClose={()=>{ setSurveillanceModal(false); setSelectedExamForSurveillance(null); setSelectedSurveillance([]); setSelectedSpeciality(''); setSelectedTeacher('') }}>
         <div className={`${styles.dashBGC}`} style={{ maxWidth: '700px', padding: '2em' }}>
           <div className="flex row a-center j-spacebet">
-            <Text text={`Assign Proctors - ${selectedExamForSurveillance?.module_name || ''}`} size='var(--text-l)' color='var(--text)' align='left' />
-            <IconButton icon='fa-solid fa-xmark' onClick={()=>{ setSurveillanceModal(false) }} />
+            <Text text={`Assign Proctors - ${selectedExamForSurveillance?.module_name || ''}`} size='var(--text-l)' color='var(--text)' align='left' mrg="0 2em 0 0"/>
+            <IconButton icon='fa-solid fa-xmark' onClick={()=>{ setSurveillanceModal(false) }}/>
           </div>
           <div className="flex column gap mrv">
             <Text text='Select teachers to proctor this exam' size='var(--text-s)' color='var(--text-low)' align='left' />
             
+            <SelectInput
+              label='Speciality'
+              placeholder='Choose speciality'
+              options={[...new Set(teachersList.map(t => t.speciality).filter(Boolean))].map(s => ({ value: s, text: s }))}
+              onChange={(val) => { setSelectedSpeciality(val || ''); setSelectedTeacher('') }}
+              value={selectedSpeciality}
+            />
+            
+            {(() => {
+              const filteredTeachers = selectedSpeciality ? teachersList.filter(t => t.speciality === selectedSpeciality) : teachersList
+              return (
+                <>
+                  <Text text='Teacher' size='var(--text-m)' align='left' />
+                  <SelectInputImage
+                    options={filteredTeachers.map(t => ({ value: t.number, text: `${t.fname} ${t.lname}`, img: t.image }))}
+                    onChange={(val) => setSelectedTeacher(val || '')}
+                    value={selectedTeacher}
+                  />
+                  <PrimaryButton isLoading={formLoading} text='Assign Proctor' onClick={async () => {
+                    if (!selectedTeacher) {
+                      notify('error', 'Please select a teacher')
+                      return
+                    }
+                    setFormLoading(true)
+                    try {
+                      await Surveillance.assign(selectedExamForSurveillance.id, selectedTeacher)
+                      const teacher = teachersList.find(t => t.number === selectedTeacher)
+                      setAssignedProctors(prev => ({ 
+                        ...prev, 
+                        [selectedExamForSurveillance.id]: [...(prev[selectedExamForSurveillance.id] || []), teacher] 
+                      }))
+                      setSelectedTeacher('')
+                      notify('success', 'Proctor assigned')
+                    } catch (err) {
+                      console.error('Failed to assign proctor', err)
+                      notify('error', 'Failed to assign proctor')
+                    } finally {
+                      setFormLoading(false)
+                    }
+                  }} mrg='0.5em 0' />
+                </>
+              )
+            })()}
+
             <div>
-              <Text text='Available Teachers' size='var(--text-m)' align='left' />
-              <div className='mrt flex column gap scrollbar pdh overflow-y-a' style={{ maxHeight: '300px'}}>
-                {teachersList.length === 0 && <Text text='No teachers available' size='0.9em' color='var(--text-low)' />}
-                {teachersList.map(t => (
-                  <label key={t.number} className='flex row a-center j-spacebet' style={{ padding: '0.8em', borderRadius: '0.4em', backgroundColor: 'var(--bg)', border: '1px solid var(--border-low)', cursor: 'pointer' }}>
-                    <div className='flex row a-center gap'>
-                      <Profile img={t.image} width='40px' />
-                      <div className='flex column a-start'>
-                        <Text text={`${t.fname} ${t.lname}`} size='var(--text-m)' />
-                        <Text text={t.number} size='var(--text-s)' color='var(--text-low)' />
+              <Text text='Assigned Proctors' size='var(--text-m)' align='left' />
+              {assignedProctors[selectedExamForSurveillance?.id] && assignedProctors[selectedExamForSurveillance.id].length > 0 ? (
+                <div className="flex column gap">
+                  {assignedProctors[selectedExamForSurveillance.id].map(teacher => (
+                    <div key={teacher.number} className="flex row a-center j-spacebet" style={{ padding: '0.6em', backgroundColor: 'var(--bg)', borderRadius: '0.4em' }}>
+                      <div className='flex row a-center gap'>
+                        <Profile img={teacher.image} width='32px' />
+                        <div>
+                          <Text align='left' text={`${teacher.fname} ${teacher.lname}`} size='var(--text-m)' />
+                          <Text align='left' text={teacher.number} size='var(--text-s)' color='var(--text-low)' />
+                        </div>
                       </div>
+                      <IconButton icon='fa-solid fa-trash' color='var(--text-low)' size='var(--text-m)' onClick={async () => {
+                        try {
+                          await Surveillance.unassign(selectedExamForSurveillance.id, teacher.number)
+                          notify('success', 'Proctor removed')
+                          setAssignedProctors(prev => ({ 
+                            ...prev, 
+                            [selectedExamForSurveillance.id]: prev[selectedExamForSurveillance.id].filter(t => t.number !== teacher.number) 
+                          }))
+                        } catch {
+                          notify('error', 'Failed to remove proctor')
+                        }
+                      }} />
                     </div>
-                    <input type='checkbox' checked={selectedSurveillance.includes(t.number)} onChange={()=>toggleTeacherForSurveillance(t.number)} />
-                  </label>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <Text text='No proctors assigned' size='var(--text-m)' color='var(--text-low)' />
+              )}
             </div>
 
             <div className='flex row a-center gap pdt' style={{ marginTop: '1em' }}>
-              <SecondaryButton text='Cancel' onClick={()=>{ setSurveillanceModal(false) }} />
-              <PrimaryButton isLoading={formLoading} text='Assign Proctors' onClick={async () => {
-                if (selectedSurveillance.length === 0) {
-                  notify('error', 'Please select at least one teacher')
-                  return
-                }
-                setFormLoading(true)
-                try {
-                  await Promise.all(selectedSurveillance.map(teacherNum => 
-                    Surveillance.assign(selectedExamForSurveillance.id, teacherNum)
-                  ))
-                  
-                  // Update the assigned proctors in the edit modal immediately
-                  const updatedProctors = selectedSurveillance.map(teacherNum => {
-                    return teachersList.find(t => t.number === teacherNum)
-                  }).filter(Boolean)
-                  
-                  setAssignedProctors(prev => ({ 
-                    ...prev, 
-                    [selectedExamForSurveillance.id]: updatedProctors 
-                  }))
-                  
-                  notify('success', 'Proctors assigned successfully')
-                  setSurveillanceModal(false)
-                  setSelectedExamForSurveillance(null)
-                  setSelectedSurveillance([])
-                } catch (err) {
-                  console.error('Failed to assign proctors', err)
-                  notify('error', 'Failed to assign proctors')
-                } finally {
-                  setFormLoading(false)
-                }
-              }} />
+              <SecondaryButton text='Cancel' onClick={()=>{ setSurveillanceModal(false); setSelectedExamForSurveillance(null); setSelectedSurveillance([]); setSelectedSpeciality(''); setSelectedTeacher('') }} />
             </div>
           </div>
         </div>
@@ -676,7 +740,6 @@ const AdminPlanning = () => {
                 />
               <div className="flex row a-end gap">
                 <SelectInput
-                  bg='var(--bg)'
                   label='Room'
                   placeholder='Filter by room'
                   options={roomsList.map(r => ({ value: r.name, text: r.name }))}
@@ -763,16 +826,15 @@ const AdminPlanning = () => {
         </div>
         <div className={`${styles.planningMain}`}>
           <div className={`${styles.planningCrl} gsap-y`}>
-            <div className={`full flex a-center j-spacebet wrap ${styles.plnn4pc}`}>
+              <div className={`full flex a-center j-spacebet wrap ${styles.plnn4pc}`}>
               <div className={`flex a-center h100 gap wrap`}>
-                <PrimaryButton text='Add Exam' icon='fa-solid fa-plus' onClick={()=>{ resetExamForm(); setAddExamModal(true) }} mrg='0 0.25em 0 0'/>
-                <SecondaryButton text='Auto assign rooms' />
+                <div><PrimaryButton text='Add Exam' icon='fa-solid fa-plus' onClick={()=>{ resetExamForm(); setAddExamModal(true) }} mrg='0 0.25em 0 0'/></div>
                 <SecondaryButton text='Check conflicts' onClick={handleCheckConflicts} />
               </div>
               <div className={`flex a-center h100 gap wrap`}>
                 <SecondaryButton text='Send Email' />
                 <SecondaryButton text='Export PDF' onClick={handleExportPDF} />
-                <Button text='Publish' mrg='0 0 0 0.25em'/>
+                <Button text='Publish' onClick={handlePublish} mrg='0 0 0 0.25em'/>
               </div>
             </div>
             <Float top="1em" right="1em" css={`${styles.plnn4p} flex column gap`}>
@@ -784,8 +846,8 @@ const AdminPlanning = () => {
             <div className={`${styles.dashBGC} full ${(calendarLoading || dataLoading) && "shimmer"} gsap-y`}>
               { !calendarLoading && !dataLoading && 
               <CalendarView  
-                startDate={filterStartdate || "2026-01-01"}
-                endDate={filterEnddate || "2026-12-31"}
+                startDate={filterStartdate || new Date()}
+                endDate={filterEnddate || new Date(new Date().setDate(new Date().getDate() + 7))}
                 startHour={8}
                 endHour={17}
                 eventsList={

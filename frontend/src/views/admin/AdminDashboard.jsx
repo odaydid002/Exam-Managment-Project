@@ -18,8 +18,9 @@ import IconButton from '../../components/buttons/IconButton';
 
 import formatNumber from '../../hooks/formatNumber';
 import { useAnimateNumber } from "../../hooks/useAnimateNumber";
-import { Exams, Rooms, Teachers, Students } from '../../API'
+import { Exams, Rooms, Teachers, Students, Groups } from '../../API'
 import * as ConflictsAPI from '../../API/conflicts';
+import * as Users from '../../API/users';
 import { useNotify } from '../../components/loaders/NotificationContext';
 import ExamRequest from '../../components/containers/ExamRequest';
 import * as ExamRequestsAPI from '../../API/examRequests';
@@ -27,6 +28,10 @@ import { authCheck } from '../../API/auth';
 import Popup from '../../components/containers/Popup';
 import PrimaryButton from '../../components/buttons/PrimaryButton';
 import SecondaryButton from '../../components/buttons/SecondaryButton';
+
+import { driver } from "driver.js";
+import "driver.js/dist/driver.css";
+
 
 const RoomsList = ({
   classrooms = 0,
@@ -115,6 +120,10 @@ const AdminDashboard = () => {
         const user = data?.user || data || {};
         const role = (user.role || user.type || user.role_name || '').toString().toLowerCase();
         setUserRole(role);
+        // set newbie flag to false
+        if (user.newbie) {
+
+        }
       } catch (err) {
         console.error('Failed to fetch user role', err);
       } finally {
@@ -247,9 +256,28 @@ const AdminDashboard = () => {
     const fetchNonValidated = async () => {
       setNonValidatedLoading(true);
       try {
-        const data = await Exams.getNonValidated();
+        const [data, studentsResp, groupsResp] = await Promise.all([
+          Exams.getNonValidated(),
+          Students.getAll(),
+          Groups.getAll()
+        ]);
+
         const exams = (data && data.exams) ? data.exams : (Array.isArray(data) ? data : []);
-        setNonValidatedExams(exams);
+        const students = Array.isArray(studentsResp) ? studentsResp : (studentsResp.students || []);
+        const groups = Array.isArray(groupsResp) ? groupsResp : (groupsResp.groups || []);
+
+        // Enrich exams with speciality - group name
+        const enrichedExams = exams.map(exam => {
+          const group = groups.find(g => g.code === exam.group_code);
+          if (group) {
+            const firstStudent = students.find(s => s.group_code === group.code);
+            const speciality = firstStudent?.speciality || 'N/A';
+            return { ...exam, group_name: `${speciality} - ${group.name}` };
+          }
+          return exam;
+        });
+
+        setNonValidatedExams(enrichedExams);
       } catch (err) {
         console.error('Failed fetching non-validated exams', err);
         notify && notify('error', 'Failed to load non-validated exams');
@@ -339,7 +367,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-      <div className={`${styles.dashboardContent} flex row wrap gap`}>
+        <div className={`${styles.dashboardContent} flex row wrap gap`}>
           <div className={`${styles.dashContent} grow-3`}>
             <div className={`gsap-y ${styles.dashRooms} ${styles.dashBGC} h-max flex row j-spacebet wrap`}>
               <div className="flex column">
@@ -363,7 +391,7 @@ const AdminDashboard = () => {
                       ovh
                       title="Pending Validation"
                       rowTitles={["Module", "Group", "Date", "Time", "Action"]}
-                      rowTemplate="0.25fr 0.2fr 0.2fr 0.15fr 0.1fr"
+                      rowTemplate="0.25fr 0.3fr 0.2fr 0.15fr 0.1fr"
                       dataList={{ total: nonValidatedExams.length, items: nonValidatedExams }}
                       filterFunction={(exam, text) => 
                         (exam.module_name || '').toLowerCase().includes(text.toLowerCase()) ||

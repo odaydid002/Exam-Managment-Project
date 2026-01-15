@@ -28,6 +28,7 @@ class UserController extends Controller
             'address' => $user->address ?? null,
             'image' => $user->image ?? null,
             'role' => $user->role ?? null,
+            'newbie' => $user->newbie ?? true,
             'birth_date' => $user->birth_date ? $user->birth_date->toDateString() : null,
             'gender' => $user->gender ?? null,
             'settings' => $user->setting ?? null,
@@ -368,6 +369,26 @@ class UserController extends Controller
         }
 
         return response()->json(['settings' => $setting]);
+    }
+
+    /**
+     * Set or unset the newbie flag for a user (admin/employee only).
+     */
+    public function setNewbie(Request $request, $id)
+    {
+        if (!auth()->user() || !auth()->user()->hasRole(['admin', 'employee'])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'newbie' => 'required|boolean',
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->newbie = (bool) $request->input('newbie');
+        $user->save();
+
+        return response()->json(['message' => 'Newbie state updated', 'user' => $user]);
     }
 
     /**

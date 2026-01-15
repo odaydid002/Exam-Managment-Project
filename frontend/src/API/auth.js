@@ -27,6 +27,20 @@ const refreshToken = async () => {
     return res.data
 }
 
+const sendOtp = async (email) => {
+    const res = await api.post('/auth/send-otp', { email })
+    return res.data
+}
+
+const verifyOtp = async (email, otp) => {
+    const res = await api.post('/auth/verify-otp', { email, otp })
+    return res.data
+}
+
+const resetPassword = async (email, otp, password, password_confirmation) => {
+    const res = await api.post('/auth/reset-password', { email, otp, password, password_confirmation })
+    return res.data
+}
 
 const logout = () => {
     window.matchMedia('(prefers-color-scheme: dark)').matches ? forceDark() : forceLight();
@@ -34,4 +48,4 @@ const logout = () => {
     localStorage.removeItem('token')
 }
 
-export { authCheck, authLogin, authSignup, refreshToken, logout }
+export { authCheck, authLogin, authSignup, refreshToken, sendOtp, verifyOtp, resetPassword, logout }

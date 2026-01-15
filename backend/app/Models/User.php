@@ -25,6 +25,7 @@ class User extends Authenticatable
         'gender',
             'image', // Added image to fillable fields
             'department_id',
+            'newbie',
     ];
 
     protected $hidden = [
@@ -35,6 +36,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'birth_date' => 'date',
+        'newbie' => 'boolean',
     ];
 
     public function notifications()

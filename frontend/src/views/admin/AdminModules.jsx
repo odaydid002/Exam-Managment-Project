@@ -21,8 +21,11 @@ import ConfirmDialog from '../../components/containers/ConfirmDialog';
 import { useAnimateNumber } from "../../hooks/useAnimateNumber";
 import { ListTable } from '../../components/tables/ListTable';
 import { Modules, Specialities, Teachers } from '../../API'
+import * as Users from '../../API/users'
+import { authCheck } from '../../API/auth'
 import { useNotify } from '../../components/loaders/NotificationContext';
 import { useGSAP } from '@gsap/react';
+import * as XLSX from 'xlsx'
 
 import gsap from 'gsap';
 gsap.registerPlugin(useGSAP);
@@ -48,12 +51,27 @@ const AdminModules = () => {
   const [attachedTeachers, setAttachedTeachers] = useState([])
   const [attachTeacherLoading, setAttachTeacherLoading] = useState(false)
   const { notify } = useNotify()
+  const [importLoading, setImportLoading] = useState(false)
+  const fileInputRef = useRef(null)
   const animatedTotal = useAnimateNumber(0, stats.total, 1000)
   const animatedFundamental = useAnimateNumber(0, stats.fundamental, 1000)
   const animatedMethodological = useAnimateNumber(0, stats.methodological, 1000)
   const animatedTransversal = useAnimateNumber(0, stats.transversal, 1000)
 
 
+
+  const downloadTemplate = () => {
+    const headers = ['Code', 'Name', 'Short Name', 'Type', 'Factor', 'Credits']
+    const sampleData = [
+      ['PMM1GL', 'Project Management', 'PM', 'Fundamental', 3, 4],
+      ['APM1GL', 'Arduino Programming', 'ARP', 'Methodological', 1, 1],
+      ['BDM2AI', 'Big Data', 'BDA', 'Fundamental', 3, 5]
+    ]
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Modules Template')
+    XLSX.writeFile(wb, 'modules_import_template.xlsx')
+  }
 
   const layoutPath = useRef(null);
   const layoutHead = useRef(null);
@@ -65,13 +83,13 @@ const AdminModules = () => {
       setTableLoading(true)
       setStaticsLoading(true)
 
-      const resp = await Modules.getAll()
+      const [resp, statsResp] = await Promise.all([Modules.getAll(), Modules.stats()])
       const data = resp ?? {}
       const items = Array.isArray(data) ? data : (data.modules || data.items || [])
-      if (isMountedRef.current) setModulesList({ total: data.total || items.length, modules: items })
-
-      const statsResp = await Modules.stats()
-      if (isMountedRef.current) setStats(statsResp)
+      if (isMountedRef.current) {
+        setModulesList({ total: data.total || items.length, modules: items })
+        setStats(statsResp)
+      }
     } catch (err) {
       console.error('Failed to load modules', err)
       notify('error', 'Failed to load modules')
@@ -87,6 +105,18 @@ const AdminModules = () => {
     layoutBody.current.style.maxHeight = `calc(50vh - ${HH}px - 2.5em)`
 
     isMountedRef.current = true
+    const loadExtras = async () => {
+      try {
+        const auth = await authCheck()
+        const user = auth?.user || auth || null
+        if (user && user.newbie) {
+          adminModulesDriver(async () => {
+            try { await Users.setNewbie(user.id, false) } catch(e){ console.debug('setNewbie failed', e) }
+          })
+        }
+      } catch(e) { console.debug('newbie check failed', e) }
+    }
+    loadExtras()
     loadModules()
     return () => { isMountedRef.current = false }
   }, []);
@@ -261,6 +291,8 @@ const AdminModules = () => {
   return (
     <div className={`${styles.modulesLayout} full scrollbar`}>
       <Float bottom='6em' right="1em" css='h4pc'>
+        <FloatButton icon="fa-solid fa-question" onClick={downloadTemplate} />
+        <FloatButton icon="fa-solid fa-file-arrow-up" onClick={() => fileInputRef.current && fileInputRef.current.click()} isLoading={importLoading} />
         <FloatButton icon="fa-solid fa-plus" onClick={()=>{ setEditingModule(null); setFormData({ code: '', name: '', short_name: '', type: '', factor: '', credits: '' }); setAddModal(true) }} />
       </Float>
       <ConfirmDialog
@@ -333,7 +365,6 @@ const AdminModules = () => {
               <div className="flex row a-end gap">
 
                 <SelectInput 
-                  bg='var(--bg)'
                   label='Select Speciality'
                   placeholder='Choose a speciality'
                   options={specialitiesList.length > 0 ? specialitiesList.map(s => ({ value: s.id, text: s.name })) : [{value: '', text: 'Loading specialities...'}]}
@@ -352,7 +383,6 @@ const AdminModules = () => {
                   <div>
                     <Text text='Available Teachers' size='var(--text-m)' align='left' css='mgs' />
                     <SelectInputImage
-                      bg='var(--bg)'
                       options={teachersList.map(teacher => ({
                         value: teacher.number,
                         text: `${teacher.fname} ${teacher.lname}`,
@@ -456,10 +486,84 @@ const AdminModules = () => {
         </div>
       </div>
       <div ref={layoutBody} className={`gsap-y ${styles.modulesContent} flex column`}>
-        <div className="flex row a-center">
+        <div className="flex row a-center j-spacebet w100">
           <Text align='left' text='Modules List' size='var(--text-l)' />
-          <PrimaryButton text='Add Module' icon='fa-solid fa-plus' onClick={()=>setAddModal(true)} mrg='0 0 0 auto' css='h4p'/>
+          <div className="flex row h100 a-center gap h4p">
+            <IconButton icon="fa-solid fa-question" onClick={downloadTemplate} />
+            <SecondaryButton isLoading={importLoading} text="Import List" icon="fa-regular fa-file-excel" onClick={() => fileInputRef.current && fileInputRef.current.click()} />
+            <div><PrimaryButton text='Add Module' icon='fa-solid fa-plus' onClick={()=>setAddModal(true)} /></div>
+          </div>
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const f = e.target.files && e.target.files[0]
+            if (!f) return
+            const reader = new FileReader()
+            reader.onload = async (event) => {
+              try {
+                const data = event.target.result
+                setImportLoading(true)
+                const workbook = XLSX.read(data, { type: 'binary' })
+                const firstSheetName = workbook.SheetNames[0]
+                const worksheet = workbook.Sheets[firstSheetName]
+                const raw = XLSX.utils.sheet_to_json(worksheet, { defval: null })
+
+                if (!raw || !raw.length) {
+                  notify('error', 'Imported file is empty')
+                  return
+                }
+
+                const fieldMap = {
+                  code: ['code', 'module code', 'id'],
+                  name: ['name', 'module name', 'title'],
+                  short_name: ['short_name', 'short name', 'shortcut', 'short'],
+                  type: ['type', 'module type'],
+                  factor: ['factor', 'module factor'],
+                  credits: ['credits', 'credit', 'module credits']
+                }
+
+                const normalizeRow = (row) => {
+                  const normalized = {}
+                  Object.entries(fieldMap).forEach(([apiField, possibles]) => {
+                    const key = Object.keys(row).find(k => possibles.includes(String(k).toLowerCase().trim()))
+                    if (key && row[key] != null) normalized[apiField] = row[key]
+                  })
+                  return normalized
+                }
+
+                const transformed = raw.map(normalizeRow)
+
+                try {
+                  const payload = { modules: transformed }
+                  const resp = await Modules.bulkStore(payload)
+                  notify('success', 'Modules imported successfully')
+                  await loadModules()
+                } catch (err) {
+                  console.error('Modules bulk import failed', err)
+                  notify('error', err?.response?.data?.message || err?.message || 'Bulk import failed')
+                }
+
+              } catch (err) {
+                console.error('Failed reading file', err)
+                notify('error', 'Failed to read the selected file')
+              } finally {
+                setImportLoading(false)
+                e.target.value = ''
+              }
+            }
+            reader.onerror = () => {
+              console.error('FileReader error')
+              notify('error', 'Failed to read the selected file')
+              e.target.value = ''
+              setImportLoading(false)
+            }
+            reader.readAsBinaryString(f)
+          }}
+        />
         <div className={`${styles.modulesTable} full ${styles.dashBGC} ${tableLoading && "shimmer"}`}>
           {!tableLoading &&
           <ListTable
