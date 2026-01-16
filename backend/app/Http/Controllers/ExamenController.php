@@ -10,6 +10,11 @@ use App\Models\User;
 use App\Models\Examen;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use App\Models\Module;
+use App\Models\Groupe;
+use App\Models\Notification;
 
 class ExamenController extends Controller
 {
@@ -541,6 +546,7 @@ class ExamenController extends Controller
             }
 
             DB::transaction(function () use ($exam) {
+                $exam->surveillances()->delete();
                 $exam->delete();
             });
 

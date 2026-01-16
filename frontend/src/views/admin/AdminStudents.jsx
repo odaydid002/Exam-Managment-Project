@@ -100,7 +100,7 @@ const AdminStudents = () => {
 
       // Load specialities and groups in parallel
       try {
-        const [sp, gr] = await Promise.all([Specialities.getAll(), Groups.getAll()])
+        const [sp, gr, st] = await Promise.all([Specialities.getAll(), Groups.getAll(), Students.getAll()])
         const listS = Array.isArray(sp) ? sp : (sp.data || sp.items || sp.specialities || [])
         const sOptions = listS.map(item => ({ 
           value: item.id || item.value || item.name, 
@@ -108,7 +108,20 @@ const AdminStudents = () => {
           department: item.department?.name || item.department || ''
         }))
         const listG = Array.isArray(gr) ? gr : (gr.data || gr.items || gr.groups || [])
-        const gOptions = listG.map(item => ({ value: item.id || item.value || item.name, text: item.name || item.title || item.group || item }))
+        const listSt = Array.isArray(st) ? st : (st.data || st.items || st.students || [])
+        const groupsWithDetails = listG.map(g => {
+          const firstStudent = listSt.find(s => s.group_code === g.code)
+          const specialityName = firstStudent?.speciality || 'N/A'
+          const spec = listS.find(s => s.name === specialityName)
+          const shortName = spec?.short_name || specialityName
+          return { 
+            ...g, 
+            speciality: specialityName, 
+            level: firstStudent?.level || 'N/A',
+            shortName: shortName
+          }
+        })
+        const gOptions = groupsWithDetails.map(item => ({ value: item.code, text: `${item.level} - ${item.shortName} - ${item.name}` }))
         if (mounted) {
           setSpecialitiesOptions(sOptions)
           setGroupsOptions(gOptions)
@@ -435,6 +448,11 @@ const AdminStudents = () => {
                           normalized.password = num != null ? String(num) : null
                         }
 
+                        // Ensure password is always a string if present
+                        if (normalized.password != null) {
+                          normalized.password = String(normalized.password);
+                        }
+
                         return normalized
                       }
 
@@ -443,6 +461,7 @@ const AdminStudents = () => {
                       try {
                         const payload = { students: transformed }
                         const resp = await Students.bulkStore(payload)
+                        console.log(resp)
                         notify('success', 'Students imported successfully')
                         await fetchStudents()
                       } catch (err) {

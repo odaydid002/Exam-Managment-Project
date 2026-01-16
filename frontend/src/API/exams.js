@@ -40,9 +40,4 @@ const validateExam = async (id, payload) => {
   return res.data
 }
 
-const sendExamSchedule = async (pdfBase64) => {
-  const res = await api.post('/exams/send-schedule', { pdf_base64: pdfBase64 })
-  return res.data
-}
-
-export { getAll, getNonValidated, bulkStore, add, get, update, remove, validateExam, sendExamSchedule }
+export { getAll, getNonValidated, bulkStore, add, get, update, remove, validateExam }

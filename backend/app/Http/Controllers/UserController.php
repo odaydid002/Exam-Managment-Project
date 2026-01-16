@@ -101,13 +101,13 @@ class UserController extends Controller
             if (!Hash::check($request->current_password, $user->password)) {
                 return response()->json(['message' => 'Current password is incorrect'], 422);
             }
-            $user->password = Hash::make($request->password);
+            $user->password = Hash::make((string) $request->password);
         }
 
         $data = $request->except(['password', 'current_password', 'password_confirmation']);
         $user->fill($data);
         if ($request->has('password')) {
-            $user->password = Hash::make($request->password);
+            $user->password = Hash::make((string) $request->password);
         }
         $user->save();
 
@@ -264,7 +264,7 @@ class UserController extends Controller
             }
         }
 
-        $user->password = Hash::make($request->password);
+        $user->password = Hash::make((string) $request->password);
         $user->save();
 
         return response()->json(['message' => 'Password updated successfully']);

@@ -118,7 +118,7 @@ class StudentController extends Controller
                     'birth_date' => $request->birth_date ?? null,
                     'gender' => $request->gender ?? null,
                     'email' => $request->email,
-                    'password' => Hash::make($request->password),
+                    'password' => Hash::make((string) $request->password),
                     'phone' => $request->phone ?? null,
                     'image' => $request->image ?? null,
                     'role' => 'student',
@@ -195,7 +195,7 @@ class StudentController extends Controller
                     'birth_date' => $item['birth_date'] ?? null,
                     'gender' => $item['gender'] ?? null,
                     'email' => $item['email'],
-                    'password' => Hash::make($item['password']),
+                    'password' => Hash::make((string) $item['password']),
                     'phone' => $item['phone'] ?? null,
                     'image' => $item['image'] ?? null,
                     'role' => 'student',
@@ -273,7 +273,7 @@ class StudentController extends Controller
                 if ($request->filled('birth_date')) $user->birth_date = $request->birth_date;
                 if ($request->filled('gender')) $user->gender = $request->gender;
                 if ($request->filled('image')) $user->image = $request->image;
-                if ($request->filled('password')) $user->password = Hash::make($request->password);
+                if ($request->filled('password')) $user->password = Hash::make((string) $request->password);
                 if (!$user->department_id) $user->department_id = $adminDepartmentId;
                 $user->save();
 

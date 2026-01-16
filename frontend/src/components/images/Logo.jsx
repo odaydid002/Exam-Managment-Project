@@ -1,5 +1,6 @@
 import React from 'react'
 import styles from "./logo.module.css";
+import { useNavigate } from "react-router-dom";
 
 const Logo = (
     {
@@ -11,13 +12,14 @@ const Logo = (
         forceLight = false
     }
 ) => {
+    const navigate = useNavigate();
     const varStyle = {
         width: `${w}px`,
         height: `${h}px`,
         margin: mrg,
     }
     return (       
-        <div className='flex row center' style={{width:wc}}>
+        <div className='flex row center' style={{width:wc}} onClick={()=>navigate('/')}>
             <svg className={`${classes || ""}`} style={varStyle} xmlns="http://www.w3.org/2000/svg" id="Layer_1" version="1.1" viewBox="0 0 400 400">
                 <rect style={{fill: forceLight?"var(--color-second)":""}} className={`${styles.st3}`} x="98.31" y="204.03" width="37.83" height="35.14" rx="4.6" ry="4.6"/>
                 <rect style={{fill: forceLight?"var(--color-second)":""}} className={`${styles.st3}`} x="156.96" y="204.03" width="37.83" height="35.14" rx="4.6" ry="4.6"/>

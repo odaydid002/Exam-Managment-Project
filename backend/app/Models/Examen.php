@@ -24,6 +24,7 @@ class Examen extends Model
     ];
 
     protected $casts = [
+        'date' => 'datetime',
         'start_hour' => 'float',
         'end_hour' => 'float',
         'validated' => 'boolean',
@@ -57,5 +58,10 @@ class Examen extends Model
     public function surveillances()
     {
         return $this->hasMany(Surveillance::class, 'exam_id');
+    }
+
+    public function examReports()
+    {
+        return $this->hasMany(ExamReport::class);
     }
 }

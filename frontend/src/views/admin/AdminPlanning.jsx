@@ -20,12 +20,12 @@ import Popup from '../../components/containers/Popup';
 import IconButton from '../../components/buttons/IconButton';
 import Profile from '../../components/containers/profile';
 import SelectInputImage from '../../components/input/SelectInputImage';
-import { Exams, Rooms, Modules, Teachers, Groups, Surveillance, Students } from '../../API'
+import { Exams, Rooms, Modules, Teachers, Groups, Surveillance, Students, Specialities } from '../../API'
 import { authCheck } from '../../API/auth';
 import * as Users from '../../API/users'
 import * as ConflictsAPI from '../../API/conflicts'
 import { useNotify } from '../../components/loaders/NotificationContext';
-import { exportExamsToPDF, generateExamPDF } from '../../utils/examSchedulePDF';
+import { exportExamsToPDF } from '../../utils/examSchedulePDF';
 
 const AdminPlanning = () => {
   document.title = "Unitime - Planning";
@@ -42,11 +42,13 @@ const AdminPlanning = () => {
   });
 
   const [userDepartment, setUserDepartment] = useState('Computer Science')
-  const [examsList, setExamsList] = useState([])
+  const [userRole, setUserRole] = useState('')
   const [roomsList, setRoomsList] = useState([])
+  const [examsList , setExamsList ] = useState([])
   const [modulesList, setModulesList] = useState([])
   const [teachersList, setTeachersList] = useState([])
   const [groupsList, setGroupsList] = useState([])
+  const [specialitiesList, setSpecialitiesList] = useState([])
   const [calendarLoading, setCalendarLoading] = useState(true)
   const [dataLoading, setDataLoading] = useState(false)
 
@@ -91,7 +93,9 @@ const AdminPlanning = () => {
         const data = await authCheck();
         const user = data?.user || data || {};
         const dept = user.department?.name || user.department || 'Computer Science';
+        const role = user.role || '';
         setUserDepartment(dept);
+        setUserRole(role);
         // set newbie flag to false
         if (user.newbie) {
           try { await Users.setNewbie(user.id, false) } catch(e){ console.debug('setNewbie failed', e) }
@@ -106,13 +110,14 @@ const AdminPlanning = () => {
   const loadAllData = useCallback(async () => {
     setDataLoading(true)
     try {
-      const [examsResp, roomsResp, modulesResp, teachersResp, groupsResp, studentsResp] = await Promise.all([
+      const [examsResp, roomsResp, modulesResp, teachersResp, groupsResp, studentsResp, specialitiesResp] = await Promise.all([
         Exams.getAll(),
         Rooms.getAll(),
         Modules.getAll(),
         Teachers.getAll(),
         Groups.getAll(),
-        Students.getAll()
+        Students.getAll(),
+        Specialities.getAll()
       ])
 
       const exams = Array.isArray(examsResp) ? examsResp : (examsResp.exams || [])
@@ -121,18 +126,28 @@ const AdminPlanning = () => {
       const teachers = Array.isArray(teachersResp) ? teachersResp : (teachersResp.teachers || [])
       const groups = Array.isArray(groupsResp) ? groupsResp : (groupsResp.groups || [])
       const students = Array.isArray(studentsResp) ? studentsResp : (studentsResp.students || [])
+      const specialities = Array.isArray(specialitiesResp) ? specialitiesResp : (specialitiesResp.data || specialitiesResp.items || specialitiesResp.specialities || [])
 
-      // Add speciality from first student of each group
-      const groupsWithSpeciality = groups.map(g => {
+      // Add speciality, level, and short name to groups
+      const groupsWithDetails = groups.map(g => {
         const firstStudent = students.find(s => s.group_code === g.code)
-        return { ...g, speciality: firstStudent?.speciality || 'N/A' }
+        const specialityName = firstStudent?.speciality || 'N/A'
+        const spec = specialities.find(s => s.name === specialityName)
+        const shortName = spec?.short_name || specialityName
+        return { 
+          ...g, 
+          speciality: specialityName, 
+          level: firstStudent?.level || 'N/A',
+          shortName: shortName
+        }
       })
 
       setExamsList(exams)
       setRoomsList(rooms)
       setModulesList(modules)
       setTeachersList(teachers)
-      setGroupsList(groupsWithSpeciality)
+      setGroupsList(groupsWithDetails)
+      setSpecialitiesList(specialities)
       setCalendarLoading(false)
     } catch (err) {
       console.error('Failed to load data', err)
@@ -164,8 +179,12 @@ const AdminPlanning = () => {
   const transformExamForCalendar = (exam) => {
     const startDate = new Date(exam.date)
     const group = groupsList.find(g => g.code === exam.group_code)
+    const year = startDate.getFullYear();
+    const month = String(startDate.getMonth() + 1).padStart(2, '0');
+    const day = String(startDate.getDate()).padStart(2, '0');
+    const dayKey = `${year}-${month}-${day}`;
     return {
-      day: startDate.toISOString().split('T')[0],
+      day: dayKey,
       startHour: parseFloat(exam.start_hour),
       endHour: parseFloat(exam.end_hour),
       type: exam.exam_type || 'Exam',
@@ -416,24 +435,24 @@ const AdminPlanning = () => {
       }
     }
     
-    setConflicts(detectedConflicts)
+    return detectedConflicts
   }, [examsList])
 
   // Run conflict detection whenever exam list changes
   useEffect(() => {
-    detectAllConflicts()
+    const detected = detectAllConflicts()
+    setConflicts(detected)
   }, [detectAllConflicts])
 
   const handleCheckConflicts = async () => {
     try {
       // Run local detection to populate conflicts list
-      detectAllConflicts()
+      const detected = detectAllConflicts()
+      setConflicts(detected)
 
-      // Fetch backend stats
-      const stats = await ConflictsAPI.getStats()
-      const total = stats?.total_conflicts || 0
-      const roomConflicts = stats?.room_conflicts || 0
-      const groupConflicts = stats?.group_conflicts || 0
+      const total = detected.length
+      const roomConflicts = detected.filter(c => c.type === 'room').length
+      const groupConflicts = detected.filter(c => c.type === 'group').length
 
       if (total === 0) {
         notify('success', 'No conflicts detected! ✓')
@@ -467,30 +486,6 @@ const AdminPlanning = () => {
     }
   }
 
-  const handlePublish = async () => {
-    try {
-      const filteredExams = filterEvents(examsList, { 
-        room: filterRoom,
-        level: filterLevel,
-        examType: filterExamType
-      })
-      
-      if (filteredExams.length === 0) {
-        notify('warning', 'No exams to publish after filtering')
-        return
-      }
-
-      const doc = generateExamPDF(filteredExams, userDepartment, filterStartdate, filterEnddate)
-      const pdfBase64 = doc.output('datauristring')
-      
-      await Exams.sendExamSchedule(pdfBase64)
-      notify('success', 'Exam schedule published successfully')
-    } catch (err) {
-      console.error('Failed to publish PDF', err)
-      notify('error', 'Failed to publish exam schedule')
-    }
-  }
-
   return (
     <div className={`${styles.modulesLayout} full scrollbar`}>
       <Popup isOpen={addExamModal} blur={2} bg='rgba(0,0,0,0.2)' onClose={()=>{ setAddExamModal(false); setEditingExam(null); resetExamForm() }}>
@@ -511,7 +506,7 @@ const AdminPlanning = () => {
               <SelectInput
                 label='Group'
                 placeholder='Choose group'
-                options={groupsList.map(g => ({ value: g.code, text: `${g.speciality} - ${g.name}` }))}
+                options={groupsList.map(g => ({ value: g.code, text: `${g.level} - ${g.shortName} - ${g.name}` }))}
                 onChange={(val) => setExamFormData(prev => ({ ...prev, group_code: val || '' }))}
                 value={examFormData.group_code}
               />
@@ -640,6 +635,7 @@ const AdminPlanning = () => {
                 <>
                   <Text text='Teacher' size='var(--text-m)' align='left' />
                   <SelectInputImage
+                    w='100%'
                     options={filteredTeachers.map(t => ({ value: t.number, text: `${t.fname} ${t.lname}`, img: t.image }))}
                     onChange={(val) => setSelectedTeacher(val || '')}
                     value={selectedTeacher}
@@ -832,9 +828,9 @@ const AdminPlanning = () => {
                 <SecondaryButton text='Check conflicts' onClick={handleCheckConflicts} />
               </div>
               <div className={`flex a-center h100 gap wrap`}>
-                <SecondaryButton text='Send Email' />
+                <SecondaryButton authorized={userRole === 'admin'} text='Send Email' />
                 <SecondaryButton text='Export PDF' onClick={handleExportPDF} />
-                <Button text='Publish' onClick={handlePublish} mrg='0 0 0 0.25em'/>
+                <Button authorized={userRole === 'admin'} text='Publish' mrg='0 0 0 0.25em'/>
               </div>
             </div>
             <Float top="1em" right="1em" css={`${styles.plnn4p} flex column gap`}>

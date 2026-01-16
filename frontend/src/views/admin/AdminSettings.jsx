@@ -39,39 +39,48 @@ const maxOdd = (n) => {
 };
 */}
 
-const General = ({settings, setSettings, semesters, onSave}) => {
+const General = ({settings, setSettings, semesters, onSave, userRole}) => {
   const semOptions = (semesters || []).map(s => ({ value: s.id, text: `${s.name} (${s.academic_year?.start_year || ''}-${s.academic_year?.end_year || ''})` }))
-  return <>
-    <div className="flex row a-end gap">
-      <SelectInput label='Current Semester' options={semOptions.length ? semOptions : [{ value: '', text: 'Select semester' }]} value={settings.semester_id || ''} onChange={(v) => { setSettings({...settings, semester_id: v}); onSave && onSave({ semester_id: v }) }} />
-      <Text align='left' text='Defines the semester used for modules, groups, and exams.' size='var(--text-m)'/>
-    </div>
-    <Text align='left' text='Period' size='var(--text-m)' color='var(--text-low)' mrg='1em 0 0 0'/>
-    <div className="flex column gap w100">
+  return (
+  userRole === 'admin' ? (
+    <>
+      <div className="flex row a-end gap">
+        <SelectInput label='Current Semester' options={semOptions.length ? semOptions : [{ value: '', text: 'Select semester' }]} value={settings.semester_id || ''} onChange={(v) => { setSettings({...settings, semester_id: v}); onSave && onSave({ semester_id: v }) }} />
+        <Text align='left' text='Defines the semester used for modules, groups, and exams.' size='var(--text-m)'/>
+      </div>
+      <Text align='left' text='Period' size='var(--text-m)' color='var(--text-low)' mrg='1em 0 0 0'/>
+      <div className="flex column gap w100">
+          <div className="flex row gap a-end">
+          <div className="flex row a-center" style={{textWrap: 'nowrap'}}>
+            <Text mrg='0 0 0.5em 0' align='left' text='Semester 1' size='var(--text-m)' color='var(--text-low)' />
+          </div>
+          <TextInput width='30%' label="Start Date" type='datetime-local' value={settings.s1_start || ''} onChange={(e) => { setSettings({...settings, s1_start: e.target.value}); onSave && onSave({ s1_start: e.target.value }) }} />
+          <TextInput width='30%' label="End Date" type='datetime-local' value={settings.s1_end || ''} onChange={(e) => { setSettings({...settings, s1_end: e.target.value}); onSave && onSave({ s1_end: e.target.value }) }} />
+        </div>
         <div className="flex row gap a-end">
-        <div className="flex row a-center" style={{textWrap: 'nowrap'}}>
-          <Text mrg='0 0 0.5em 0' align='left' text='Semester 1' size='var(--text-m)' color='var(--text-low)' />
+          <div className="flex row a-center" style={{textWrap: 'nowrap'}}>
+            <Text mrg='0 0 0.5em 0' align='left' text='Semester 2' size='var(--text-m)' color='var(--text-low)' />
+          </div>
+          <TextInput width='30%' label="Start Date" type='datetime-local' value={settings.s2_start || ''} onChange={(e) => { setSettings({...settings, s2_start: e.target.value}); onSave && onSave({ s2_start: e.target.value }) }} />
+          <TextInput width='30%' label="End Date" type='datetime-local' value={settings.s2_end || ''} onChange={(e) => { setSettings({...settings, s2_end: e.target.value}); onSave && onSave({ s2_end: e.target.value }) }} />
         </div>
-        <TextInput width='30%' label="Start Date" type='datetime-local' value={settings.s1_start || ''} onChange={(e) => { setSettings({...settings, s1_start: e.target.value}); onSave && onSave({ s1_start: e.target.value }) }} />
-        <TextInput width='30%' label="End Date" type='datetime-local' value={settings.s1_end || ''} onChange={(e) => { setSettings({...settings, s1_end: e.target.value}); onSave && onSave({ s1_end: e.target.value }) }} />
       </div>
-      <div className="flex row gap a-end">
-        <div className="flex row a-center" style={{textWrap: 'nowrap'}}>
-          <Text mrg='0 0 0.5em 0' align='left' text='Semester 2' size='var(--text-m)' color='var(--text-low)' />
+      <Text align='left' text='Export / Backup' size='var(--text-m)' color='var(--text-low)' mrg='1em 0 0 0'/>
+      <div className="flex column gap w100">
+        <div className="flex row gap">
+          <PrimaryButton text='Export Database' onClick={() => { /* implement export */ }} />
+          <SecondaryButton text='Backup Now' onClick={() => { /* implement backup */ }} />
         </div>
-        <TextInput width='30%' label="Start Date" type='datetime-local' value={settings.s2_start || ''} onChange={(e) => { setSettings({...settings, s2_start: e.target.value}); onSave && onSave({ s2_start: e.target.value }) }} />
-        <TextInput width='30%' label="End Date" type='datetime-local' value={settings.s2_end || ''} onChange={(e) => { setSettings({...settings, s2_end: e.target.value}); onSave && onSave({ s2_end: e.target.value }) }} />
       </div>
-    </div>
-    <Text align='left' text='Export / Backup' size='var(--text-m)' color='var(--text-low)' mrg='1em 0 0 0'/>
-    <div className="flex column gap w100">
-      <div className="flex row gap">
-        <PrimaryButton text='Export Database' onClick={() => { /* implement export */ }} />
-        <SecondaryButton text='Backup Now' onClick={() => { /* implement backup */ }} />
-      </div>
-    </div>
-  </>
+    </>
+  ) : (
+  <div className='flex full center'>
+    <Text text='Not Authorized' align='center' size='var(--text-m)' color='var(--text-low)' />
+  </div>
+  )
+)
 }
+
 const Appearance = ({currentColor, currentTheme, changeColor, changeTheme}) => {
   return <>
     <div className='flex column j-center'>
@@ -299,7 +308,8 @@ const AdminSettings = () => {
   const [roomModalLoading, setRoomModalLoading] = useState(false);
   const [userId, setUserId] = useState(null);
   const fileRef = useRef(null);
-  const [currentColor, setCurrentColor] = useState(getComputedStyle(root).getPropertyValue('--color-main').trim());
+  const [userRole, setUserRole] = useState('');
+  const [currentColor, setCurrentColor] = useState('#F1504A');
   const [currentTheme, setCurrentTheme] = useState('system');
 
   useEffect(() => {
@@ -346,6 +356,7 @@ const AdminSettings = () => {
 
         if (!mounted) return;
         if (user && user.id) setUserId(user.id);
+        if (user && user.role) setUserRole(user.role);
 
         const normalizeProfile = (p) => {
           if (!p) return {};
@@ -512,30 +523,29 @@ const AdminSettings = () => {
     saveSettings({ theme_color: color });
   }
 
-  // Auto-save with field mapping: local keys -> server keys
-    const changeDepartment = async (deptId) => {
-      setProfileLoading(true);
+  const changeDepartment = async (deptId) => {
+    setProfileLoading(true);
+    try {
+      const deptName = departments.find(d => d.id === deptId)?.name || '';
+      setProfile({ ...profile, department_id: deptId, department: { id: deptId, name: deptName } });
+      await Users.updateProfile(userId, { department_id: deptId });
+      notify && notify('success', 'Department updated');
+      // Refresh department general setting after switching
       try {
-        const deptName = departments.find(d => d.id === deptId)?.name || '';
-        setProfile({ ...profile, department_id: deptId, department: { id: deptId, name: deptName } });
-        await Users.updateProfile(userId, { department_id: deptId });
-        notify && notify('success', 'Department updated');
-        // Refresh department general setting after switching
-        try {
-          const gres = await GeneralSettingsAPI.getByDepartment(deptId);
-          const g = (gres && (gres.general_setting || gres)) ? (gres.general_setting || gres) : null;
-          setDeptGeneral(g);
-        } catch (err) {
-          console.debug('Failed to refresh department general setting', err);
-        }
-        setEditingDept(false);
+        const gres = await GeneralSettingsAPI.getByDepartment(deptId);
+        const g = (gres && (gres.general_setting || gres)) ? (gres.general_setting || gres) : null;
+        setDeptGeneral(g);
       } catch (err) {
-        console.error('Failed to update department', err);
-        notify && notify('error', 'Failed to update department');
-      } finally {
-        setProfileLoading(false);
+        console.debug('Failed to refresh department general setting', err);
       }
+      setEditingDept(false);
+    } catch (err) {
+      console.error('Failed to update department', err);
+      notify && notify('error', 'Failed to update department');
+    } finally {
+      setProfileLoading(false);
     }
+  }
 
   const saveSettings = async (patch) => {
     const merged = { ...(settings || {}), ...patch };
@@ -650,7 +660,6 @@ const AdminSettings = () => {
     }
   };
 
-
   return (
     <div className={`${styles.settingsLayout} full scrollbar pdv`}>
       <div className={`${styles.settingsHeader}`} style={{paddingBottom:"0.5em "}}>
@@ -674,7 +683,7 @@ const AdminSettings = () => {
               <LineBreak mrg='0.625em 0' w='40%' h='3px' color='var(--trans-grey)'/>
               <div className="flex column pdt gap w100">
                 {currentSubpage == 'Account' && <Account settings={settings} setSettings={setSettings} profile={profile} profileLoading={profileLoading} fileRef={fileRef} handleImageChange={handleImageChange} handleProfileChange={handleProfileChange} handleSaveProfile={handleSaveProfile} />}
-                {currentSubpage == 'General' && <General settings={settings} setSettings={setSettings} semesters={semesters} academicYears={academicYears} onSave={saveSettings} />}
+                {currentSubpage == 'General' && <General settings={settings} setSettings={setSettings} semesters={semesters} academicYears={academicYears} onSave={saveSettings} userRole={userRole} />}
                 {currentSubpage == 'Security' && <Security settings={settings} saveSettings={saveSettings} />}
                 {currentSubpage == 'Appearance' && <Appearance currentColor={currentColor} currentTheme={currentTheme} changeColor={changeColor} changeTheme={changeTheme} />}
                 {currentSubpage == 'Notifications' && <Notifications settings={settings} saveSettings={saveSettings} />}
@@ -683,37 +692,56 @@ const AdminSettings = () => {
             </div>}
         </div>
         <div className={`${styles.settingsSide} flex column gap full`}>
-          <div className={`${styles.settingsRect} full ${settingsLoading && "shimmer"} gsap-y ${styles.dashBGC}`}>
-            {!settingsLoading && <div className="flex full column gap">
-                <div style={{cursor: 'pointer'}} onClick={() => setEditingDept(true)}>
-                  <TextInput readOnly val={profile?.department?.name || ''} label='Department Name' editable = {true} />
-                </div>
-              <div className="flex row a-center gap" style={{cursor: 'pointer'}} onClick={() => {
-                  const init = { semester_id: deptGeneral?.semester_id || deptGeneral?.semester?.id || settings.semester_id || null, academic_year_id: deptGeneral?.academic_year_id || deptGeneral?.academic_year?.id || settings.academic_year_id || null };
-                  setModalDeptGeneral(init);
-                  setEditingDeptGeneral(true);
-                }}>
+          {userRole === 'admin' ? (
+            <>
+              <div className={`${styles.settingsRect} full ${settingsLoading && "shimmer"} gsap-y ${styles.dashBGC}`}>
+                {!settingsLoading && <div className="flex full column gap">
+                    <div style={{cursor: 'pointer'}} onClick={() => setEditingDept(true)}>
+                      <TextInput readOnly val={profile?.department?.name || ''} label='Department Name' editable = {true} />
+                    </div>
+                  <div className="flex row a-center gap" style={{cursor: 'pointer'}} onClick={() => {
+                      const init = { semester_id: deptGeneral?.semester_id || deptGeneral?.semester?.id || settings.semester_id || null, academic_year_id: deptGeneral?.academic_year_id || deptGeneral?.academic_year?.id || settings.academic_year_id || null };
+                      setModalDeptGeneral(init);
+                      setEditingDeptGeneral(true);
+                    }}>
+                  </div>
+                  <div className="flex row a-center gap" style={{cursor: 'pointer'}} onClick={() => {
+                      const init = { semester_id: deptGeneral?.semester_id || deptGeneral?.semester?.id || settings.semester_id || null, academic_year_id: deptGeneral?.academic_year_id || deptGeneral?.academic_year?.id || settings.academic_year_id || null };
+                      setModalDeptGeneral(init);
+                      setEditingDeptGeneral(true);
+                    }}>
+                    <TextInput readOnly val={(deptGeneral?.academic_year && `${deptGeneral.academic_year.start_year} - ${deptGeneral.academic_year.end_year}`) || (academicYears.find(a => a.id === settings.academic_year_id) ? `${academicYears.find(a => a.id === settings.academic_year_id).start_year} - ${academicYears.find(a => a.id === settings.academic_year_id).end_year}` : '')} label='Academic Year' editable={true} />
+                  </div>
+                </div>}
               </div>
-              <div className="flex row a-center gap" style={{cursor: 'pointer'}} onClick={() => {
-                  const init = { semester_id: deptGeneral?.semester_id || deptGeneral?.semester?.id || settings.semester_id || null, academic_year_id: deptGeneral?.academic_year_id || deptGeneral?.academic_year?.id || settings.academic_year_id || null };
-                  setModalDeptGeneral(init);
-                  setEditingDeptGeneral(true);
-                }}>
-                <TextInput readOnly val={(deptGeneral?.academic_year && `${deptGeneral.academic_year.start_year} - ${deptGeneral.academic_year.end_year}`) || (academicYears.find(a => a.id === settings.academic_year_id) ? `${academicYears.find(a => a.id === settings.academic_year_id).start_year} - ${academicYears.find(a => a.id === settings.academic_year_id).end_year}` : '')} label='Academic Year' editable={true} />
+              <div className={`${styles.settingsCtr} full ${settingsLoading && "shimmer"} gsap-y ${styles.dashBGC}`}>
+                  {!settingsLoading && <div className="flex full column gap">
+                    <Text text='System maintenance' align='left' size='var(--text-m)' color='var(--text-low)'/>
+                    <div className="flex column gap center w100">
+                      <DangerAction css="w100" title='Reset all schedules (exams + monitoring)' onAction={() => {}} />
+                      <DangerAction css="w100" title='Clean up orphaned groups' onAction={() => {}} />
+                      <DangerAction css="w100" title='Clear old notifications' onAction={() => {}} />
+                      <DangerAction css="w100" title='Clear old validation requests' onAction={() => {}} />
+                    </div>
+                  </div>}
               </div>
-            </div>}
-          </div>
-          <div className={`${styles.settingsCtr} full ${settingsLoading && "shimmer"} gsap-y ${styles.dashBGC}`}>
-              {!settingsLoading && <div className="flex full column gap">
-                <Text text='System maintenance' align='left' size='var(--text-m)' color='var(--text-low)'/>
-                <div className="flex column gap center w100">
-                  <DangerAction css="w100" title='Reset all schedules (exams + monitoring)' onAction={() => {}} />
-                  <DangerAction css="w100" title='Clean up orphaned groups' onAction={() => {}} />
-                  <DangerAction css="w100" title='Clear old notifications' onAction={() => {}} />
-                  <DangerAction css="w100" title='Clear old validation requests' onAction={() => {}} />
+            </>
+          ) : (
+            <>
+              <div className={`${styles.settingsRect} full gsap-y ${styles.dashBGC}`}>
+                <div className='flex column full center'>
+                  <i className="fa-solid fa-lock text-m" style={{color:"var(--text-low)"}}/>
+                  <Text text='Not Authorized' align='center' size='var(--text-m)' color='var(--text-low)' />
                 </div>
-              </div>}
-          </div>
+              </div>
+              <div className={`${styles.settingsCtr} full gsap-y ${styles.dashBGC}`}>
+                <div className='flex column full center'>
+                  <i className="fa-solid fa-lock text-m" style={{color:"var(--text-low)"}}/>
+                  <Text text='Not Authorized' align='center' size='var(--text-m)' color='var(--text-low)' />
+                </div>
+              </div>
+            </>
+          )}
         </div>
     
           <Popup isOpen={editingDept} blur={2} bg='rgba(0,0,0,0.2)' onClose={() => setEditingDept(false)}>

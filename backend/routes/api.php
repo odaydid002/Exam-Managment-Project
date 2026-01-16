@@ -146,7 +146,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/exams/edit/{id}', [ExamenController::class, 'update']);
     Route::put('/exams/{id}/validate', [ExamenController::class, 'validateExam']);
     Route::delete('/exams/delete/{id}', [ExamenController::class, 'destroy']);
-    Route::post('/exams/send-schedule', [ExamenController::class, 'sendExamSchedule']);
 
     // Surveillance
     Route::get('/surveillance/exam/{examId}', [SurveillanceController::class, 'getByExam']);

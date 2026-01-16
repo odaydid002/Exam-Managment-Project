@@ -388,8 +388,8 @@ const AdminModules = () => {
                         text: `${teacher.fname} ${teacher.lname}`,
                         img: teacher.image
                       }))}
-                      onChange={(index) => {
-                        setSelectedTeacher(teachersList[index])
+                      onChange={(val) => {
+                        setSelectedTeacher(teachersList.find(t => t.number === val))
                       }}
                     />
                   </div>

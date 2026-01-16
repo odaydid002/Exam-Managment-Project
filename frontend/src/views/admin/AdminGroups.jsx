@@ -73,7 +73,7 @@ const AdminGroups = () => {
   const [formData, setFormData] = useState({ code: '', name: '' })
   const [generateModal, setGenerateModal] = useState(false)
   const [generateLoading, setGenerateLoading] = useState(false)
-  const [generateFormData, setGenerateFormData] = useState({ speciality: null, level: '' })
+  const [generateFormData, setGenerateFormData] = useState({ speciality: null, level: '', groupSize: 30 })
   const [delegateModal, setDelegateModal] = useState(false)
   const [delegateLoading, setDelegateLoading] = useState(false)
   const [delegateGroup, setDelegateGroup] = useState(null)
@@ -332,8 +332,8 @@ const AdminGroups = () => {
   }
 
   const generateGroups = async () => {
-    if (!generateFormData.speciality || !generateFormData.level) {
-      notify('error', 'Please select speciality and level')
+    if (!generateFormData.speciality || !generateFormData.level || !generateFormData.groupSize || generateFormData.groupSize < 1) {
+      notify('error', 'Please select speciality, level, and enter a valid group size')
       return
     }
 
@@ -353,8 +353,8 @@ const AdminGroups = () => {
       }
 
       const groupsOfStudents = []
-      for (let i = 0; i < students.length; i += 30) {
-        groupsOfStudents.push(students.slice(i, i + 30))
+      for (let i = 0; i < students.length; i += generateFormData.groupSize) {
+        groupsOfStudents.push(students.slice(i, i + generateFormData.groupSize))
       }
 
       // Sort each group alphabetically
@@ -444,7 +444,7 @@ const AdminGroups = () => {
 
       notify('success', `Generated ${successCount} groups successfully`)
       setGenerateModal(false)
-      setGenerateFormData({ speciality: null, level: '' })
+      setGenerateFormData({ speciality: null, level: '', groupSize: 30 })
       await loadGroups()
     } catch (err) {
       console.error('Failed to generate groups', err)
@@ -602,14 +602,14 @@ const AdminGroups = () => {
             onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
           />
 
-          <Popup isOpen={generateModal} blur={2} bg='rgba(0,0,0,0.2)' onClose={()=>{ setGenerateModal(false); setGenerateFormData({ speciality: null, level: '' }) }}>
+          <Popup isOpen={generateModal} blur={2} bg='rgba(0,0,0,0.2)' onClose={()=>{ setGenerateModal(false); setGenerateFormData({ speciality: null, level: '', groupSize: 30 }) }}>
             <div className={`${styles.dashBGC}`} style={{ maxWidth: '600px', padding: '2em' }}>
               <div className="flex row a-center j-spacebet">
                 <Text text='Auto Generate Groups' size='var(--text-l)' color='var(--text)' align='left' />
                 <IconButton icon='fa-solid fa-xmark' onClick={()=>{ setGenerateModal(false) }} />
               </div>
               <div className="flex column gap mrv">
-                <Text text='This will automatically divide students into groups of 30, create sections (A1, A2, B1, etc.), and organize groups alphabetically. Each 4 groups will create a new section.' size='var(--text-s)' color='var(--text-low)' align='left' />
+                <Text text='This will automatically divide students into groups of the specified size, create sections (A1, A2, B1, etc.), and organize groups alphabetically. Each 4 groups will create a new section.' size='var(--text-s)' color='var(--text-low)' align='left' />
                 <div className="flex row a-center gap">
                   <SelectInput
                     bg='var(--bg)'
@@ -626,6 +626,15 @@ const AdminGroups = () => {
                     options={levelsList.length > 0 ? levelsList.map(l => ({ value: l, text: l })) : [{ value: '', text: 'Loading...' }]}
                     onChange={(val) => { setGenerateFormData(prev => ({ ...prev, level: val || '' })) }}
                     value={generateFormData.level}
+                  />
+                  <TextInput
+                    bg='var(--bg)'
+                    label='Group Size'
+                    placeholder='30'
+                    type='number'
+                    min='1'
+                    value={generateFormData.groupSize}
+                    onchange={(e) => { setGenerateFormData(prev => ({ ...prev, groupSize: parseInt(e.target.value) || 30 })) }}
                   />
                 </div>
                 <div className='flex row a-center gap pdt' style={{ marginTop: '1em' }}>
@@ -666,7 +675,7 @@ const AdminGroups = () => {
           <Text align='left' text='Groups List' size='var(--text-l)' />
           <div className="flex row a-center gap mrla">
             <div><PrimaryButton text='Add Group' icon='fa-solid fa-plus' onClick={()=>{ setEditingGroup(null); setFormData({ code: '', name: '' }); setSelectedSpeciality(null); setSelectedSection(null); setSelectedLevel(''); setStudentsList([]); setSelectedStudents([]); setAddModal(true) }} css='h4p'/></div>
-            <PrimaryButton text='Generate' icon='fa-solid fa-wand-magic-sparkles' onClick={()=>{ setGenerateModal(true); setGenerateFormData({ speciality: null, level: '' }) }} css='h4p'/>
+            <PrimaryButton text='Generate' icon='fa-solid fa-wand-magic-sparkles' onClick={()=>{ setGenerateModal(true); setGenerateFormData({ speciality: null, level: '', groupSize: 30 }) }} css='h4p'/>
             <SecondaryButton text='Export' isLoading={exportLoading} onClick={generatePDF} css='h4p'/>
           </div>
         </div>

@@ -543,6 +543,16 @@ const AdminTeachers = () => {
                     return
                   }
 
+                  // Filter out empty rows
+                  const filteredRaw = raw.filter(row => 
+                    Object.values(row).some(val => val != null && val !== '' && val !== 0)
+                  )
+
+                  if (!filteredRaw.length) {
+                    notify('error', 'No valid data found in the imported file')
+                    return
+                  }
+
 
                   let freshSpecialities = []
                   try {
@@ -560,7 +570,7 @@ const AdminTeachers = () => {
                     }
                   })
 
-                  const transformed = raw.map(row => {
+                  const transformed = filteredRaw.map(row => {
                     const r = { ...row }
                     
                     // Normalize keys
@@ -615,6 +625,11 @@ const AdminTeachers = () => {
                       }
                       delete r.speciality
                     }
+
+                    // Ensure password is string
+                    if (r.password != null) {
+                      r.password = String(r.password);
+                    }
                     
                     return r
                   })
@@ -624,48 +639,21 @@ const AdminTeachers = () => {
                     .map((r, idx) => `Row ${idx + 1}`)
 
 
-                  const normalizeRow = (row) => {
-                    const normalized = {}
-                    const fieldMap = {
-                      'adj': ['adj', 'title', 'salutation'],
-                      'fname': ['fname', 'first name', 'firstname', 'first_name', 'firstname'],
-                      'lname': ['lname', 'last name', 'lastname', 'last_name', 'lastname'],
-                      'number': ['number', 'teacher number', 'id', 'code'],
-                      'image': ['image', 'img', 'photo', 'picture'],
-                      'position': ['position', 'job title', 'job_title'],
-                      'department': ['department', 'departement', 'dept'],
-                      'speciality': ['speciality', 'speciality_id', 'specialty'],
-                      'phone': ['phone', 'phone number', 'phone_number'],
-                      'email': ['email', 'e-mail'],
-                      'password': ['password']
-                    }
+                  const validTeachers = finalTransformed.filter(r => r.fname && r.lname && r.number)
 
-                    Object.entries(fieldMap).forEach(([apiField, possibleNames]) => {
-                      const rowKeyLower = Object.keys(row).find(key => 
-                        possibleNames.includes(String(key).toLowerCase().trim())
-                      )
-                      if (rowKeyLower && row[rowKeyLower] != null) {
-                        normalized[apiField] = row[rowKeyLower]
-                      }
-                    })
-
-                    if (normalized.number) {
-                      normalized.password = String(normalized.number)
-                    }
-
-                    if (normalized.speciality_id != null) {
-                      const idNum = parseInt(normalized.speciality_id, 10)
-                      normalized.speciality_id = isNaN(idNum) ? null : idNum
-                    }
-
-                    return normalized
+                  if (!validTeachers.length) {
+                    notify('error', 'No valid teacher records found after processing')
+                    return
                   }
 
-                  const normalized = transformed.map(normalizeRow)
+                  const skipped = finalTransformed.length - validTeachers.length
+                  if (skipped > 0) {
+                    console.warn(`Skipped ${skipped} invalid rows`)
+                  }
 
                   setDialogLoading(true)
                   try {
-                    const payload = { teachers: finalTransformed }
+                    const payload = { teachers: validTeachers }
                     const response = await Teachers.bulkStore(payload)
                     if (unmapped && unmapped.length) {
                       notify('success', 'Teachers imported successfully')

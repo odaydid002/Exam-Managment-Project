@@ -17,6 +17,13 @@ export default function CalendarView({
     onEventSurveillance = () => {}
     , readOnly = false
 }) {
+    // Helper to get local date string YYYY-MM-DD
+    const getLocalDateString = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
     // Parse date string in local timezone (not UTC)
     const parseLocalDate = (dateStr) => {
         if (!dateStr) return null;
@@ -56,7 +63,8 @@ export default function CalendarView({
             days.push({
                 date: current.getDate(),
                 weekday: current.toLocaleDateString("en-US", { weekday: "long" }),
-                full: new Date(current)
+                full: new Date(current),
+                localDate: getLocalDateString(current)
             });
             current.setDate(current.getDate() + 1);
         }
@@ -159,7 +167,7 @@ export default function CalendarView({
                             <Text text={d.weekday} size="var(--text-m)" />
                         </div>
                         {(() => {
-                            const dayKey = d.full.toISOString().split("T")[0];
+                            const dayKey = d.localDate;
                             const dayEvents = eventsList.filter(ev => ev.day === dayKey);
 
                             return timeSlots.map((t, rowIndex) => {
@@ -167,9 +175,21 @@ export default function CalendarView({
 
                                 const events = dayEvents.filter(ev => slotTime === ev.startHour);
 
+                                // Sort events by start time, then by end time
+                                const sortedEvents = events.sort((a, b) => a.startHour - b.startHour || a.endHour - b.endHour);
+
+                                // Calculate vertical positions to stack them
+                                let currentTop = 0;
+                                const eventPositions = sortedEvents.map(ev => {
+                                    const height = (ev.endHour - ev.startHour) * HOUR_HEIGHT + 10;
+                                    const top = currentTop;
+                                    currentTop += height + 0; // no space between events
+                                    return { ...ev, calculatedHeight: height, calculatedTop: top };
+                                });
+
                                 return (
                                     <div key={t} className="day-cell w100 pos-rel">
-                                        {events.map((ev, i) => {
+                                        {eventPositions.map((ev, i) => {
                                             const zIndex = dayEvents.filter(e => e.startHour < ev.startHour).length + 1;
 
                                             // compute overlapping events for room and group
@@ -226,8 +246,8 @@ export default function CalendarView({
                                                     onMouseEnter={() => setHoveredEvent(`${ev.id}-${i}`)}
                                                     onMouseLeave={() => setHoveredEvent(null)}
                                                     style={{
-                                                        height: `${(ev.endHour - ev.startHour) * HOUR_HEIGHT + 10}px`,
-                                                        top: `${i * 20}px`,
+                                                        height: `${ev.calculatedHeight}px`,
+                                                        top: `${ev.calculatedTop}px`,
                                                         zIndex: zIndex,
                                                         border: borderStyle,
                                                         boxSizing: 'border-box',
