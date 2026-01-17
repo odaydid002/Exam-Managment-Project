@@ -22,7 +22,7 @@ import * as AcademicYearsAPI from '../../API/academicYears';
 import * as DepartmentsAPI from '../../API/departments';
 import * as RoomsAPI from '../../API/rooms';
 import { ListTable } from '../../components/tables/ListTable';
-import Profile from '../../components/containers/profile';
+import Profile from '../../components/containers/Profile';
 import Switchbox from '../../components/input/Switchbox';
 import Circle from '../../components/shapes/Circle';
 import {setMainColor, forceDark, forceLight} from './../../hooks/apearance';

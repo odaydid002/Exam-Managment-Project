@@ -11,7 +11,7 @@ import IconButton from '../../components/buttons/IconButton';
 import formatNumber from '../../hooks/formatNumber';
 import StaticsCard from '../../components/containers/StaticsCard';
 import Button from '../../components/buttons/Button';
-import Profile from '../../components/containers/profile';
+import Profile from '../../components/containers/Profile';
 import Popup from '../../components/containers/Popup';
 import TextInput from '../../components/input/TextInput';
 import SelectInputImage from '../../components/input/SelectInputImage';

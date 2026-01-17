@@ -17,7 +17,7 @@ import { Groups, Specialities, Students, Sections } from '../../API'
 import * as Users from '../../API/users'
 import { authCheck } from '../../API/auth'
 
-import Profile from '../../components/containers/profile';
+import Profile from '../../components/containers/Profile';
 import IconButton from '../../components/buttons/IconButton';
 import Button from '../../components/buttons/Button';
 import TextInput from '../../components/input/TextInput';

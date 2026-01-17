@@ -29,10 +29,6 @@ import Popup from '../../components/containers/Popup';
 import PrimaryButton from '../../components/buttons/PrimaryButton';
 import SecondaryButton from '../../components/buttons/SecondaryButton';
 
-import { driver } from "driver.js";
-import "driver.js/dist/driver.css";
-
-
 const RoomsList = ({
   classrooms = 0,
   labo = 0,

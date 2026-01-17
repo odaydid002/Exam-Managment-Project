@@ -7,8 +7,6 @@ import { get as getTeacher } from '../../API/teachers';
 import { getByTeacher as getModulesByTeacher } from '../../API/modules';
 // exam requests functionality removed (was using getTeacherExams)
 
-import formatDateTime from '../../hooks/formatDateTime';
-
 import Text from '../../components/text/Text';
 import ExamRequest from '../../components/containers/ExamRequest';
 import StaticsCard from '../../components/containers/StaticsCard';

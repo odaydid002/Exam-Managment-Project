@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom'
 import formatDateTime from '../../hooks/formatDateTime';
 
 import StaticCard2 from '../../components/containers/StaticCard2';
-import Profile from '../../components/containers/profile';
+import Profile from '../../components/containers/Profile';
 import Text from '../../components/text/Text';
 import Notification from '../../components/svg/Notification';
 import Eclipse from '../../components/shapes/Eclipse';

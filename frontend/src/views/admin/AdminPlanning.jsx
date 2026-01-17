@@ -18,7 +18,7 @@ import TextInput from '../../components/input/TextInput';
 import Checkbox from '../../components/input/Checkbox';
 import Popup from '../../components/containers/Popup';
 import IconButton from '../../components/buttons/IconButton';
-import Profile from '../../components/containers/profile';
+import Profile from '../../components/containers/Profile';
 import SelectInputImage from '../../components/input/SelectInputImage';
 import { Exams, Rooms, Modules, Teachers, Groups, Surveillance, Students, Specialities } from '../../API'
 import { authCheck } from '../../API/auth';
