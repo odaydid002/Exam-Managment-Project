@@ -1,31 +1,78 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { Outlet, useNavigate } from 'react-router-dom'
+import AdminSidebar from './AdminSidebar';
+import AdminAppbar from './AdminAppbar';
 
-import Logo from '../../components/images/Logo'
-import ExpendContainer from '../../components/containers/ExpendContainer'
-import NavElement from '../../components/navigators/NavElement'
-import NavElementButton from '../../components/navigators/NavElementButton'
-import NavSeparator from '../../components/navigators/NavSeparator'
-import { logout } from '../../API/auth'
-import { useNavigate } from 'react-router-dom'
+import styles from './admin.module.css';
 
-const AdminSidebar = () => {
+import {forceDark, forceLight, setMainColor} from "../../hooks/apearance"
+import { authCheck } from '../../API/auth'
+import * as Users from '../../API/users'
+
+const AdminLayout = () => {
+
+  document.title = "Unitime - Home";
+
   const navigate = useNavigate()
+  const [verified, setVerified] = useState(false)
+  useEffect(()=>{
+    let mounted = true
+    // apply default theme/color before auth (will be overridden if user settings exist)
+    const applyDefaultTheme = () => {
+      try {
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) forceDark(); else forceLight();
+        setMainColor('#F1504A');
+      } catch (e) { /* ignore */ }
+    }
+    applyDefaultTheme();
+    const check = async () => {
+      try {
+        const data = await authCheck()
+        if (!mounted) return
+        const user = data?.user || data || {}
+        const role = (user.role || user.type || user.role_name || '').toString().toLowerCase()
+        if (role === 'admin' || role === 'employee') {
+          setVerified(true)
+          // apply user settings (theme / color) if present
+          try {
+            const settingsResp = await Users.getSettings(user.id)
+            const srv = settingsResp && settingsResp.settings ? settingsResp.settings : settingsResp
+            const theme = srv?.theme || 'system'
+            const color = srv?.main_color || srv?.theme_color || null
+            if (theme === 'dark') forceDark()
+            else if (theme === 'light') forceLight()
+            if (color) setMainColor(color)
+          } catch (err) {
+            console.debug('users.getSettings failed', err)
+          }
+          return
+        }
+        if (role === 'teacher') navigate('/teacher')
+        else if (role === 'student') navigate('/student')
+        else navigate('/login')
+      } catch (err) {
+        if (!mounted) return
+        navigate('/login')
+      }
+    }
+    check()
+    return () => { mounted = false }
+  }, [navigate])
+
+  if (!verified) return null
+
   return (
-    <ExpendContainer w="var(--sidebar-width)" xw="var(--sidebar-expand)" h="calc(100vh - 2em)"  minHeight="600px" classes="pdv flex column bgc rounded-l ease-in-out mrg h4p">
-        <Logo w={35} h={35} mrg="0 0 1em 0"/>
-        <NavElement path="home/" title="Home" icon="fa-solid fa-house" mrt="0" hover/>
-        <NavSeparator title="Main"/>
-        <NavElement path="teachers/" title="Teachers" icon="fa-solid fa-user-tie" mrt="0" hover/>
-        <NavElement path="students/" title="Students" icon="fa-solid fa-user-graduate" mrt="0" hover/>
-        <NavElement path="modules/" title="Modules" icon="fa-solid fa-book" mrt="0" hover/>
-        <NavElement path="groups/" title="Groups" icon="fa-solid fa-users-line" mrt="0" hover/>
-        <NavElement path="planning/" title="Planning" icon="fa-solid fa-calendar-days" mrt="0" hover/>
-        <NavSeparator title="System"/>
-        <NavElementButton onClick={()=>{}} title="" icon="fa-solid fa-bell" mrt="0" hover/>
-        <NavElement path="settings/" title="" icon="fa-solid fa-gear" mrt="0" hover/>
-        <NavElementButton onClick={()=>{logout(); navigate('/login')}} title="" icon="fa-solid fa-arrow-right-from-bracket" mrt="0" hover/>
-    </ExpendContainer>
+    <section className={`flex full-view column4p overflow-h ${styles.section}`}>
+        <div className={`${styles.navigator}`}>
+          <AdminSidebar />
+          <AdminAppbar />
+        </div>
+        <div className={`full ${styles.content}`}>
+          <Outlet />
+        </div>
+    </section>
   )
 }
 
-export default AdminSidebar
+export default AdminLayout
