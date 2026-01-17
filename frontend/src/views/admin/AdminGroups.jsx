@@ -457,6 +457,21 @@ const AdminGroups = () => {
   const generatePDF = async () => {
     setExportLoading(true);
     try {
+      // Load the logo images
+      const img = new Image();
+      img.src = '/images/logo.png';
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
+      const univImg = new Image();
+      univImg.src = '/images/univ.png';
+      await new Promise((resolve, reject) => {
+        univImg.onload = resolve;
+        univImg.onerror = reject;
+      });
+
       const doc = new jsPDF();
       let first = true;
 
@@ -504,6 +519,14 @@ const AdminGroups = () => {
           theme: 'grid',
           styles: { fontSize: 8 },
           headStyles: { fillColor: [41, 128, 185] },
+          didDrawPage: (data) => {
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const logoWidth = 10;
+            const logoHeight = 10;
+            const margin = 5;
+            doc.addImage(img, 'PNG', pageWidth - logoWidth - margin, margin, logoWidth, logoHeight);
+            doc.addImage(univImg, 'PNG', margin, margin, logoWidth, logoHeight);
+          }
         });
       }
 
