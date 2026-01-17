@@ -354,11 +354,42 @@ const AdminPlanning = () => {
     })
   }
 
-  const handleConflict = (event, dayKey) => {
+  const handleConflict = (event, dayKey, conflictData) => {
     setConflicts(prev => {
-      const exists = prev.some(c => c.room === event.room && c.day === dayKey && c.startHour === event.startHour)
-      if (!exists) {
-        return [...prev, { room: event.room, day: dayKey, startHour: event.startHour, type: 'room' }]
+      // Use the conflict data from calendar if available
+      if (conflictData && conflictData.type) {
+        const description = conflictData.type === 'room' 
+          ? `Room conflict: ${event.room} has overlapping exams`
+          : `Group conflict: ${event.group} has overlapping exams`
+        
+        const newConflict = {
+          day: dayKey,
+          startHour: event.startHour,
+          type: conflictData.type,
+          description: description,
+          ...(conflictData.type === 'group' && { group: event.group })
+        }
+        
+        const exists = prev.some(c => 
+          c.day === newConflict.day && 
+          c.type === newConflict.type && 
+          c.description === newConflict.description
+        )
+        if (!exists) {
+          return [...prev, newConflict]
+        }
+      } else {
+        // Fallback to old logic
+        const exists = prev.some(c => c.room === event.room && c.day === dayKey && c.startHour === event.startHour)
+        if (!exists) {
+          return [...prev, { 
+            room: event.room, 
+            day: dayKey, 
+            startHour: event.startHour, 
+            type: 'room',
+            description: `Room conflict: ${event.room} has overlapping exams`
+          }]
+        }
       }
       return prev
     })
@@ -374,11 +405,11 @@ const AdminPlanning = () => {
         const exam1 = examsList[i]
         const exam2 = examsList[j]
         
-        const date1 = exam1.date ? exam1.date.split('T')[0] : ''
-        const date2 = exam2.date ? exam2.date.split('T')[0] : ''
+        const date1 = exam1.date ? (exam1.date.includes('T') ? exam1.date.split('T')[0] : exam1.date.split(' ')[0]) : ''
+        const date2 = exam2.date ? (exam2.date.includes('T') ? exam2.date.split('T')[0] : exam2.date.split(' ')[0]) : ''
         
         // Check if same day and same room
-        if (date1 === date2 && exam1.room_id && exam1.room_id === exam2.room_id) {
+        if (date1 === date2 && exam1.room_id != null && exam1.room_id === exam2.room_id) {
           const start1 = parseFloat(exam1.start_hour)
           const end1 = parseFloat(exam1.end_hour)
           const start2 = parseFloat(exam2.start_hour)
@@ -390,7 +421,7 @@ const AdminPlanning = () => {
               day: date1,
               startHour: Math.min(start1, start2),
               type: 'room',
-              description: `Room conflict: ${exam1.room_name} (${exam1.module_name} and ${exam2.module_name})`
+              description: `Room conflict: ${exam1.room_name || 'Unknown Room'} (${exam1.module_name || 'Unknown Module'} and ${exam2.module_name || 'Unknown Module'})`
             }
             
             const exists = detectedConflicts.some(c => 
@@ -405,7 +436,7 @@ const AdminPlanning = () => {
         }
         
         // Check for group schedule conflicts (same group, same day, overlapping time)
-        if (date1 === date2 && exam1.group_code === exam2.group_code) {
+        if (date1 === date2 && exam1.group_code != null && exam1.group_code === exam2.group_code) {
           const start1 = parseFloat(exam1.start_hour)
           const end1 = parseFloat(exam1.end_hour)
           const start2 = parseFloat(exam2.start_hour)
@@ -418,7 +449,7 @@ const AdminPlanning = () => {
               startHour: Math.min(start1, start2),
               type: 'group',
               group: exam1.group_code,
-              description: `Group schedule conflict: ${exam1.group_name} has overlapping exams (${exam1.module_name} ${start1}-${end1} and ${exam2.module_name} ${start2}-${end2})`
+              description: `Group schedule conflict: ${exam1.group_name || exam1.group_code || 'Unknown Group'} has overlapping exams (${exam1.module_name || 'Unknown Module'} ${start1}-${end1} and ${exam2.module_name || 'Unknown Module'} ${start2}-${end2})`
             }
             
             const exists = detectedConflicts.some(c => 
