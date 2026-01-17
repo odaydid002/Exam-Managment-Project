@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class InitialSeeder extends Seeder
 {
@@ -22,7 +23,7 @@ class InitialSeeder extends Seeder
                 'lname' => 'Admin',
                 'birth_date' => '1990-01-01',
                 'gender' => 'male',
-                'password' => '$2y$12$P.EwMMrgRnf5qZXXtWLWI.DLH5U1upEv5SLETtlO88oEShMhfYLqa',
+                'password' => Hash::make('admin'),
                 'phone' => '0698765432',
                 'role' => 'admin',
                 'image' => null,
@@ -38,10 +39,42 @@ class InitialSeeder extends Seeder
                 'lname' => 'Employee',
                 'birth_date' => '1995-01-01',
                 'gender' => 'female',
-                'password' => '$2y$12$.tVa3y3AqP7tyXV97g4UVOz.pw1PY/jjV0KegiQr/2C2.s.K.w4mW',
+                'password' => Hash::make('123'),
                 'phone' => null,
                 'role' => 'employee',
                 'image' => null,
+                'updated_at' => $now,
+                'created_at' => DB::raw('COALESCE(created_at, NOW())'),
+            ]
+        );
+
+        DB::table('users')->updateOrInsert(
+            ['email' => 'student@test.com'],
+            [
+                'fname' => 'Student',
+                'lname' => 'test',
+                'birth_date' => '1990-01-01',
+                'gender' => 'male',
+                'password' => Hash::make('123123'),
+                'phone' => '0698754810',
+                'role' => 'student',
+                'image' => 'https://api.dicebear.com/7.x/initials/svg?seed=Student%20Test',
+                'updated_at' => $now,
+                'created_at' => DB::raw('COALESCE(created_at, NOW())'),
+            ]
+        );
+
+        DB::table('users')->updateOrInsert(
+            ['email' => 'teacher@test.com'],
+            [
+                'fname' => 'Teacher',
+                'lname' => 'Test',
+                'birth_date' => '1990-01-01',
+                'gender' => 'male',
+                'password' => Hash::make('123123'),
+                'phone' => '0654125470',
+                'role' => 'teacher',
+                'image' => 'https://api.dicebear.com/7.x/initials/svg?seed=Teacher%20Test',
                 'updated_at' => $now,
                 'created_at' => DB::raw('COALESCE(created_at, NOW())'),
             ]
@@ -71,30 +104,12 @@ class InitialSeeder extends Seeder
             ['updated_at' => $now, 'created_at' => DB::raw('COALESCE(created_at, NOW())')]
         );
 
-        // Rooms generation
-        $rooms = [];
-        $prefixes = ['L', 'B', 'S'];
-        // First set: prefix + 3-digit number (001..010)
-        foreach ($prefixes as $p) {
-            for ($i = 1; $i <= 10; $i++) {
-                $name = $p . str_pad($i, 3, '0', STR_PAD_LEFT);
-                $rooms[] = ['name' => $name, 'capacity' => 30, 'disabled' => false, 'created_at' => $now, 'updated_at' => $now];
-            }
-        }
-        // Second set: prefix + '1' + 2-digit (100..109)
-        foreach ($prefixes as $p) {
-            for ($i = 1; $i <= 10; $i++) {
-                $name = $p . '1' . str_pad($i, 2, '0', STR_PAD_LEFT);
-                $rooms[] = ['name' => $name, 'capacity' => 30, 'disabled' => false, 'created_at' => $now, 'updated_at' => $now];
-            }
-        }
-        // Third set: prefix + '2' + 2-digit
-        foreach ($prefixes as $p) {
-            for ($i = 1; $i <= 10; $i++) {
-                $name = $p . '2' . str_pad($i, 2, '0', STR_PAD_LEFT);
-                $rooms[] = ['name' => $name, 'capacity' => 30, 'disabled' => false, 'created_at' => $now, 'updated_at' => $now];
-            }
-        }
+        // Rooms
+        $rooms = [
+            ['name' => 'A1', 'type' => 'amphitheater', 'capacity' => 100, 'disabled' => false, 'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'S202', 'type' => 'classroom', 'capacity' => 30, 'disabled' => false, 'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'L001', 'type' => 'laboratory', 'capacity' => 25, 'disabled' => false, 'created_at' => $now, 'updated_at' => $now],
+        ];
 
         // Insert rooms if not exist
         DB::table('rooms')->insertOrIgnore($rooms);
@@ -149,6 +164,30 @@ class InitialSeeder extends Seeder
             );
         }
 
+        DB::table('students')->updateOrInsert(
+            ['user_id' => 3],
+            [
+                'number' => 123123,
+                'group_code' => null,
+                'speciality_id' => 1,
+                'level' => 'Master 1',
+                'updated_at' => $now,
+                'created_at' => DB::raw('COALESCE(created_at, NOW())'),
+            ]
+        );
+
+        DB::table('teachers')->updateOrInsert(
+            ['user_id' => 4],
+            [
+                'number' => 123123,
+                'adj' => 'Mr',
+                'speciality_id' => 2,
+                'position' => 'Doctor',
+                'updated_at' => $now,
+                'created_at' => DB::raw('COALESCE(created_at, NOW())'),
+            ]
+        );
+
         // General settings
         $semesterId = DB::table('semesters')
             ->where('name', 'Semester 1')
@@ -168,5 +207,7 @@ class InitialSeeder extends Seeder
         // Assign seeded users to the default department
         DB::table('users')->where('email', 'admin@system.com')->update(['department_id' => 1, 'updated_at' => $now]);
         DB::table('users')->where('email', 'employee@system.com')->update(['department_id' => 1, 'updated_at' => $now]);
+        DB::table('users')->where('id', 3)->update(['department_id' => 1, 'updated_at' => $now]);
+        DB::table('users')->where('id', 4)->update(['department_id' => 1, 'updated_at' => $now]);
     }
 }
