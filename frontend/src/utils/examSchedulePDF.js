@@ -210,6 +210,14 @@ export async function exportExamsToPDF(exams, department = "Computer Science", s
     img.onerror = reject;
   });
 
+  // Load the univ image
+  const univImg = new Image();
+  univImg.src = '/images/univ.png';
+  await new Promise((resolve, reject) => {
+    univImg.onload = resolve;
+    univImg.onerror = reject;
+  });
+
   const doc = new jsPDF({ orientation: "landscape" });
   let pageCount = 0;
 
@@ -354,6 +362,7 @@ export async function exportExamsToPDF(exams, department = "Computer Science", s
           const logoHeight = 10;
           const margin = 5;
           doc.addImage(img, 'PNG', pageWidth - logoWidth - margin, margin, logoWidth, logoHeight);
+          doc.addImage(univImg, 'PNG', pageWidth - (logoWidth * 2) - (margin * 2), margin, logoWidth, logoHeight);
         }
       });
     };
