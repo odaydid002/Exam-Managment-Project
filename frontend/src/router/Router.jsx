@@ -31,6 +31,7 @@ import AdminExamRequests from '../views/admin/AdminExamRequests'
 
 import ErrorPage from '../views/error/ErrorPage'
 import ForgetPassword from '../views/ForgetPassword';
+import AdminLayout from '../views/admin/AdminLayout';
 
 const router = createBrowserRouter([
   {
