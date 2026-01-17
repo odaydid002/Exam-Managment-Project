@@ -5,6 +5,9 @@ A full-stack Laravel + React application for managing exams, students, teachers,
 🔗 Figma Design:
 👉https://www.figma.com/design/7GtBgiKFH4qe1hxJSpFcDE/Exam-managment?node-id=0-1&t=ZZ91tbIZZVWm5JRt-1
 
+📊 Preview:
+👉https://exam-managment-project.vercel.app/
+
 🚀 Features
 
 🎓 Student & teacher management
