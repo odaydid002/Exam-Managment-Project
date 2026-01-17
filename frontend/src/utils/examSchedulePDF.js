@@ -79,11 +79,11 @@ function normalizeExams(exams) {
     }
     
     // Handle both camelCase (startHour) and snake_case (start_hour) field names
-    const start = parseFloat(e.start_hour ?? e.startHour ?? e.start ?? 0);
-    const end = parseFloat(e.end_hour ?? e.endHour ?? e.end ?? 0);
+    const start = parseFloat(e.start_hour || e.startHour || e.start || 0);
+    const end = parseFloat(e.end_hour || e.endHour || e.end || 0);
     
     // Handle both module naming conventions (module vs module_name)
-    const moduleName = e.module_name ?? e.module ?? e.module_code ?? '';
+    const moduleName = e.module_name || e.module || e.module_code || '';
     
     return {
       module: moduleName,
@@ -185,7 +185,7 @@ function buildWeeklySchedule(exams, startDate = null, endDate = null) {
    PDF GENERATOR (ONE WEEK PER PAGE)
 -------------------------------------------------- */
 export function exportExamsToPDF(exams, department = "Computer Science", startDate = null, endDate = null, filename = "exam_schedule_by_speciality.pdf") {
-  console.debug('exportExamsToPDF called with:', { examsCount: exams?.length, department, startDate, endDate, filename });
+  console.debug('exportExamsToPDF called with:', { examsCount: exams && exams.length, department, startDate, endDate, filename });
   console.debug('Raw exams before normalization:', exams);
   
   const normalizedExams = normalizeExams(exams || []);
@@ -205,15 +205,20 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
   const doc = new jsPDF({ orientation: "landscape" });
   let pageCount = 0;
 
-  Object.entries(specMap).forEach(([key, examsForSpec]) => {
-    const [level, speciality] = key.split('-');
+  Object.entries(specMap).forEach(function(entry) {
+    const key = entry[0];
+    const examsForSpec = entry[1];
+    const parts = key.split('-');
+    const level = parts[0];
+    const speciality = parts[1];
     const weeks = buildWeeklySchedule(examsForSpec, startDate, endDate);
-    console.debug(`Building schedule for level "${level}" speciality "${speciality}":`, weeks);
+    console.debug("Building schedule for level " + level + " speciality " + speciality + ":", weeks);
 
     // Only generate one page per level-speciality (first week)
     const weeksArray = Object.entries(weeks);
     if (weeksArray.length > 0) {
-      const [weekStart, days] = weeksArray[0];
+      const weekStart = weeksArray[0][0];
+      const days = weeksArray[0][1];
       if (pageCount > 0) doc.addPage();
       pageCount++;
 
@@ -233,10 +238,10 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
       doc.text(`Department of ${department}`, 148, 25, { align: "center" });
 
       doc.setFontSize(14);
-      doc.text(`Exam Schedule - ${level} - ${speciality}`, 148, 35, { align: "center" });
+      doc.text("Exam Schedule - " + level + " - " + speciality, 148, 35, { align: "center" });
 
       doc.setFontSize(12);
-      doc.text(`Week of ${formatDate(weekStartDate)}`, 148, 45, { align: "center" });
+      doc.text("Week of " + formatDate(weekStartDate), 148, 45, { align: "center" });
 
       // Get unique time slots for this week's exams
       const allExamsInWeek = [];
@@ -336,8 +341,7 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
         tableLineColor: [0, 0, 0],
         alternateRowStyles: { fillColor: [245, 245, 245] }
       });
-    });
-  });
+    };
   });
 
   doc.save(filename);
