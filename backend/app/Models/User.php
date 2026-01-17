@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\Setting;
 
 class User extends Authenticatable
 {
@@ -23,9 +24,9 @@ class User extends Authenticatable
         'role',
         'birth_date',
         'gender',
-            'image', // Added image to fillable fields
-            'department_id',
-            'newbie',
+        'image',
+        'department_id',
+        'newbie',
     ];
 
     protected $hidden = [
@@ -38,6 +39,10 @@ class User extends Authenticatable
         'birth_date' => 'date',
         'newbie' => 'boolean',
     ];
+
+    /* ----------------------------
+     | Relationships
+     |---------------------------- */
 
     public function notifications()
     {
@@ -64,10 +69,39 @@ class User extends Authenticatable
         return $this->belongsTo(Department::class, 'department_id');
     }
 
+    /* ----------------------------
+     | Replaces MySQL Trigger
+     |---------------------------- */
+
+    protected static function booted()
+    {
+        static::created(function (User $user) {
+            Setting::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'theme' => 'light',
+                    'language' => 'en',
+                    'notifications' => true,
+                    'exam_reminder' => true,
+                    'schedule_updates' => true,
+                    'login_alerts' => true,
+                    'two_factor_authentication' => false,
+                ]
+            );
+        });
+    }
+
+    /* ----------------------------
+     | Helpers
+     |---------------------------- */
+
     public function currentGeneralSetting()
     {
         if (!$this->department_id) return null;
-        return \App\Models\GeneralSetting::where('department_id', $this->department_id)->orderByDesc('id')->first();
+
+        return \App\Models\GeneralSetting::where('department_id', $this->department_id)
+            ->orderByDesc('id')
+            ->first();
     }
 
     public function currentAcademicYearId()
@@ -84,6 +118,8 @@ class User extends Authenticatable
 
     public function hasRole($role)
     {
-        return $this->role === $role || (is_array($role) && in_array($this->role, $role));
+        return is_array($role)
+            ? in_array($this->role, $role)
+            : $this->role === $role;
     }
 }

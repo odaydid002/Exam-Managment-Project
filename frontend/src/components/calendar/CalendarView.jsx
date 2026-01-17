@@ -170,27 +170,72 @@ export default function CalendarView({
                             const dayKey = d.localDate;
                             const dayEvents = eventsList.filter(ev => ev.day === dayKey);
 
+                            // Group overlapping events
+                            const groupOverlappingEvents = (events) => {
+                                if (events.length === 0) return [];
+                                
+                                const sorted = events.sort((a, b) => a.startHour - b.startHour);
+                                const groups = [];
+                                
+                                for (const event of sorted) {
+                                    let added = false;
+                                    for (const group of groups) {
+                                        // Check if event overlaps with any in the group
+                                        const overlaps = group.some(g => 
+                                            g.startHour < event.endHour && event.startHour < g.endHour
+                                        );
+                                        if (overlaps) {
+                                            group.push(event);
+                                            added = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!added) {
+                                        groups.push([event]);
+                                    }
+                                }
+                                
+                                return groups;
+                            };
+
+                            const eventGroups = groupOverlappingEvents(dayEvents);
+
                             return timeSlots.map((t, rowIndex) => {
                                 const slotTime = numericTimeSlots[rowIndex];
 
-                                const events = dayEvents.filter(ev => slotTime === ev.startHour);
+                                // Find groups that should be displayed in this slot (first event starts here)
+                                const slotGroups = eventGroups.filter(group => 
+                                    group.length > 0 && group[0].startHour === slotTime
+                                );
+
+                                const events = slotGroups.flat();
 
                                 // Sort events by start time, then by end time
                                 const sortedEvents = events.sort((a, b) => a.startHour - b.startHour || a.endHour - b.endHour);
 
-                                // Calculate vertical positions to stack them
+                                // Check if all events have the same start and end time
+                                const allSameTime = sortedEvents.length > 1 && sortedEvents.every(ev => ev.startHour === sortedEvents[0].startHour && ev.endHour === sortedEvents[0].endHour);
+
+                                // Calculate vertical positions
                                 let currentTop = 0;
                                 const eventPositions = sortedEvents.map(ev => {
                                     const height = (ev.endHour - ev.startHour) * HOUR_HEIGHT + 10;
-                                    const top = currentTop;
-                                    currentTop += height + 0; // no space between events
+                                    let top;
+                                    if (allSameTime) {
+                                        // Stack on top for same time exams
+                                        top = 0;
+                                    } else {
+                                        // Stack vertically for overlapping exams
+                                        top = currentTop;
+                                        currentTop += height + 0;
+                                    }
                                     return { ...ev, calculatedHeight: height, calculatedTop: top };
                                 });
 
                                 return (
                                     <div key={t} className="day-cell w100 pos-rel">
                                         {eventPositions.map((ev, i) => {
-                                            const zIndex = dayEvents.filter(e => e.startHour < ev.startHour).length + 1;
+                                            const zIndex = i + 1; // Stack order: first event at bottom, later ones on top
 
                                             // compute overlapping events for room and group
                                             const overlappingRoom = dayEvents.filter(e =>

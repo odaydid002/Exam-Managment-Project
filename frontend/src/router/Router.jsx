@@ -18,7 +18,6 @@ import TeacherModules from '../views/teacher/TeacherModules'
 import TeacherSchedule from '../views/teacher/TeacherSchedule'
 import TeacherSettings from '../views/teacher/TeacherSettings'
 
-import AdminLayout from '../views/admin/adminLayout'
 import AdminDashboard from '../views/admin/AdminDashboard'
 import AdminRooms from '../views/admin/AdminDashboard'
 import AdminModules from '../views/admin/AdminModules'
