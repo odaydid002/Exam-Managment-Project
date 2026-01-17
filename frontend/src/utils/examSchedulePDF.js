@@ -191,7 +191,6 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
   const normalizedExams = normalizeExams(exams || []);
   console.debug('Normalized exams:', normalizedExams);
 
-  // group exams by level and speciality
   const specMap = {};
   normalizedExams.forEach(e => {
     const level = e.level || 'General';
