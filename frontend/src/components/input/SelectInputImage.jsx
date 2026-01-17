@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import styles from './inputs.module.css'
-import Profile from '../containers/profile'
+import Profile from '../containers/Profile'
 
 /*  Options List Strecture 
 
