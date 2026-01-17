@@ -525,7 +525,7 @@ const AdminGroups = () => {
             const logoHeight = 10;
             const margin = 5;
             doc.addImage(img, 'PNG', pageWidth - logoWidth - margin, margin, logoWidth, logoHeight);
-            doc.addImage(univImg, 'PNG', margin, margin, logoWidth, logoHeight);
+            doc.addImage(univImg, 'PNG', margin, margin, logoWidth*2, logoHeight*2);
           }
         });
       }
