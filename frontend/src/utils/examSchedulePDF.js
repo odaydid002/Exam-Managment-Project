@@ -59,8 +59,10 @@ function getWeekStart(date) {
   return d;
 }
 
-function getWeekKey(date) {
-  return getWeekStart(date).toISOString().split("T")[0];
+function formatDateString(date) {
+  return date.getFullYear() + '-' + 
+         String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+         String(date.getDate()).padStart(2, '0');
 }
 
 /* --------------------------------------------------
@@ -106,8 +108,12 @@ function buildWeeklySchedule(exams, startDate = null, endDate = null) {
   let firstDate = null;
   let lastDate = null;
 
-  if (startDate) firstDate = new Date(startDate);
-  if (endDate) lastDate = new Date(endDate);
+  if (startDate) {
+    firstDate = new Date(startDate);
+  }
+  if (endDate) {
+    lastDate = new Date(endDate);
+  }
 
   if (!firstDate || !lastDate) {
     const examDates = (exams || []).map(e => e.date && e.date.getTime()).filter(Boolean);
@@ -125,10 +131,21 @@ function buildWeeklySchedule(exams, startDate = null, endDate = null) {
   const startWeek = getWeekStart(firstDate);
   const endWeek = getWeekStart(lastDate);
 
-  // build all week keys between startWeek and endWeek inclusive
+  // build week keys starting from startDate, every 7 days
   const weekKeys = [];
-  for (let d = new Date(startWeek); d <= endWeek; d.setDate(d.getDate() + 7)) {
-    weekKeys.push(new Date(d).toISOString().split('T')[0]);
+  if (firstDate && lastDate) {
+    let current = new Date(firstDate);
+    while (current <= lastDate) {
+      weekKeys.push(formatDateString(current));
+      current.setDate(current.getDate() + 7);
+    }
+  } else {
+    // fallback to old logic
+    const startWeek = getWeekStart(firstDate);
+    const endWeek = getWeekStart(lastDate);
+    for (let d = new Date(startWeek); d <= endWeek; d.setDate(d.getDate() + 7)) {
+      weekKeys.push(new Date(d).toISOString().split('T')[0]);
+    }
   }
 
   // initialize each week with all days (empty maps for dynamic slots)
@@ -141,7 +158,14 @@ function buildWeeklySchedule(exams, startDate = null, endDate = null) {
 
   // populate with exams
   (exams || []).forEach(exam => {
-    const weekKey = getWeekKey(exam.date);
+    const examDate = new Date(exam.date);
+    const diffTime = examDate - firstDate;
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    const weekIndex = Math.floor(diffDays / 7);
+    
+    if (weekIndex < 0 || weekIndex >= weekKeys.length) return;
+    
+    const weekKey = weekKeys[weekIndex];
     const dayName = exam.date.toLocaleDateString("en-US", { weekday: "long" });
     const slotKey = `${exam.start}-${exam.end}`;
     
@@ -176,7 +200,7 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
 
   console.debug('Exams grouped by speciality:', specMap);
 
-  const doc = new jsPDF({ orientation: "portrait" });
+  const doc = new jsPDF({ orientation: "landscape" });
   let pageCount = 0;
 
   Object.entries(specMap).forEach(([spec, examsForSpec]) => {
@@ -191,21 +215,30 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
       if (pageCount > 0) doc.addPage();
       pageCount++;
 
+      // Calculate week days for this specific week
+      const weekStartDate = new Date(weekStart);
+      const weekDays = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(weekStartDate);
+        d.setDate(d.getDate() + i);
+        weekDays.push(d.toLocaleDateString("en-US", { weekday: "long" }));
+      }
+
       /* HEADER */
       doc.setFont("times", "bold");
       doc.setFontSize(16);
-      doc.text("Faculty of Sciences", 105, 15, { align: "center" });
-      doc.text(`Department of ${department}`, 105, 25, { align: "center" });
+      doc.text("Faculty of Sciences", 148, 15, { align: "center" });
+      doc.text(`Department of ${department}`, 148, 25, { align: "center" });
 
       doc.setFontSize(14);
-      doc.text(`Exam Schedule - ${spec}`, 105, 35, { align: "center" });
+      doc.text(`Exam Schedule - ${spec}`, 148, 35, { align: "center" });
 
       doc.setFontSize(12);
-      doc.text(`Week of ${formatDate(new Date(weekStart))}`, 105, 45, { align: "center" });
+      doc.text(`Week of ${formatDate(weekStartDate)}`, 148, 45, { align: "center" });
 
       // Get unique time slots for this week's exams
       const allExamsInWeek = [];
-      WEEK_DAYS.forEach(day => {
+      weekDays.forEach(day => {
         days[day].forEach(exams => allExamsInWeek.push(...exams));
       });
       const uniqueSlots = getUniqueTimeSlots(allExamsInWeek);
@@ -215,7 +248,7 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
       uniqueSlots.forEach(slot => {
         const slotKey = `${slot.start}-${slot.end}`;
         const modules = new Set();
-        WEEK_DAYS.forEach(day => {
+        weekDays.forEach(day => {
           const dayExams = days[day].get(slotKey) || [];
           dayExams.forEach(exam => modules.add(exam.module));
         });
@@ -226,56 +259,59 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
       const head = [
         [
           "",
-          ...WEEK_DAYS.map(day => {
-            const d = new Date(weekStart);
-            d.setDate(d.getDate() + WEEK_DAYS.indexOf(day));
+          ...weekDays.map(day => {
+            const d = new Date(weekStartDate);
+            d.setHours(12, 0, 0, 0); // set to noon to avoid timezone issues
+            d.setDate(d.getDate() + weekDays.indexOf(day));
+            d.setHours(0, 0, 0, 0);
             return `${day.slice(0, 3)}\n${formatDate(d)}`;
           })
         ]
       ];
 
-      const body = [];
-      slotModuleMap.forEach(({ slot, modules }) => {
+      const body = uniqueSlots.map(slot => {
         const slotKey = `${slot.start}-${slot.end}`;
-        if (modules.length === 1) {
-          // Single module, one row
-          const module = modules[0];
-          body.push([
-            slot.label,
-            ...WEEK_DAYS.map(day => {
-              const dayExams = days[day].get(slotKey) || [];
-              const moduleExams = dayExams.filter(exam => exam.module === module);
-              if (moduleExams.length === 0) return "";
-              const details = moduleExams.map(exam => `${exam.group || 'N/A'} - ${exam.room}`).join('\n');
-              return details;
-            })
-          ]);
-        } else {
-          // Multiple modules, separate rows for each
-          modules.forEach(module => {
-            body.push([
-              `${slot.label} - ${module}`,
-              ...WEEK_DAYS.map(day => {
-                const dayExams = days[day].get(slotKey) || [];
-                const moduleExams = dayExams.filter(exam => exam.module === module);
-                if (moduleExams.length === 0) return "";
-                const details = moduleExams.map(exam => `${exam.group || 'N/A'} - ${exam.room}`).join('\n');
-                return details;
-              })
-            ]);
-          });
-        }
+        return [
+          slot.label,
+          ...weekDays.map(day => {
+            const dayExams = days[day].get(slotKey) || [];
+            if (dayExams.length === 0) return "";
+            
+            // Group exams by module
+            const moduleGroups = {};
+            dayExams.forEach(exam => {
+              const module = exam.module;
+              if (!moduleGroups[module]) moduleGroups[module] = [];
+              moduleGroups[module].push(exam);
+            });
+            
+            // Format each module group
+            const formattedGroups = Object.entries(moduleGroups).map(([module, exams]) => {
+              if (exams.length === 1) {
+                const exam = exams[0];
+                return `${module}\n${exam.group || 'N/A'} - ${exam.room}`;
+              } else {
+                // Multiple exams with same module
+                const details = exams.map(exam => `${exam.group || 'N/A'} - ${exam.room}`).join('\n');
+                return `${module}\n${details}`;
+              }
+            });
+            
+            return formattedGroups.join('\n\n');
+          })
+        ];
       });
 
       autoTable(doc, {
         startY: 55,
         head,
         body,
+        margin: { left: 18, right: 18 },
         styles: {
           fontSize: 9,
           halign: "center",
           valign: "middle",
-          minCellHeight: 25,
+          minCellHeight: 20,
           cellPadding: 3
         },
         headStyles: {
@@ -285,7 +321,14 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
           fontStyle: "bold"
         },
         columnStyles: {
-          0: { fontStyle: "bold", textColor: [44, 62, 80], cellWidth: 35 }
+          0: { fontStyle: "bold", textColor: [44, 62, 80], cellWidth: 32 },
+          1: { cellWidth: 32.7 },
+          2: { cellWidth: 32.7 },
+          3: { cellWidth: 32.7 },
+          4: { cellWidth: 32.7 },
+          5: { cellWidth: 32.7 },
+          6: { cellWidth: 32.7 },
+          7: { cellWidth: 32.7 }
         },
         tableLineWidth: 0.5,
         tableLineColor: [0, 0, 0],
