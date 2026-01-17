@@ -21,7 +21,7 @@ import Copy from '../../components/buttons/Copy';
 import Popup from '../../components/containers/Popup';
 import TextButton from '../../components/buttons/TextButton';
 import Notif from '../../components/containers/Notif';
-import Profile from '../../components/containers/profile';
+import Profile from '../../components/containers/Profile';
 
 gsap.registerPlugin(useGSAP);
 

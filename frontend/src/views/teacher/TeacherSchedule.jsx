@@ -17,7 +17,7 @@ import { Specialities, Groups, Rooms } from '../../API'
 import { getTeacherExams } from '../../API/surveillance'
 import { get as getTeacher } from '../../API/teachers'
 import Popup from '../../components/containers/Popup'
-import Profile from '../../components/containers/profile'
+import Profile from '../../components/containers/Profile'
 
 const TeacherSchedule = () => {
 

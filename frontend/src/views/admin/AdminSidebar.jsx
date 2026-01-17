@@ -1,7 +1,7 @@
 import React from 'react'
 
 import Logo from '../../components/images/Logo'
-import Profile from '../../components/containers/profile'
+import Profile from '../../components/containers/Profile'
 import ExpendContainer from '../../components/containers/ExpendContainer'
 import NavElement from '../../components/navigators/NavElement'
 import NavElementButton from '../../components/navigators/NavElementButton'

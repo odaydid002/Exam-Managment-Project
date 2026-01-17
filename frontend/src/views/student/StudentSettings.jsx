@@ -17,7 +17,7 @@ import DarkUI from '../../components/svg/DarkUI';
 import LightUI from '../../components/svg/LightUI';
 import SystemUI from '../../components/svg/SystemUI';
 import SecondaryButton from '../../components/buttons/SecondaryButton';
-import Profile from '../../components/containers/profile';
+import Profile from '../../components/containers/Profile';
 import TextButton from '../../components/buttons/TextButton';
 
 const StudentSettings = () => {

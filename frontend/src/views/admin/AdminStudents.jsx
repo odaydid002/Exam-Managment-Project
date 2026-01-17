@@ -14,7 +14,7 @@ import SecondaryButton from '../../components/buttons/SecondaryButton';
 import IconButton from '../../components/buttons/IconButton';
 import FloatButton from '../../components/buttons/FloatButton';
 import { ListTable } from '../../components/tables/ListTable';
-import Profile from '../../components/containers/profile';
+import Profile from '../../components/containers/Profile';
 import Popup from '../../components/containers/Popup';
 import TextInput from '../../components/input/TextInput';
 import SelectInput from '../../components/input/SelectInput';
