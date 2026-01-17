@@ -1,12 +1,12 @@
 /* Fonts */
 @font-face {
     font-family: poppins;
-    src: url(../fonts/poppins.ttf);
+    src: url(/fonts/poppins.ttf);
 }
 
 @font-face {
     font-family: poppins-black;
-    src: url(../fonts/Poppins-Black.ttf);
+    src: url(/fonts/Poppins-Black.ttf);
 }
 /*-------*/
 
