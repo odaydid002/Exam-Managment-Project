@@ -184,7 +184,7 @@ function buildWeeklySchedule(exams, startDate = null, endDate = null) {
 /* --------------------------------------------------
    PDF GENERATOR (ONE WEEK PER PAGE)
 -------------------------------------------------- */
-export function exportExamsToPDF(exams, department = "Computer Science", startDate = null, endDate = null, filename = "exam_schedule_by_speciality.pdf") {
+export async function exportExamsToPDF(exams, department = "Computer Science", startDate = null, endDate = null, filename = "exam_schedule_by_speciality.pdf") {
   console.debug('exportExamsToPDF called with:', { examsCount: exams && exams.length, department, startDate, endDate, filename });
   console.debug('Raw exams before normalization:', exams);
   
@@ -201,6 +201,14 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
   });
 
   console.debug('Exams grouped by speciality:', specMap);
+
+  // Load the logo image
+  const img = new Image();
+  img.src = '/images/logo.png';
+  await new Promise((resolve, reject) => {
+    img.onload = resolve;
+    img.onerror = reject;
+  });
 
   const doc = new jsPDF({ orientation: "landscape" });
   let pageCount = 0;
@@ -339,7 +347,14 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
         },
         tableLineWidth: 0.5,
         tableLineColor: [0, 0, 0],
-        alternateRowStyles: { fillColor: [245, 245, 245] }
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        didDrawPage: (data) => {
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const logoWidth = 10;
+          const logoHeight = 10;
+          const margin = 5;
+          doc.addImage(img, 'PNG', pageWidth - logoWidth - margin, margin, logoWidth, logoHeight);
+        }
       });
     };
   });
