@@ -92,6 +92,7 @@ function normalizeExams(exams) {
       date: dateObj,
       start: start,
       end: end,
+      level: e.level || e.level_name || '',
       speciality: e.speciality || e.speciality_name || e.department || e.group_speciality || 'General',
       group: e.group || e.group_name || e.group_code || ''
     };
@@ -190,12 +191,14 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
   const normalizedExams = normalizeExams(exams || []);
   console.debug('Normalized exams:', normalizedExams);
 
-  // group exams by speciality
+  // group exams by level and speciality
   const specMap = {};
   normalizedExams.forEach(e => {
-    const s = e.speciality || 'General';
-    if (!specMap[s]) specMap[s] = [];
-    specMap[s].push(e);
+    const level = e.level || 'General';
+    const speciality = e.speciality || 'General';
+    const key = `${level}-${speciality}`;
+    if (!specMap[key]) specMap[key] = [];
+    specMap[key].push(e);
   });
 
   console.debug('Exams grouped by speciality:', specMap);
@@ -203,15 +206,15 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
   const doc = new jsPDF({ orientation: "landscape" });
   let pageCount = 0;
 
-  Object.entries(specMap).forEach(([spec, examsForSpec]) => {
+  Object.entries(specMap).forEach(([key, examsForSpec]) => {
+    const [level, speciality] = key.split('-');
     const weeks = buildWeeklySchedule(examsForSpec, startDate, endDate);
-    console.debug(`Building schedule for speciality "${spec}":`, weeks);
+    console.debug(`Building schedule for level "${level}" speciality "${speciality}":`, weeks);
 
-  Object.entries(specMap).forEach(([spec, examsForSpec]) => {
-    const weeks = buildWeeklySchedule(examsForSpec, startDate, endDate);
-    console.debug(`Building schedule for speciality "${spec}":`, weeks);
-
-    Object.entries(weeks).forEach(([weekStart, days]) => {
+    // Only generate one page per level-speciality (first week)
+    const weeksArray = Object.entries(weeks);
+    if (weeksArray.length > 0) {
+      const [weekStart, days] = weeksArray[0];
       if (pageCount > 0) doc.addPage();
       pageCount++;
 
@@ -231,7 +234,7 @@ export function exportExamsToPDF(exams, department = "Computer Science", startDa
       doc.text(`Department of ${department}`, 148, 25, { align: "center" });
 
       doc.setFontSize(14);
-      doc.text(`Exam Schedule - ${spec}`, 148, 35, { align: "center" });
+      doc.text(`Exam Schedule - ${level} - ${speciality}`, 148, 35, { align: "center" });
 
       doc.setFontSize(12);
       doc.text(`Week of ${formatDate(weekStartDate)}`, 148, 45, { align: "center" });

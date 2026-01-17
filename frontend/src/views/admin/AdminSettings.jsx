@@ -217,7 +217,7 @@ const Rooms = ({rooms, onAddRoom, onEditRoom, onDeleteRoom, showAddForm, setShow
       </div>
       <PrimaryButton icon='fa-solid fa-plus' text='Add Room' onClick={() => { setEditingId(null); setFormData({ name: '', capacity: '', disabled: false }); setShowAddForm(true); }} />
     </div>
-    <div className="flex center w100" style={{maxHeight: "70vh"}}>
+    <div className="flex center w100" style={{maxHeight: "70vh", minHeight:"400px"}}>
       <ListTable
             title="Rooms"
             rowTitles={["Name", "Type", "Capacity", "Status", "Action"]}
@@ -261,9 +261,9 @@ const Rooms = ({rooms, onAddRoom, onEditRoom, onDeleteRoom, showAddForm, setShow
                 {!modalLoading && <IconButton icon='fa-solid fa-xmark' onClick={handleCloseModal} />}
               </div>
               <div className="flex column gap" style={{marginTop: '1em'}}>
-                <TextInput label='Room Name' value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder='Enter room name' />
+                <TextInput label='Room Name' val={formData.name} onchange={(e) => setFormData({...formData, name: e.target.value})} placeholder='Enter room name' editable={true} />
                 <SelectInput label='Type' options={[{ value: 'classroom', text: 'Classroom' }, { value: 'laboratory', text: 'Laboratory' }, { value: 'amphitheater', text: 'Amphitheater' }]} value={formData.type} onChange={(v) => setFormData({...formData, type: v})} />
-                <TextInput label='Capacity' type='number' value={formData.capacity} onChange={(e) => setFormData({...formData, capacity: e.target.value})} placeholder='Enter capacity' />
+                <TextInput label='Capacity' type='number' val={formData.capacity} onchange={(e) => setFormData({...formData, capacity: e.target.value})} placeholder='Enter capacity' editable={true} />
                 <Switchbox label='Disabled' value={formData.disabled} onChange={(v) => setFormData({...formData, disabled: v})} />
                 <div className="flex row j-end gap">
                   <SecondaryButton text='Cancel' onClick={handleCloseModal} isLoading={modalLoading} />
