@@ -362,7 +362,7 @@ export async function exportExamsToPDF(exams, department = "Computer Science", s
           const logoHeight = 10;
           const margin = 5;
           doc.addImage(img, 'PNG', pageWidth - logoWidth - margin, margin, logoWidth, logoHeight);
-          doc.addImage(univImg, 'PNG', pageWidth - (logoWidth * 2) - (margin * 2), margin, logoWidth, logoHeight);
+          doc.addImage(univImg, 'PNG', margin, margin, 20, 20);
         }
       });
     };
