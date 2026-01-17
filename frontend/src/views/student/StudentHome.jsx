@@ -12,7 +12,6 @@ import { useNavigate } from 'react-router-dom'
 import formatDateTime from '../../hooks/formatDateTime';
 
 import StaticCard2 from '../../components/containers/StaticCard2';
-import Profile from '../../components/containers/profile';
 import Text from '../../components/text/Text';
 import Notification from '../../components/svg/Notification';
 import Eclipse from '../../components/shapes/Eclipse';
@@ -22,6 +21,7 @@ import Copy from '../../components/buttons/Copy';
 import Popup from '../../components/containers/Popup';
 import TextButton from '../../components/buttons/TextButton';
 import Notif from '../../components/containers/Notif';
+import Profile from '../../components/containers/profile';
 
 gsap.registerPlugin(useGSAP);
 
