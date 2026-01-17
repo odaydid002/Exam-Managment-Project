@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./Calendar.css";
+import "./calendar.css";
 import Text from "../text/Text";
 import IconButton from "../buttons/IconButton";
 import Eclipse from "../shapes/Eclipse";
