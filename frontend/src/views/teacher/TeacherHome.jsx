@@ -24,6 +24,9 @@ import Popup from '../../components/containers/Popup';
 import TextButton from '../../components/buttons/TextButton';
 import IconButton from '../../components/buttons/IconButton';
 import Notif from '../../components/containers/Notif';
+import { Students } from '../../API'
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 gsap.registerPlugin(useGSAP);
 
@@ -50,6 +53,7 @@ const TeacherHome = () => {
   const [approvalLoading, setApprovalLoading] = useState(null)
   const [modulesCount, setModulesCount] = useState(0)
   const [otherTeachersModal, setOtherTeachersModal] = useState(null)
+  const [exportLoading, setExportLoading] = useState(null)
 
   const getLocalTodayString = () => {
     const d = new Date();
@@ -341,6 +345,72 @@ const TeacherHome = () => {
     }
   }
 
+  const downloadStudentList = async (exam) => {
+    setExportLoading(exam.surveillance_id || exam.exam_id);
+    try {
+      const params = { group_code: exam.group_code };
+      const resp = await Students.getAll(params);
+      const students = Array.isArray(resp) ? resp : (resp.students || []);
+
+      if (students.length === 0) {
+        notify('error', 'No students found for this exam');
+        return;
+      }
+
+      // Sort students alphabetically A to Z
+      students.sort((a, b) => `${a.fname} ${a.lname}`.localeCompare(`${b.fname} ${b.lname}`));
+
+      // Load the logo images
+      const img = new Image();
+      img.src = '/images/logo.png';
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
+      const univImg = new Image();
+      univImg.src = '/images/univ.png';
+      await new Promise((resolve, reject) => {
+        univImg.onload = resolve;
+        univImg.onerror = reject;
+      });
+
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text(`Students for ${exam.module_name} - ${exam.exam_type}`, 14, 42);
+
+      const headers = ['#', 'Number', 'Name', 'Email'];
+      const data = students.map((s, i) => [
+        i + 1,
+        s.number,
+        `${s.fname} ${s.lname}`,
+        s.email || ''
+      ]);
+
+      autoTable(doc, {
+        head: [headers],
+        body: data,
+        startY: 50,
+        margin: { top: 20 },
+        didDrawPage: (data) => {
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const logoWidth = 10;
+          const logoHeight = 10;
+          const margin = 5;
+          doc.addImage(img, 'PNG', pageWidth - logoWidth - margin, margin, logoWidth, logoHeight);
+          doc.addImage(univImg, 'PNG', margin, margin, logoWidth*2, logoHeight*2);
+        }
+      });
+
+      doc.save(`Students_${exam.module_name}_${exam.exam_type}.pdf`);
+    } catch (err) {
+      console.error('Failed to download student list', err);
+      notify('error', 'Failed to download student list');
+    } finally {
+      setExportLoading(null);
+    }
+  }
+
   // Notification grouping helpers
   const getDateOnlyFrom = (value) => {
     try {
@@ -578,9 +648,12 @@ const TeacherHome = () => {
                         />
                       </>
                     )}
-                    {exam.status !== 'pending' && (
-                      <Text text='-' size='var(--text-m)' opacity='0.5' />
-                    )}
+                    <IconButton
+                      icon="fa-solid fa-clipboard-list"
+                      onClick={() => downloadStudentList(exam)}
+                      disabled={exportLoading !== null && exportLoading !== (exam.surveillance_id || exam.exam_id)}
+                      title="Download Student List"
+                    />
                   </div>
                 </>
               )}

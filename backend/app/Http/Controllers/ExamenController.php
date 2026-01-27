@@ -738,4 +738,4 @@ class ExamenController extends Controller
             return response()->json(['error' => 'Failed to send email', 'details' => $e->getMessage()], 500);
         }
     }
-}
+
